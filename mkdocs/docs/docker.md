@@ -4,7 +4,7 @@ Each component in this system that is designed to be run in a container has an a
 
 ## Conventions
 
-Each deployable component of the system should have a Dockerfile, and depending on it's build dependency requirements, it may or may not live in the same directory as the component itself.  In general, if a component has dependencies on other parts of the system, that Dockerfile should live at the highest possible place in the directory structure without (ideally), making it all the way to the root.  Also, if the Dockerfile does not live alongside it's component, it should be named after the component.  For example, many of the .NET projects rely on other .NET projects, so many of those Dockerfiles live in the `dotnet` directly.  `DbSeeder.Dockerfile`, for instance, lives in `dotnet` because it depends on `UnAd.Redis`, `UnAd.Data` and others, and referencing those projects with relative paths from that directory is far less messy than the mass of `../../../.......` that would be necessary otherwise.
+Each deployable component of the system should have a Dockerfile, and depending on it's build dependency requirements, it may or may not live in the same directory as the component itself.  In general, if a component has dependencies on other parts of the system, that Dockerfile should live at the highest possible place in the directory structure without (ideally), making it all the way to the root.  Also, if the Dockerfile does not live alongside it's component, it should be named after the component.  For example, many of the .NET projects rely on other .NET projects, so many of those Dockerfiles live in the `dotnet` directly.  `DbSeeder.Dockerfile`, for instance, lives in `dotnet` because it depends on `Nudges.Redis`, `Nudges.Data` and others, and referencing those projects with relative paths from that directory is far less messy than the mass of `../../../.......` that would be necessary otherwise.
 
 ## Local Development
 
@@ -37,8 +37,8 @@ Before running anything locally, there is at least one file needed:  `dotnet/.en
 
     COGNITO_CLIENT_ID="7o8na736debi5u11kutaoao4qr"
     COGNITO_CLIENT_SECRET=""
-    COGNITO_POOL_DOMAIN="unad-development"
-    COGNITO_POOL_DOMAIN_ID="unad-development"
+    COGNITO_POOL_DOMAIN="nudges-development"
+    COGNITO_POOL_DOMAIN_ID="nudges-development"
     COGNITO_POOL_ENDPOINT="cognito-idp.us-east-2.amazonaws.com/us-east-2_xD41Z0dWM"
     COGNITO_USER_POOL_ID="us-east-2_xD41Z0dWM"
 

@@ -8,12 +8,12 @@
 # ####################
 
 resource "aws_service_discovery_private_dns_namespace" "this" {
-  name = "unad.local"
+  name = "nudges.local"
   vpc  = aws_vpc.vpc.id
 }
 
 resource "aws_ecs_cluster" "cluster" {
-  name = "unad-cluster"
+  name = "nudges-cluster"
 
   setting {
     name  = "containerInsights"
@@ -85,8 +85,8 @@ resource "aws_security_group" "ecs_private" {
 
 resource "aws_security_group_rule" "ecs_egress_redis" {
   type              = "egress"
-  from_port         = aws_elasticache_cluster.unad.port
-  to_port           = aws_elasticache_cluster.unad.port
+  from_port         = aws_elasticache_cluster.nudges.port
+  to_port           = aws_elasticache_cluster.nudges.port
   protocol          = "tcp"
   cidr_blocks       = [var.vpc_cidr]
   security_group_id = aws_security_group.ecs_private.id
@@ -154,7 +154,7 @@ resource "aws_security_group_rule" "ecs_ingress_http" {
 }
 
 resource "aws_s3_bucket" "alb_logs" {
-  bucket = "unad-alb-logs-bucket${var.postfix}"
+  bucket = "nudges-alb-logs-bucket${var.postfix}"
 
   force_destroy = true
 }
@@ -598,19 +598,19 @@ output "graph_monitor_api_url" {
   value = "https://monitor.${data.aws_route53_zone.main.name}"
 }
 
-resource "random_password" "unad_functions_api_key" {
+resource "random_password" "nudges_functions_api_key" {
   length  = 32
   special = false
 }
 
-resource "aws_ssm_parameter" "unad_functions_api_key" {
+resource "aws_ssm_parameter" "nudges_functions_api_key" {
   name  = "/ecs/webhooks-api-key"
   type  = "SecureString"
-  value = random_password.unad_functions_api_key.result
+  value = random_password.nudges_functions_api_key.result
 }
 
-output "unad_functions_api_key" {
-  value     = random_password.unad_functions_api_key.result
+output "nudges_functions_api_key" {
+  value     = random_password.nudges_functions_api_key.result
   sensitive = true
 }
 
@@ -638,7 +638,7 @@ module "webhooks" {
     valueFrom = "${aws_ssm_parameter.redis_connection_string.arn}"
     }, {
     name      = "API_KEY"
-    valueFrom = "${aws_ssm_parameter.unad_functions_api_key.arn}"
+    valueFrom = "${aws_ssm_parameter.nudges_functions_api_key.arn}"
     }, {
     name      = "TWILIO_ACCOUNT_SID"
     valueFrom = "${data.aws_ssm_parameter.twilio_account_sid.arn}"
@@ -700,6 +700,6 @@ resource "aws_route53_record" "functions" {
   zone_id         = data.aws_route53_zone.main.zone_id
 }
 
-output "unad_functions_api_url" {
+output "nudges_functions_api_url" {
   value = "https://${aws_route53_record.functions.name}"
 }

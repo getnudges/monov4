@@ -5,14 +5,14 @@ FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 WORKDIR /src
 COPY DbSeeder.sln ./
 COPY tools/DbSeeder/*.csproj ./tools/DbSeeder/
-COPY UnAd.Redis/*.csproj ./UnAd.Redis/
-COPY UnAd.Data/*.csproj ./UnAd.Data/
+COPY Nudges.Redis/*.csproj ./Nudges.Redis/
+COPY Nudges.Data/*.csproj ./Nudges.Data/
 
 RUN dotnet restore
 
 COPY tools/DbSeeder/ ./tools/DbSeeder/
-COPY UnAd.Redis/ ./UnAd.Redis/
-COPY UnAd.Data/ ./UnAd.Data/
+COPY Nudges.Redis/ ./Nudges.Redis/
+COPY Nudges.Data/ ./Nudges.Data/
 
 FROM build AS publish
 

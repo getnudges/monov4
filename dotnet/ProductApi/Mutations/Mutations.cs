@@ -1,5 +1,5 @@
-using UnAd.Auth;
-using UnAd.HotChocolate.Utils;
+using Nudges.Auth;
+using Nudges.HotChocolate.Utils;
 
 namespace ProductApi;
 

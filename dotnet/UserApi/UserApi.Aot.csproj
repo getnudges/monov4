@@ -10,10 +10,10 @@
   </PropertyGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\UnAd.Auth\UnAd.Auth.csproj" />
-      <ProjectReference Include="..\UnAd.Data\UnAd.Data.csproj" />
-      <ProjectReference Include="..\UnAd.Kafka\UnAd.Kafka.csproj" />
-      <ProjectReference Include="..\UnAd.Redis\UnAd.Redis.csproj" />
+      <ProjectReference Include="..\Nudges.Auth\Nudges.Auth.csproj" />
+      <ProjectReference Include="..\Nudges.Data\Nudges.Data.csproj" />
+      <ProjectReference Include="..\Nudges.Kafka\Nudges.Kafka.csproj" />
+      <ProjectReference Include="..\Nudges.Redis\Nudges.Redis.csproj" />
     </ItemGroup>
 
     <ItemGroup>

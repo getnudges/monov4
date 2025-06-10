@@ -3,7 +3,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Twilio.Clients;
 using Twilio.Rest.Api.V2010.Account;
-using UnAd.Configuration.Extensions;
+using Nudges.Configuration.Extensions;
 
 namespace KafkaConsumer.Notifications;
 

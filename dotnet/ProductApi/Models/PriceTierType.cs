@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
-using UnAd.Data.Products;
-using UnAd.Data.Products.Models;
-using UnAd.Models;
+using Nudges.Data.Products;
+using Nudges.Data.Products.Models;
+using Nudges.Models;
 
 namespace ProductApi.Models;
 

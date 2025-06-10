@@ -1,8 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using PaymentApi.Types;
-using UnAd.Auth;
-using UnAd.Data.Payments;
-using UnAd.Data.Payments.Models;
+using Nudges.Auth;
+using Nudges.Data.Payments;
+using Nudges.Data.Payments.Models;
 
 namespace PaymentApi;
 

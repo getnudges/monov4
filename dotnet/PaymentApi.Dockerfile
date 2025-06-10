@@ -2,15 +2,15 @@ FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 ARG GRAPH_MONITOR_URL
 
 WORKDIR /src
-COPY UnAd.Data/*.csproj ./UnAd.Data/
-COPY UnAd.Models/*.csproj ./UnAd.Models/
-COPY UnAd.Redis/*.csproj ./UnAd.Redis/
-COPY UnAd.Telemetry/*.csproj ./UnAd.Telemetry/
-COPY UnAd.Auth/*.csproj ./UnAd.Auth/
-COPY UnAd.Auth.Web/*.csproj ./UnAd.Auth.Web/
-COPY UnAd.Kafka/*.csproj ./UnAd.Kafka/
-COPY UnAd.Kafka.Analyzers/*.csproj ./UnAd.Kafka.Analyzers/
-COPY UnAd.HotChocolate.Utils/*.csproj ./UnAd.HotChocolate.Utils/
+COPY Nudges.Data/*.csproj ./Nudges.Data/
+COPY Nudges.Models/*.csproj ./Nudges.Models/
+COPY Nudges.Redis/*.csproj ./Nudges.Redis/
+COPY Nudges.Telemetry/*.csproj ./Nudges.Telemetry/
+COPY Nudges.Auth/*.csproj ./Nudges.Auth/
+COPY Nudges.Auth.Web/*.csproj ./Nudges.Auth.Web/
+COPY Nudges.Kafka/*.csproj ./Nudges.Kafka/
+COPY Nudges.Kafka.Analyzers/*.csproj ./Nudges.Kafka.Analyzers/
+COPY Nudges.HotChocolate.Utils/*.csproj ./Nudges.HotChocolate.Utils/
 COPY PaymentApi/*.csproj ./PaymentApi/
 COPY Nudges.Configuration/*.csproj ./Nudges.Configuration/
 

@@ -1,4 +1,4 @@
-using UnAd.Data.Products.Models;
+using Nudges.Data.Products.Models;
 
 namespace ProductApi.Models;
 

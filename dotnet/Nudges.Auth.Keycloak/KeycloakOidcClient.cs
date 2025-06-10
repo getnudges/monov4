@@ -4,7 +4,7 @@ using System.Text.Json.Serialization.Metadata;
 using Keycloak.AuthServices.Sdk.Admin.Models;
 using Microsoft.Extensions.Options;
 using Monads;
-using UnAd.Auth;
+using Nudges.Auth;
 
 namespace Nudges.Auth.Keycloak;
 

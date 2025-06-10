@@ -6,9 +6,9 @@ FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 
 WORKDIR /src
 
-COPY ./UnAd.Data.Migrator.sln ./UnAd.Data.Migrator.sln
-COPY ./tools/UnAd.Data.Migrator/ ./tools/UnAd.Data.Migrator/
-COPY ./UnAd.Data/ ./UnAd.Data/
+COPY ./Nudges.Data.Migrator.sln ./Nudges.Data.Migrator.sln
+COPY ./tools/Nudges.Data.Migrator/ ./tools/Nudges.Data.Migrator/
+COPY ./Nudges.Data/ ./Nudges.Data/
 
 RUN dotnet restore
 
@@ -17,8 +17,8 @@ COPY .config/ ./.config
 RUN dotnet tool restore
 
 RUN dotnet ef migrations bundle \
-    --project ./UnAd.Data/UnAd.Data.csproj \
-    --startup-project ./tools/UnAd.Data.Migrator/UnAd.Data.Migrator.csproj \
+    --project ./Nudges.Data/Nudges.Data.csproj \
+    --startup-project ./tools/Nudges.Data.Migrator/Nudges.Data.Migrator.csproj \
     --self-contained -r linux-x64 \
     --context UserDbContext
 
@@ -26,8 +26,8 @@ RUN chmod +x ./efbundle
 RUN mv ./efbundle ./migrateUserDb
 
 RUN dotnet ef migrations bundle \
-    --project ./UnAd.Data/UnAd.Data.csproj \
-    --startup-project ./tools/UnAd.Data.Migrator/UnAd.Data.Migrator.csproj \
+    --project ./Nudges.Data/Nudges.Data.csproj \
+    --startup-project ./tools/Nudges.Data.Migrator/Nudges.Data.Migrator.csproj \
     --self-contained -r linux-x64 \
     --context ProductDbContext
 
@@ -35,8 +35,8 @@ RUN chmod +x ./efbundle
 RUN mv ./efbundle ./migrateProductDb
 
 RUN dotnet ef migrations bundle \
-    --project ./UnAd.Data/UnAd.Data.csproj \
-    --startup-project ./tools/UnAd.Data.Migrator/UnAd.Data.Migrator.csproj \
+    --project ./Nudges.Data/Nudges.Data.csproj \
+    --startup-project ./tools/Nudges.Data.Migrator/Nudges.Data.Migrator.csproj \
     --self-contained -r linux-x64 \
     --context PaymentDbContext
 

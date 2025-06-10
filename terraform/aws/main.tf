@@ -26,5 +26,5 @@ data "aws_availability_zones" "available" {}
 
 locals {
   availability_zones = data.aws_availability_zones.available.names
-  rds_user = "unad"
+  rds_user = "nudges"
 }

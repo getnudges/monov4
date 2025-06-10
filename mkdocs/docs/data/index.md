@@ -1,6 +1,6 @@
-# UnAd Data Layer Overview
+# Nudges Data Layer Overview
 
-UnAd roughly follows a [Domain-driven design](https://en.wikipedia.org/wiki/Domain-driven_design) concept with it's data persistence layer, which has many implications for this system.
+Nudges roughly follows a [Domain-driven design](https://en.wikipedia.org/wiki/Domain-driven_design) concept with it's data persistence layer, which has many implications for this system.
 
 ## DDD Approach
 
@@ -11,7 +11,7 @@ Following a DDD pattern, our data exists in multiple separate databases, each fo
 - The payment-related data all lives in the [`paymentdb` database](/data/paymentdb), implemented in PostgresQL.
 - Ephemeral data and some cached data lives in a Redis database. 
 
-Management of the databases in UnAd are handled with a mix of local scripts to modify the local databases, and [EF Core Migrations](https://learn.microsoft.com/en-us/ef/core/managing-schemas/migrations/?tabs=dotnet-core-cli).
+Management of the databases in Nudges are handled with a mix of local scripts to modify the local databases, and [EF Core Migrations](https://learn.microsoft.com/en-us/ef/core/managing-schemas/migrations/?tabs=dotnet-core-cli).
 
 ## Conventions
 

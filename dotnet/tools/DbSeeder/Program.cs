@@ -7,8 +7,8 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using StackExchange.Redis;
 using Stripe;
-using UnAd.Data.Payments;
-using UnAd.Data.Users;
+using Nudges.Data.Payments;
+using Nudges.Data.Users;
 
 static IHostBuilder CreateBaseHost(string[] args) =>
     Host.CreateDefaultBuilder(args)

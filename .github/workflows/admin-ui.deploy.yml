@@ -9,8 +9,8 @@ on:
         required: true
 
 env:
-  ECR_REPOSITORY: unad/admin-ui
-  ECS_CLUSTER: unad-cluster
+  ECR_REPOSITORY: nudges/admin-ui
+  ECS_CLUSTER: nudges-cluster
   ECS_SERVICE: admin-ui
   PROJECT_PATH: web/admin-ui
   

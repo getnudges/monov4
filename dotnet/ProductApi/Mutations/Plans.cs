@@ -3,12 +3,12 @@ using HotChocolate.Authorization;
 using HotChocolate.Subscriptions;
 using Microsoft.EntityFrameworkCore;
 using ProductApi.Models;
-using UnAd.Auth;
-using UnAd.Data.Products;
-using UnAd.Data.Products.Models;
-using UnAd.Kafka;
-using UnAd.Models;
-using UnAd.Telemetry;
+using Nudges.Auth;
+using Nudges.Data.Products;
+using Nudges.Data.Products.Models;
+using Nudges.Kafka;
+using Nudges.Models;
+using Nudges.Telemetry;
 
 namespace ProductApi;
 

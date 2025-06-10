@@ -1,16 +1,16 @@
 FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 
 WORKDIR /src
-COPY UnAd.Models/*.csproj ./UnAd.Models/
-COPY UnAd.Redis/*.csproj ./UnAd.Redis/
-COPY UnAd.Kafka/*.csproj ./UnAd.Kafka/
-COPY UnAd.Kafka.Analyzers/*.csproj ./UnAd.Kafka.Analyzers/
-COPY UnAd.Auth/*.csproj ./UnAd.Auth/
-COPY UnAd.Auth.Web/*.csproj ./UnAd.Auth.Web/
+COPY Nudges.Models/*.csproj ./Nudges.Models/
+COPY Nudges.Redis/*.csproj ./Nudges.Redis/
+COPY Nudges.Kafka/*.csproj ./Nudges.Kafka/
+COPY Nudges.Kafka.Analyzers/*.csproj ./Nudges.Kafka.Analyzers/
+COPY Nudges.Auth/*.csproj ./Nudges.Auth/
+COPY Nudges.Auth.Web/*.csproj ./Nudges.Auth.Web/
 COPY Monads/*.csproj ./Monads/
-COPY UnAd.Localization/*.csproj ./UnAd.Localization/
-COPY UnAd.Localization.Analyzers/*.csproj ./UnAd.Localization.Analyzers/
-COPY UnAd.Configuration.Analyzers/*.csproj ./UnAd.Configuration.Analyzers/
+COPY Nudges.Localization/*.csproj ./Nudges.Localization/
+COPY Nudges.Localization.Analyzers/*.csproj ./Nudges.Localization.Analyzers/
+COPY Nudges.Configuration.Analyzers/*.csproj ./Nudges.Configuration.Analyzers/
 COPY Precision.WarpCache/Precision.WarpCache.Grpc.Client/*.csproj Precision.WarpCache/Precision.WarpCache.Grpc.Client/
 COPY Nudges.Configuration/*.csproj ./Nudges.Configuration/
 COPY AuthApi/*.csproj ./AuthApi/

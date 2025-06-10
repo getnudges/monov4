@@ -16,7 +16,7 @@ const ResponsiveLayout: FC<ResponsiveLayoutProps> = ({ children }) => {
 
       <footer className="bg-secondary text-secondary-foreground">
         <div className="container mx-auto px-4 py-4 sm:py-6 text-center text-sm sm:text-base">
-          <p>&copy; {new Date().getFullYear()} UnAd. All rights reserved.</p>
+          <p>&copy; {new Date().getFullYear()} Nudges. All rights reserved.</p>
         </div>
       </footer>
     </div>

@@ -10,7 +10,7 @@ terraform {
 data "aws_region" "current" {}
 
 resource "aws_ecr_repository" "this" {
-  name         = "unad/${var.project_name}"
+  name         = "nudges/${var.project_name}"
   force_delete = true
 }
 

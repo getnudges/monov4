@@ -1,0 +1,10 @@
+using Microsoft.Extensions.Logging;
+using Stripe;
+
+namespace Nudges.Stripe;
+
+internal static partial class Logging {
+
+    [LoggerMessage(Level = LogLevel.Warning)]
+    public static partial void LogStripeVerificationFailure(this ILogger<StripeVerifier> logger, StripeException exception);
+}

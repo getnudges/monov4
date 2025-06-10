@@ -8,14 +8,14 @@
   </PropertyGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\UnAd.Auth.Web\UnAd.Auth.Web.csproj" />
-      <ProjectReference Include="..\UnAd.Auth\UnAd.Auth.csproj" />
-      <ProjectReference Include="..\UnAd.Data\UnAd.Data.csproj" />
-      <ProjectReference Include="..\UnAd.HotChocolate.Utils\UnAd.HotChocolate.Utils.csproj" />
-      <ProjectReference Include="..\UnAd.Kafka\UnAd.Kafka.csproj" />
-      <ProjectReference Include="..\UnAd.Models\UnAd.Models.csproj" />
-      <ProjectReference Include="..\UnAd.Redis\UnAd.Redis.csproj" />
-      <ProjectReference Include="..\UnAd.Telemetry\UnAd.Telemetry.csproj" />
+      <ProjectReference Include="..\Nudges.Auth.Web\Nudges.Auth.Web.csproj" />
+      <ProjectReference Include="..\Nudges.Auth\Nudges.Auth.csproj" />
+      <ProjectReference Include="..\Nudges.Data\Nudges.Data.csproj" />
+      <ProjectReference Include="..\Nudges.HotChocolate.Utils\Nudges.HotChocolate.Utils.csproj" />
+      <ProjectReference Include="..\Nudges.Kafka\Nudges.Kafka.csproj" />
+      <ProjectReference Include="..\Nudges.Models\Nudges.Models.csproj" />
+      <ProjectReference Include="..\Nudges.Redis\Nudges.Redis.csproj" />
+      <ProjectReference Include="..\Nudges.Telemetry\Nudges.Telemetry.csproj" />
     </ItemGroup>
 
     <ItemGroup>
@@ -60,7 +60,7 @@
     </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\UnAd.Configuration.Analyzers\UnAd.Configuration.Analyzers.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+    <ProjectReference Include="..\Nudges.Configuration.Analyzers\Nudges.Configuration.Analyzers.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
   </ItemGroup>
 </Project>
 

@@ -22,11 +22,11 @@ using Precision.WarpCache.MemoryCache;
 using Stripe;
 using Twilio;
 using Twilio.Clients;
-using UnAd.Auth;
-using UnAd.Configuration.Extensions;
-using UnAd.Kafka;
-using UnAd.Kafka.Middleware;
-using UnAd.Localization.Client;
+using Nudges.Auth;
+using Nudges.Configuration.Extensions;
+using Nudges.Kafka;
+using Nudges.Kafka.Middleware;
+using Nudges.Localization.Client;
 
 var notificationsCmd = new Command("notifications");
 var plansCmd = new Command("plans");
@@ -117,7 +117,7 @@ static IHostBuilder CreateBaseHost(string[] args, string name) =>
 
             services.AddHttpClient<IServerTokenClient, ServerTokenClient>()
                 .ConfigureHttpClient(client => client.BaseAddress = new Uri(hostContext.Configuration.GetOidcServerUrl()));
-            services.AddUnAdClient()
+            services.AddNudgesClient()
                 .ConfigureHttpClient((sp, client) => {
                     var config = sp.GetRequiredService<IConfiguration>();
                     client.BaseAddress = new Uri(config.GetGraphQLApiUrl());
@@ -130,7 +130,7 @@ static IHostBuilder CreateBaseHost(string[] args, string name) =>
                         // TODO: this throw is probably a bad idea
                     }, e => throw new Exception(e.ErrorDescription));
                 });
-            services.AddSingleton<Func<IUnAdClient>>(static sp => sp.GetRequiredService<IUnAdClient>);
+            services.AddSingleton<Func<INudgesClient>>(static sp => sp.GetRequiredService<INudgesClient>);
             services.AddLocalizationClient((sp, o) => {
                 o.ServerAddress = sp.GetRequiredService<IConfiguration>().GetLocalizationApiUrl();
                 return o;

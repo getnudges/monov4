@@ -3,7 +3,7 @@ using HotChocolate.Utilities;
 using Microsoft.Extensions.Logging;
 using Monads;
 using Stripe;
-using UnAd.Models;
+using Nudges.Models;
 
 namespace KafkaConsumer.Services;
 

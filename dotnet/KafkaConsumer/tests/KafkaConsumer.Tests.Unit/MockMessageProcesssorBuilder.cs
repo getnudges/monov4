@@ -1,7 +1,7 @@
 using Confluent.Kafka;
-using UnAd.Kafka.Middleware;
+using Nudges.Kafka.Middleware;
 
-namespace UnAd.Kafka.Tests.Unit;
+namespace Nudges.Kafka.Tests.Unit;
 
 public sealed class MockConsumerWrapper<TKey, TValue>(IEnumerable<ConsumeResult<TKey, TValue>> consumeResults, CancellationToken cancellationToken) : IAsyncConsumer<TKey, TValue>, IAsyncDisposable {
     private readonly Enumerator _asyncEnumerator = new(new Queue<ConsumeResult<TKey, TValue>>(consumeResults), cancellationToken);

@@ -15,7 +15,7 @@ on:
         required: true
 
 env:
-  ECS_CLUSTER: unad-cluster
+  ECS_CLUSTER: nudges-cluster
   
 jobs:
   run-dev:

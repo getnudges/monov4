@@ -2,9 +2,9 @@ using System.Security.Claims;
 using HotChocolate.Authorization;
 using HotChocolate.Resolvers;
 using Microsoft.EntityFrameworkCore;
-using UnAd.Auth;
-using UnAd.Data.Users;
-using UnAd.Data.Users.Models;
+using Nudges.Auth;
+using Nudges.Data.Users;
+using Nudges.Data.Users.Models;
 using UserApi.Models;
 
 namespace UserApi;

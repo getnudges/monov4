@@ -5,7 +5,7 @@ resource "random_password" "rds_password" {
 }
 
 resource "aws_rds_cluster" "aurora" {
-  cluster_identifier      = "unad-aurora"
+  cluster_identifier      = "nudges-aurora"
   availability_zones      = local.availability_zones
   master_username         = local.rds_user
   master_password         = random_password.rds_password.result
@@ -27,7 +27,7 @@ resource "aws_rds_cluster" "aurora" {
   }
 
   tags = {
-    Name = "unad-postgres"
+    Name = "nudges-postgres"
   }
   lifecycle {
     prevent_destroy = false # TODO: set to false for all but prod

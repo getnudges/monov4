@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
-using UnAd.Data.Products;
-using UnAd.Data.Products.Models;
+using Nudges.Data.Products;
+using Nudges.Data.Products.Models;
 
 namespace ProductApi.Models;
 

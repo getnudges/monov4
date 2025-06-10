@@ -15,7 +15,7 @@ done
 
 echo "PostgreSQL is available. Running script..."
 
-psql -h $POSTGRES_HOST -p $POSTGRES_PORT -U $POSTGRES_USER -d postgres -c "DROP DATABASE IF EXISTS unad;"
+psql -h $POSTGRES_HOST -p $POSTGRES_PORT -U $POSTGRES_USER -d postgres -c "DROP DATABASE IF EXISTS nudges;"
 psql -h $POSTGRES_HOST -p 5432 -U $POSTGRES_USER -d postgres -c "SHOW hba_file;"
 
 echo "Script completed."

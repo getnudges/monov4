@@ -2,13 +2,13 @@ using Confluent.Kafka;
 using KafkaConsumer.Services;
 using Microsoft.Extensions.Logging;
 using Monads;
-using UnAd.Kafka;
-using UnAd.Kafka.Middleware;
+using Nudges.Kafka;
+using Nudges.Kafka.Middleware;
 
 namespace KafkaConsumer.Middleware;
 
 internal class PaymentMessageMiddleware(ILogger<PaymentMessageMiddleware> logger,
-                                        Func<IUnAdClient> unAdClientFactory,
+                                        Func<INudgesClient> nudgesClientFactory,
                                         KafkaMessageProducer<NotificationKey, NotificationEvent> notificationProducer) : IMessageMiddleware<PaymentKey, PaymentEvent> {
 
     public async Task<MessageContext<PaymentKey, PaymentEvent>> InvokeAsync(MessageContext<PaymentKey, PaymentEvent> context, MessageHandler<PaymentKey, PaymentEvent> next) {
@@ -33,7 +33,7 @@ internal class PaymentMessageMiddleware(ILogger<PaymentMessageMiddleware> logger
          * NOTE: this is only fired and used in local debugging.
          * The CreatePlanSubscription mutation is called by the Stripe webhook handler in production.
          */
-        using var client = new DisposableWrapper<IUnAdClient>(unAdClientFactory);
+        using var client = new DisposableWrapper<INudgesClient>(nudgesClientFactory);
         logger.LogAction($"Handling PaymentComplete for {paymentEvent}");
 
         return await client.Instance.GetPriceTierByForeignId(paymentEvent.PriceForeignServiceId, cancellationToken).Match(async tier =>

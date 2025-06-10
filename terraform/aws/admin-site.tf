@@ -5,7 +5,7 @@ locals {
 }
 
 resource "aws_s3_bucket" "admin_site" {
-  bucket        = "unad-admin-site${var.postfix}"
+  bucket        = "nudges-admin-site${var.postfix}"
   force_destroy = var.environment == "production" ? false : true
 }
 

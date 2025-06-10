@@ -1,6 +1,6 @@
 {
   "id": "b61f223b-ed3b-42ee-818c-23fa071269fd",
-  "realm": "unad",
+  "realm": "nudges",
   "notBefore": 0,
   "defaultSignatureAlgorithm": "RS256",
   "revokeRefreshToken": false,
@@ -58,7 +58,7 @@
       },
       {
         "id": "a8fc98d6-408a-482c-96fa-44d88c96972d",
-        "name": "default-roles-unad",
+        "name": "default-roles-nudges",
         "description": "${role_default-roles}",
         "composite": true,
         "composites": {
@@ -466,7 +466,7 @@
   ],
   "defaultRole": {
     "id": "a8fc98d6-408a-482c-96fa-44d88c96972d",
-    "name": "default-roles-unad",
+    "name": "default-roles-nudges",
     "description": "${role_default-roles}",
     "composite": true,
     "clientRole": false,
@@ -519,7 +519,7 @@
       "serviceAccountClientId": "auth-api",
       "disableableCredentialTypes": [],
       "requiredActions": [],
-      "realmRoles": ["default-roles-unad"],
+      "realmRoles": ["default-roles-nudges"],
       "notBefore": 0,
       "groups": []
     },
@@ -533,7 +533,7 @@
       "serviceAccountClientId": "kafka-consumer",
       "disableableCredentialTypes": [],
       "requiredActions": [],
-      "realmRoles": ["default-roles-unad"],
+      "realmRoles": ["default-roles-nudges"],
       "clientRoles": {
         "kafka-consumer": ["admin"]
       },
@@ -550,7 +550,7 @@
       "serviceAccountClientId": "payment-api",
       "disableableCredentialTypes": [],
       "requiredActions": [],
-      "realmRoles": ["default-roles-unad"],
+      "realmRoles": ["default-roles-nudges"],
       "notBefore": 0,
       "groups": []
     },
@@ -564,7 +564,7 @@
       "serviceAccountClientId": "product-api",
       "disableableCredentialTypes": [],
       "requiredActions": [],
-      "realmRoles": ["default-roles-unad"],
+      "realmRoles": ["default-roles-nudges"],
       "notBefore": 0,
       "groups": []
     },
@@ -578,7 +578,7 @@
       "serviceAccountClientId": "user-api",
       "disableableCredentialTypes": [],
       "requiredActions": [],
-      "realmRoles": ["default-roles-unad"],
+      "realmRoles": ["default-roles-nudges"],
       "notBefore": 0,
       "groups": []
     },
@@ -592,7 +592,7 @@
       "serviceAccountClientId": "webhooks",
       "disableableCredentialTypes": [],
       "requiredActions": [],
-      "realmRoles": ["default-roles-unad"],
+      "realmRoles": ["default-roles-nudges"],
       "notBefore": 0,
       "groups": []
     }
@@ -617,12 +617,12 @@
       "clientId": "account",
       "name": "${client_account}",
       "rootUrl": "${authBaseUrl}",
-      "baseUrl": "/realms/unad/account/",
+      "baseUrl": "/realms/nudges/account/",
       "surrogateAuthRequired": false,
       "enabled": true,
       "alwaysDisplayInConsole": false,
       "clientAuthenticatorType": "client-secret",
-      "redirectUris": ["/realms/unad/account/*"],
+      "redirectUris": ["/realms/nudges/account/*"],
       "webOrigins": [],
       "notBefore": 0,
       "bearerOnly": false,
@@ -662,12 +662,12 @@
       "clientId": "account-console",
       "name": "${client_account-console}",
       "rootUrl": "${authBaseUrl}",
-      "baseUrl": "/realms/unad/account/",
+      "baseUrl": "/realms/nudges/account/",
       "surrogateAuthRequired": false,
       "enabled": true,
       "alwaysDisplayInConsole": false,
       "clientAuthenticatorType": "client-secret",
-      "redirectUris": ["/realms/unad/account/*"],
+      "redirectUris": ["/realms/nudges/account/*"],
       "webOrigins": [],
       "notBefore": 0,
       "bearerOnly": false,
@@ -1088,12 +1088,12 @@
       "clientId": "security-admin-console",
       "name": "${client_security-admin-console}",
       "rootUrl": "${authAdminUrl}",
-      "baseUrl": "/admin/unad/console/",
+      "baseUrl": "/admin/nudges/console/",
       "surrogateAuthRequired": false,
       "enabled": true,
       "alwaysDisplayInConsole": false,
       "clientAuthenticatorType": "client-secret",
-      "redirectUris": ["/admin/unad/console/*"],
+      "redirectUris": ["/admin/nudges/console/*"],
       "webOrigins": ["+"],
       "notBefore": 0,
       "bearerOnly": false,
@@ -1874,14 +1874,14 @@
     "strictTransportSecurity": "max-age=31536000; includeSubDomains"
   },
   "smtpServer": {
-    "replyToDisplayName": "UnAd Support",
+    "replyToDisplayName": "Nudges Support",
     "starttls": "false",
     "auth": "",
     "port": "1025",
     "host": "maildev",
-    "replyTo": "support@unad.dev",
-    "from": "onboarding@unad.dev",
-    "fromDisplayName": "UnAd Onboarding",
+    "replyTo": "support@nudges.dev",
+    "from": "onboarding@nudges.dev",
+    "fromDisplayName": "Nudges Onboarding",
     "envelopeFrom": "",
     "ssl": "false"
   },

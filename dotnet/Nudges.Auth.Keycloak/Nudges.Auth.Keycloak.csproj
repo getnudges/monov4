@@ -12,7 +12,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Monads\Monads.csproj" />
-    <ProjectReference Include="..\UnAd.Auth\UnAd.Auth.csproj" />
+    <ProjectReference Include="..\Nudges.Auth\Nudges.Auth.csproj" />
   </ItemGroup>
 
 </Project>

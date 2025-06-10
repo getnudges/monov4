@@ -9,19 +9,19 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{98A21168
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PaymentApi.Tests.Integration", "PaymentApi\tests\PaymentApi.Tests.Integration\PaymentApi.Tests.Integration.csproj", "{C8BAB6B0-8D59-419E-BA37-6BB0F9038C66}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UnAd.Data", "UnAd.Data\UnAd.Data.csproj", "{50721FB1-E2F1-409A-A5DA-B369341D78F3}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Nudges.Data", "Nudges.Data\Nudges.Data.csproj", "{50721FB1-E2F1-409A-A5DA-B369341D78F3}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UnAd.Redis", "UnAd.Redis\UnAd.Redis.csproj", "{F55FBC41-A43A-4A2A-9513-1FB692F9D219}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Nudges.Redis", "Nudges.Redis\Nudges.Redis.csproj", "{F55FBC41-A43A-4A2A-9513-1FB692F9D219}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UnAd.Kafka", "UnAd.Kafka\UnAd.Kafka.csproj", "{C7D90436-3A7C-4DC5-85E9-8FC32BC9C0CD}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Nudges.Kafka", "Nudges.Kafka\Nudges.Kafka.csproj", "{C7D90436-3A7C-4DC5-85E9-8FC32BC9C0CD}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UnAd.Auth.Web", "UnAd.Auth.Web\UnAd.Auth.Web.csproj", "{5D32B887-A751-40AB-96F1-C307CC506913}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Nudges.Auth.Web", "Nudges.Auth.Web\Nudges.Auth.Web.csproj", "{5D32B887-A751-40AB-96F1-C307CC506913}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UnAd.Auth", "UnAd.Auth\UnAd.Auth.csproj", "{7DAEBEDF-8E6D-4EBD-840D-4478A7A0A6D4}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Nudges.Auth", "Nudges.Auth\Nudges.Auth.csproj", "{7DAEBEDF-8E6D-4EBD-840D-4478A7A0A6D4}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UnAd.HotChocolate.Utils", "UnAd.HotChocolate.Utils\UnAd.HotChocolate.Utils.csproj", "{8A482EC0-CAFB-4967-AD94-80943AB1FA2E}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Nudges.HotChocolate.Utils", "Nudges.HotChocolate.Utils\Nudges.HotChocolate.Utils.csproj", "{8A482EC0-CAFB-4967-AD94-80943AB1FA2E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UnAd.Telemetry", "UnAd.Telemetry\UnAd.Telemetry.csproj", "{6A493A8A-2D7D-2236-F141-100D33179674}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Nudges.Telemetry", "Nudges.Telemetry\Nudges.Telemetry.csproj", "{6A493A8A-2D7D-2236-F141-100D33179674}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

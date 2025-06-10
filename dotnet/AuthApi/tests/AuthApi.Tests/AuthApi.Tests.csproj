@@ -33,9 +33,9 @@
     <ProjectReference Include="..\..\..\Monads\Monads.csproj" />
     <ProjectReference Include="..\..\..\Nudges.Auth.Keycloak\Nudges.Auth.Keycloak.csproj" />
     <ProjectReference Include="..\..\..\Precision.WarpCache\Precision.WarpCache.Grpc.Client\Precision.WarpCache.Grpc.Client.csproj" />
-    <ProjectReference Include="..\..\..\UnAd.Auth.Web\UnAd.Auth.Web.csproj" />
-    <ProjectReference Include="..\..\..\UnAd.Auth\UnAd.Auth.csproj" />
-    <ProjectReference Include="..\..\..\UnAd.Kafka\UnAd.Kafka.csproj" />
+    <ProjectReference Include="..\..\..\Nudges.Auth.Web\Nudges.Auth.Web.csproj" />
+    <ProjectReference Include="..\..\..\Nudges.Auth\Nudges.Auth.csproj" />
+    <ProjectReference Include="..\..\..\Nudges.Kafka\Nudges.Kafka.csproj" />
     <ProjectReference Include="..\..\AuthApi.csproj" />
   </ItemGroup>
 

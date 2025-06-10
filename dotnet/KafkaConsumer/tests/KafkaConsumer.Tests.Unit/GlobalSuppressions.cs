@@ -8,4 +8,4 @@ using System.Diagnostics.CodeAnalysis;
 [assembly: SuppressMessage("Usage", "CA2201:Do not raise reserved exception types",
     Justification = "It's unit test, bro",
     Scope = "namespaceanddescendants",
-    Target = "~N:UnAd.Kafka.Tests.Unit")]
+    Target = "~N:Nudges.Kafka.Tests.Unit")]

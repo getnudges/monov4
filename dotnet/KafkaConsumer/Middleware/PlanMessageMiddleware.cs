@@ -3,13 +3,13 @@ using KafkaConsumer.GraphQL;
 using KafkaConsumer.Services;
 using Microsoft.Extensions.Logging;
 using Monads;
-using UnAd.Kafka;
-using UnAd.Kafka.Middleware;
+using Nudges.Kafka;
+using Nudges.Kafka.Middleware;
 
 namespace KafkaConsumer.Middleware;
 
 internal class PlanMessageMiddleware(ILogger<PlanMessageMiddleware> logger,
-                                     Func<IUnAdClient> unAdClientFactory,
+                                     Func<INudgesClient> nudgesClientFactory,
                                      IForeignProductService foreignProductService) : IMessageMiddleware<PlanKey, PlanEvent> {
 
     public async Task<MessageContext<PlanKey, PlanEvent>> InvokeAsync(MessageContext<PlanKey, PlanEvent> context, MessageHandler<PlanKey, PlanEvent> next) {
@@ -34,14 +34,14 @@ internal class PlanMessageMiddleware(ILogger<PlanMessageMiddleware> logger,
     }
 
     private async Task<Result<bool, Exception>> HandlePlanCreated(string planNodeId, CancellationToken cancellationToken) {
-        using var client = new DisposableWrapper<IUnAdClient>(unAdClientFactory);
+        using var client = new DisposableWrapper<INudgesClient>(nudgesClientFactory);
         var planResult = await client.Instance.GetPlan(planNodeId, cancellationToken);
 
         return await planResult.Map(plan => CreateForeignProduct(plan, cancellationToken));
     }
 
     private async Task<Result<bool, Exception>> CreateForeignProduct(IGetPlan_Plan plan, CancellationToken cancellationToken) {
-        using var client = new DisposableWrapper<IUnAdClient>(unAdClientFactory);
+        using var client = new DisposableWrapper<INudgesClient>(nudgesClientFactory);
 
         var foreignCreateResult = await foreignProductService.CreateForeignProduct(plan, cancellationToken);
         return await foreignCreateResult.Map(async foreignId =>
@@ -59,7 +59,7 @@ internal class PlanMessageMiddleware(ILogger<PlanMessageMiddleware> logger,
     }
 
     private async Task<Result<bool, Exception>> HandlePlanUpdated(string planNodeId, CancellationToken cancellationToken) {
-        using var client = new DisposableWrapper<IUnAdClient>(unAdClientFactory);
+        using var client = new DisposableWrapper<INudgesClient>(nudgesClientFactory);
         var planResult = await client.Instance.GetPlan(planNodeId, cancellationToken);
 
         return await planResult.Map(async plan => {

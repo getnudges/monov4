@@ -17,7 +17,7 @@ RDS: {
 
 ECS: {
   icon: "./icons/ecs.svg"
-  unad-cluster: {
+  nudges-cluster: {
     webhooks: {
       shape: image
       icon: ./icons/ecs-instance.svg
@@ -37,8 +37,8 @@ S3: {
   }
 }
 
-ECS.unad-cluster.webhooks -> RDS.userdb
-ECS.unad-cluster.webhooks -> ElastiCache
-ECS.unad-cluster.signup-site -> RDS.userdb
-ECS.unad-cluster.signup-site -> ElastiCache
-ECS.unad-cluster -> S3.Cloudwatch: Logs
+ECS.nudges-cluster.webhooks -> RDS.userdb
+ECS.nudges-cluster.webhooks -> ElastiCache
+ECS.nudges-cluster.signup-site -> RDS.userdb
+ECS.nudges-cluster.signup-site -> ElastiCache
+ECS.nudges-cluster -> S3.Cloudwatch: Logs

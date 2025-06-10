@@ -1,8 +1,8 @@
 using Confluent.Kafka;
 using HotChocolate.Subscriptions;
-using UnAd.Data.Products;
-using UnAd.Data.Products.Models;
-using UnAd.Kafka;
+using Nudges.Data.Products;
+using Nudges.Data.Products.Models;
+using Nudges.Kafka;
 
 namespace ProductApi;
 

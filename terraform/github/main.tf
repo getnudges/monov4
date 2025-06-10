@@ -10,7 +10,7 @@ terraform {
 # Configure the GitHub Provider
 provider "github" {
   token = var.token
-  owner = "The-UnAd"
+  owner = "The-Nudges"
 }
 
 resource "github_actions_environment_variable" "db_host" {

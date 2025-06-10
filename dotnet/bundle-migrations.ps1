@@ -1,3 +1,3 @@
 dotnet ef migrations bundle `
-    --project ./UnAd.Data/UnAd.Data.csproj `
-    --startup-project ./tools/UnAd.Data.Migrator/UnAd.Data.Migrator.csproj
+    --project ./Nudges.Data/Nudges.Data.csproj `
+    --startup-project ./tools/Nudges.Data.Migrator/Nudges.Data.Migrator.csproj

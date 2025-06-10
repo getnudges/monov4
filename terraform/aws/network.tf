@@ -1,7 +1,7 @@
 
 resource "aws_vpc" "vpc" {
   tags = {
-    Name      = "unad-vpc"
+    Name      = "nudges-vpc"
     managedBy = "terraform"
   }
   cidr_block           = var.vpc_cidr
@@ -95,7 +95,7 @@ resource "aws_internet_gateway" "igw" {
   vpc_id = aws_vpc.vpc.id
 
   tags = {
-    Name = "unad-igw"
+    Name = "nudges-igw"
   }
 }
 

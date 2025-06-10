@@ -2,9 +2,9 @@ using Confluent.Kafka;
 using KafkaConsumer.Services;
 using Microsoft.Extensions.Logging;
 using Monads;
-using UnAd.Kafka;
-using UnAd.Kafka.Middleware;
-using UnAd.Localization.Client;
+using Nudges.Kafka;
+using Nudges.Kafka.Middleware;
+using Nudges.Localization.Client;
 
 namespace KafkaConsumer.Middleware;
 

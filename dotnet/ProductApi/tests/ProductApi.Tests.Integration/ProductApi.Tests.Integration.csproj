@@ -36,7 +36,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\..\..\UnAd.Data\UnAd.Data.csproj" />
+      <ProjectReference Include="..\..\..\Nudges.Data\Nudges.Data.csproj" />
       <ProjectReference Include="..\..\ProductApi.csproj" />
     </ItemGroup>
 

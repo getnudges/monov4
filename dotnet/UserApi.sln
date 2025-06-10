@@ -4,26 +4,26 @@ VisualStudioVersion = 17.9.34616.47
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UserApi", "UserApi\UserApi.csproj", "{F5C7D9F2-7E7B-4B1D-9B3D-7A7E6C5B3F8F}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UnAd.Data", "UnAd.Data\UnAd.Data.csproj", "{3BAC9222-68A2-48B2-916E-5E48BA4397E8}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Nudges.Data", "Nudges.Data\Nudges.Data.csproj", "{3BAC9222-68A2-48B2-916E-5E48BA4397E8}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UserApi.Tests.Integration", "UserApi\tests\UserApi.Tests.Integration\UserApi.Tests.Integration.csproj", "{BDF0E73A-78EF-4613-A193-056310C406CB}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UnAd.Kafka", "UnAd.Kafka\UnAd.Kafka.csproj", "{B6753523-E94C-489E-8B98-2D6097DC0EA2}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Nudges.Kafka", "Nudges.Kafka\Nudges.Kafka.csproj", "{B6753523-E94C-489E-8B98-2D6097DC0EA2}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UnAd.Auth", "UnAd.Auth\UnAd.Auth.csproj", "{EFE3030F-B629-4DD5-95BF-F7F8454C647A}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Nudges.Auth", "Nudges.Auth\Nudges.Auth.csproj", "{EFE3030F-B629-4DD5-95BF-F7F8454C647A}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UnAd.Auth.Web", "UnAd.Auth.Web\UnAd.Auth.Web.csproj", "{47DF77BD-23E8-461F-9B81-6D0BFB002947}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Nudges.Auth.Web", "Nudges.Auth.Web\Nudges.Auth.Web.csproj", "{47DF77BD-23E8-461F-9B81-6D0BFB002947}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{9224AA59-FFE6-431A-B8E8-E533DB837147}"
 	ProjectSection(SolutionItems) = preProject
 		.editorconfig = .editorconfig
 	EndProjectSection
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UnAd.Models", "UnAd.Models\UnAd.Models.csproj", "{63E0373E-8936-4620-9F52-41A2CE043FDC}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Nudges.Models", "Nudges.Models\Nudges.Models.csproj", "{63E0373E-8936-4620-9F52-41A2CE043FDC}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UnAd.HotChocolate.Utils", "UnAd.HotChocolate.Utils\UnAd.HotChocolate.Utils.csproj", "{B85D7588-7C16-6F88-79CE-1D4B4A4A0B94}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Nudges.HotChocolate.Utils", "Nudges.HotChocolate.Utils\Nudges.HotChocolate.Utils.csproj", "{B85D7588-7C16-6F88-79CE-1D4B4A4A0B94}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UnAd.Telemetry", "UnAd.Telemetry\UnAd.Telemetry.csproj", "{FB2A2CB2-E93D-4D9F-9412-CE917CB68271}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Nudges.Telemetry", "Nudges.Telemetry\Nudges.Telemetry.csproj", "{FB2A2CB2-E93D-4D9F-9412-CE917CB68271}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Monads", "Monads\Monads.csproj", "{010D34F4-ACEC-5BD4-C9DC-7890E308C690}"
 EndProject

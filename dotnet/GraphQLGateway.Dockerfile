@@ -3,15 +3,15 @@ ARG GRAPH_MONITOR_URL
 
 WORKDIR /src
 
-COPY UnAd.Data/*.csproj ./UnAd.Data/
-COPY UnAd.Redis/*.csproj ./UnAd.Redis/
-COPY UnAd.Telemetry/*.csproj ./UnAd.Telemetry/
+COPY Nudges.Data/*.csproj ./Nudges.Data/
+COPY Nudges.Redis/*.csproj ./Nudges.Redis/
+COPY Nudges.Telemetry/*.csproj ./Nudges.Telemetry/
 COPY Monads/*.csproj ./Monads/
-COPY UnAd.Auth/*.csproj ./UnAd.Auth/
-COPY UnAd.Kafka/*.csproj ./UnAd.Kafka/
-COPY UnAd.Kafka.Analyzers/*.csproj ./UnAd.Kafka.Analyzers/
-COPY UnAd.Auth.Web/*.csproj ./UnAd.Auth.Web/
-COPY UnAd.HotChocolate.Utils/*.csproj ./UnAd.HotChocolate.Utils/
+COPY Nudges.Auth/*.csproj ./Nudges.Auth/
+COPY Nudges.Kafka/*.csproj ./Nudges.Kafka/
+COPY Nudges.Kafka.Analyzers/*.csproj ./Nudges.Kafka.Analyzers/
+COPY Nudges.Auth.Web/*.csproj ./Nudges.Auth.Web/
+COPY Nudges.HotChocolate.Utils/*.csproj ./Nudges.HotChocolate.Utils/
 COPY UserApi/*.csproj ./UserApi/
 COPY ProductApi/*.csproj ./ProductApi/
 COPY PaymentApi/*.csproj ./PaymentApi/

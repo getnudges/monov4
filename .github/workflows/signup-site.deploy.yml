@@ -13,10 +13,10 @@ permissions:
   contents: read
 
 env:
-  ECR_REPOSITORY: unad/signup-site
-  ECS_CLUSTER: unad-cluster
+  ECR_REPOSITORY: nudges/signup-site
+  ECS_CLUSTER: nudges-cluster
   ECS_SERVICE: signup-site
-  CONTEXT_PATH: web/unad-web
+  CONTEXT_PATH: web/nudges-web
   
 jobs:
   deploy-dev:

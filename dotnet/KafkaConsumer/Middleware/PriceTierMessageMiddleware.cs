@@ -3,13 +3,13 @@ using KafkaConsumer.GraphQL;
 using KafkaConsumer.Services;
 using Microsoft.Extensions.Logging;
 using Monads;
-using UnAd.Kafka;
-using UnAd.Kafka.Middleware;
+using Nudges.Kafka;
+using Nudges.Kafka.Middleware;
 
 namespace KafkaConsumer.Middleware;
 
 internal class PriceTierMessageMiddleware(ILogger<PriceTierMessageMiddleware> logger,
-                                          Func<IUnAdClient> unAdClientFactory,
+                                          Func<INudgesClient> nudgesClientFactory,
                                           IForeignProductService foreignProductService) : IMessageMiddleware<PriceTierEventKey, PriceTierEvent> {
 
     public async Task<MessageContext<PriceTierEventKey, PriceTierEvent>> InvokeAsync(MessageContext<PriceTierEventKey, PriceTierEvent> context, MessageHandler<PriceTierEventKey, PriceTierEvent> next) {
@@ -34,7 +34,7 @@ internal class PriceTierMessageMiddleware(ILogger<PriceTierMessageMiddleware> lo
     }
 
     private async Task<Result<bool, Exception>> HandlePriceTierCreated(string priceTierNodeId, CancellationToken cancellationToken) {
-        using var client = new DisposableWrapper<IUnAdClient>(unAdClientFactory);
+        using var client = new DisposableWrapper<INudgesClient>(nudgesClientFactory);
 
         return await client.Instance.GetPriceTier(priceTierNodeId, cancellationToken).Map(async priceTier =>
             await foreignProductService.GetPriceIdByLookupId(priceTier.Id, cancellationToken).Match(async foreignId => {
@@ -49,7 +49,7 @@ internal class PriceTierMessageMiddleware(ILogger<PriceTierMessageMiddleware> lo
     }
 
     private async Task<Result<bool, Exception>> HandlePriceTierUpdated(string priceTierNodeId, CancellationToken cancellationToken) {
-        using var client = new DisposableWrapper<IUnAdClient>(unAdClientFactory);
+        using var client = new DisposableWrapper<INudgesClient>(nudgesClientFactory);
 
         return await client.Instance.GetPriceTier(priceTierNodeId, cancellationToken).Map(async priceTier => {
             var foreignUpdateResult = await foreignProductService.UpdateForeignPrice(priceTier, cancellationToken);

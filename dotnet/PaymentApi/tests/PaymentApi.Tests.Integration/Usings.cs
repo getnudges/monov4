@@ -5,7 +5,7 @@ global using PaymentApi;
 global using HotChocolate;
 global using HotChocolate.Execution;
 global using CookieCrumble;
-global using UnAd.Data.Users;
-global using UnAd.Data.Users.Models;
+global using Nudges.Data.Users;
+global using Nudges.Data.Users.Models;
 
 

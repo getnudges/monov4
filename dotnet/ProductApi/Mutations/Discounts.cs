@@ -1,10 +1,10 @@
 using Confluent.Kafka;
 using HotChocolate.Subscriptions;
 using ProductApi.Models;
-using UnAd.Data.Products;
-using UnAd.Data.Products.Models;
-using UnAd.Kafka;
-using UnAd.Models;
+using Nudges.Data.Products;
+using Nudges.Data.Products.Models;
+using Nudges.Kafka;
+using Nudges.Models;
 
 namespace ProductApi;
 

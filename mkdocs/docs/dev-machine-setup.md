@@ -3,7 +3,7 @@
 !!! note
     If you have [winget](https://learn.microsoft.com/en-us/windows/package-manager/winget/) installed, (or Windows 11 in general), you can setup your machine automatically with [this script](/scripts#configure-local).
     
-When setting up a new machine for development in UnAd, there is a standard list of tools to install.
+When setting up a new machine for development in Nudges, there is a standard list of tools to install.
 
 - [Git](https://git-scm.com/) is used for source control.
 - [Node.js](https://nodejs.org/en) is used for much of the APIs and other projects. (preferably via [nvm](https://github.com/nvm-sh/nvm))

@@ -86,8 +86,8 @@ resource "aws_security_group_rule" "jumpbox_egress_postgres" {
 
 resource "aws_security_group_rule" "jumpbox_egress_redis" {
   type              = "egress"
-  from_port         = aws_elasticache_cluster.unad.port
-  to_port           = aws_elasticache_cluster.unad.port
+  from_port         = aws_elasticache_cluster.nudges.port
+  to_port           = aws_elasticache_cluster.nudges.port
   protocol          = "tcp"
   cidr_blocks       = [var.vpc_cidr]
   security_group_id = aws_security_group.jumpbox.id

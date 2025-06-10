@@ -1,6 +1,6 @@
 title: |`md
   # 30,000ft View
-  This is the 30,000ft view of the UnAd system
+  This is the 30,000ft view of the Nudges system
 `|
 
 ElastiCache: {
@@ -35,7 +35,7 @@ RDS: {
 ECS: {
   icon: ./icons/ecs.svg
 
-  unad-cluster: {
+  nudges-cluster: {
     link: /aws/ecs
     shape: parallelogram
     icon: ./icons/ecs-instance.svg
@@ -92,9 +92,9 @@ MSK -> ECS: Event Stream
 
 S3 -> Cloudfront
 Cloudfront -> ECS: Authentication
-Admin -> S3.admin-ui: portal.unad.tech
-Clients -> S3.signup-site: signup.unad.tech
-Subscribers -> S3.signup-site: unad.me/id_here
+Admin -> S3.admin-ui: portal.nudges.tech
+Clients -> S3.signup-site: signup.nudges.tech
+Subscribers -> S3.signup-site: nudges.me/id_here
 
 Twilio -> ECS: Webhooks
 Stripe -> ECS: Product Sync

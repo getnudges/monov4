@@ -27,14 +27,14 @@ jobs:
           dotnet-version: '8.0'
       
       - name: Install dependencies
-        run: dotnet restore dotnet/UnAd.Data.Migrator.sln
+        run: dotnet restore dotnet/Nudges.Data.Migrator.sln
 
       - name: Generate Bundle
         run: |
           dotnet tool restore
           dotnet ef migrations bundle \
-          --project ./UnAd.Data/UnAd.Data.csproj \
-          --startup-project ./tools/UnAd.Data.Migrator/UnAd.Data.Migrator.csproj \
+          --project ./Nudges.Data/Nudges.Data.csproj \
+          --startup-project ./tools/Nudges.Data.Migrator/Nudges.Data.Migrator.csproj \
           --self-contained -r linux-x64
           chmod +x efbundle
         working-directory: dotnet
@@ -47,7 +47,7 @@ jobs:
 
           ssh -i ~/.ssh/jumpbox_ed25519 -o StrictHostKeyChecking=no -L 5050:${{ vars.DB_HOST }}:${{ vars.DB_PORT }} ubuntu@${{ vars.JUMPBOX_HOST }} -N & echo $! > ssh_tunnel.pid
 
-          ConnectionStrings__UserDb="Host=localhost;Port=5050;Username=unad;Password=${{ secrets.DB_PASS }};Timeout=60;Database=userdb;" dotnet/efbundle
+          ConnectionStrings__UserDb="Host=localhost;Port=5050;Username=nudges;Password=${{ secrets.DB_PASS }};Timeout=60;Database=userdb;" dotnet/efbundle
 
           kill -9 $(lsof -t -i :5050)
 
@@ -66,14 +66,14 @@ jobs:
           dotnet-version: '8.0'
       
       - name: Install dependencies
-        run: dotnet restore dotnet/UnAd.Data.Migrator.sln
+        run: dotnet restore dotnet/Nudges.Data.Migrator.sln
 
       - name: Generate Bundle
         run: |
           dotnet tool restore
           dotnet ef migrations bundle \
-          --project ./UnAd.Data/UnAd.Data.csproj \
-          --startup-project ./tools/UnAd.Data.Migrator/UnAd.Data.Migrator.csproj \
+          --project ./Nudges.Data/Nudges.Data.csproj \
+          --startup-project ./tools/Nudges.Data.Migrator/Nudges.Data.Migrator.csproj \
           --self-contained -r linux-x64
           chmod +x efbundle
         working-directory: dotnet
@@ -86,6 +86,6 @@ jobs:
 
           ssh -i ~/.ssh/jumpbox_ed25519 -o StrictHostKeyChecking=no -L 5050:${{ vars.DB_HOST }}:${{ vars.DB_PORT }} ubuntu@${{ vars.JUMPBOX_HOST }} -N & echo $! > ssh_tunnel.pid
 
-          ConnectionStrings__UserDb="Host=localhost;Port=5050;Username=unad;Password=${{ secrets.DB_PASS }};Timeout=60;Database=userdb;" dotnet/efbundle
+          ConnectionStrings__UserDb="Host=localhost;Port=5050;Username=nudges;Password=${{ secrets.DB_PASS }};Timeout=60;Database=userdb;" dotnet/efbundle
 
           kill -9 $(lsof -t -i :5050)

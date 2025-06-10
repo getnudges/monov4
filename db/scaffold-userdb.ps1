@@ -1,12 +1,12 @@
 dotnet ef dbcontext scaffold `
     Name=ConnectionStrings:UserDb `
     --context UserDbContext `
-    --namespace UnAd.Data.Users.Models `
-    --output-dir ../UnAd.Data/Users/Models `
-    --context-dir ../UnAd.Data/Users `
-    --context-namespace UnAd.Data.Users `
-    --project ../dotnet/UnAd.Data/UnAd.Data.csproj `
-    --startup-project ../dotnet/tools/UnAd.Data.Migrator/UnAd.Data.Migrator.csproj `
+    --namespace Nudges.Data.Users.Models `
+    --output-dir ../Nudges.Data/Users/Models `
+    --context-dir ../Nudges.Data/Users `
+    --context-namespace Nudges.Data.Users `
+    --project ../dotnet/Nudges.Data/Nudges.Data.csproj `
+    --startup-project ../dotnet/tools/Nudges.Data.Migrator/Nudges.Data.Migrator.csproj `
     --no-onconfiguring `
     --force `
     --verbose `

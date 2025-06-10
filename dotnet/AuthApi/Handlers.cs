@@ -9,10 +9,10 @@ using Microsoft.IdentityModel.Tokens;
 using Monads;
 using Nudges.Auth.Keycloak;
 using Precision.WarpCache.Grpc.Client;
-using UnAd.Auth;
-using UnAd.Auth.Web;
-using UnAd.Configuration.Extensions;
-using UnAd.Kafka;
+using Nudges.Auth;
+using Nudges.Auth.Web;
+using Nudges.Configuration.Extensions;
+using Nudges.Kafka;
 
 namespace AuthApi;
 

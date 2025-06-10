@@ -9,10 +9,10 @@ using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 using StackExchange.Redis;
-using UnAd.Auth;
-using UnAd.Configuration.Extensions;
-using UnAd.Data.Users;
-using UnAd.Kafka;
+using Nudges.Auth;
+using Nudges.Configuration.Extensions;
+using Nudges.Data.Users;
+using Nudges.Kafka;
 using UserApi;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -50,7 +50,7 @@ builder.Services.AddTransient<IConnectionMultiplexer>(c =>
     ConnectionMultiplexer.Connect(c.GetRequiredService<IConfiguration>().GetRedisUrl()));
 
 builder.Services.AddPooledDbContextFactory<UserDbContext>((s, o) =>
-    o.UseNpgsql(s.GetRequiredService<IConfiguration>().GetConnectionString(UnAd.Data.DbConstants.UserDb)));
+    o.UseNpgsql(s.GetRequiredService<IConfiguration>().GetConnectionString(Nudges.Data.DbConstants.UserDb)));
 
 builder.Services
     .AddSingleton<KafkaMessageProducer<NotificationKey, NotificationEvent>>(sp =>

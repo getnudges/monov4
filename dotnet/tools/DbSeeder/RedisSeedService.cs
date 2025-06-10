@@ -2,7 +2,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using StackExchange.Redis;
 using Stripe;
-using UnAd.Redis;
+using Nudges.Redis;
 
 namespace DbSeeder;
 

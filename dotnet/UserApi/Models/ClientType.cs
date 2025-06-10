@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
-using UnAd.Data.Users;
-using UnAd.Data.Users.Models;
+using Nudges.Data.Users;
+using Nudges.Data.Users.Models;
 
 namespace UserApi.Models;
 

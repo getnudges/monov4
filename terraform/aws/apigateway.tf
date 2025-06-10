@@ -40,7 +40,7 @@
 # }
 
 resource "aws_api_gateway_rest_api" "admin_api" {
-  name        = "unad_admin_api"
+  name        = "nudges_admin_api"
   description = "API gateway for admin site"
 }
 

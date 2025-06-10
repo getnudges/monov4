@@ -3,20 +3,20 @@ ARG GRAPH_MONITOR_URL
 
 WORKDIR /src
 COPY KafkaConsumer.Docker.sln ./
-COPY UnAd.Models/*.csproj ./UnAd.Models/
-COPY UnAd.Data/*.csproj ./UnAd.Data/
-COPY UnAd.Redis/*.csproj ./UnAd.Redis/
-COPY UnAd.Auth.Web/*.csproj ./UnAd.Auth.Web/
-COPY UnAd.Kafka.Analyzers/*.csproj ./UnAd.Kafka.Analyzers/
-COPY UnAd.Kafka/*.csproj ./UnAd.Kafka/
-COPY UnAd.Auth/*.csproj ./UnAd.Auth/
-COPY UnAd.Localization/*.csproj ./UnAd.Localization/
-COPY UnAd.Localization.Client/*.csproj ./UnAd.Localization.Client/
-COPY UnAd.Localization.Analyzers/*.csproj ./UnAd.Localization.Analyzers/
+COPY Nudges.Models/*.csproj ./Nudges.Models/
+COPY Nudges.Data/*.csproj ./Nudges.Data/
+COPY Nudges.Redis/*.csproj ./Nudges.Redis/
+COPY Nudges.Auth.Web/*.csproj ./Nudges.Auth.Web/
+COPY Nudges.Kafka.Analyzers/*.csproj ./Nudges.Kafka.Analyzers/
+COPY Nudges.Kafka/*.csproj ./Nudges.Kafka/
+COPY Nudges.Auth/*.csproj ./Nudges.Auth/
+COPY Nudges.Localization/*.csproj ./Nudges.Localization/
+COPY Nudges.Localization.Client/*.csproj ./Nudges.Localization.Client/
+COPY Nudges.Localization.Analyzers/*.csproj ./Nudges.Localization.Analyzers/
 COPY Monads/*.csproj ./Monads/
-COPY UnAd.Stripe/*.csproj ./UnAd.Stripe/
-COPY UnAd.Telemetry/*.csproj ./UnAd.Telemetry/
-COPY UnAd.HotChocolate.Utils/*.csproj ./UnAd.HotChocolate.Utils/
+COPY Nudges.Stripe/*.csproj ./Nudges.Stripe/
+COPY Nudges.Telemetry/*.csproj ./Nudges.Telemetry/
+COPY Nudges.HotChocolate.Utils/*.csproj ./Nudges.HotChocolate.Utils/
 COPY Precision.WarpCache/Precision.WarpCache/*.csproj ./Precision.WarpCache/
 COPY Precision.WarpCache/Precision.WarpCache.MemoryCache/*.csproj ./Precision.WarpCache.MemoryCache/
 COPY Precision.WarpCache/Precision.WarpCache.Grpc.Client/*.csproj ./Precision.WarpCache.Grpc.Client/

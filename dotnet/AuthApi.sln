@@ -5,15 +5,15 @@ VisualStudioVersion = 17.9.34723.18
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AuthApi", "AuthApi\AuthApi.csproj", "{D272D4FA-D385-46FB-96F7-847B9DFF6338}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UnAd.Auth", "UnAd.Auth\UnAd.Auth.csproj", "{424CA6B0-BFF7-475D-A881-EB47A6F9FE82}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Nudges.Auth", "Nudges.Auth\Nudges.Auth.csproj", "{424CA6B0-BFF7-475D-A881-EB47A6F9FE82}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UnAd.Configuration.Analyzers", "UnAd.Configuration.Analyzers\UnAd.Configuration.Analyzers.csproj", "{CBFF5673-2922-49E3-AABA-C4C1CDFC8756}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Nudges.Configuration.Analyzers", "Nudges.Configuration.Analyzers\Nudges.Configuration.Analyzers.csproj", "{CBFF5673-2922-49E3-AABA-C4C1CDFC8756}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Precision.WarpCache.Grpc.Client", "Precision.WarpCache\Precision.WarpCache.Grpc.Client\Precision.WarpCache.Grpc.Client.csproj", "{41061286-70D3-7C46-826E-8906697A9942}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UnAd.Kafka", "UnAd.Kafka\UnAd.Kafka.csproj", "{1138AE3E-4E72-491E-3202-8EDF3E42B410}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Nudges.Kafka", "Nudges.Kafka\Nudges.Kafka.csproj", "{1138AE3E-4E72-491E-3202-8EDF3E42B410}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UnAd.Auth.Web", "UnAd.Auth.Web\UnAd.Auth.Web.csproj", "{195B8CCC-032D-5F2B-0BD4-450B2D4B2085}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Nudges.Auth.Web", "Nudges.Auth.Web\Nudges.Auth.Web.csproj", "{195B8CCC-032D-5F2B-0BD4-450B2D4B2085}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AuthApi.Tests", "AuthApi\tests\AuthApi.Tests\AuthApi.Tests.csproj", "{B07F8DAA-2889-1A8E-3AD7-F17EC4F27166}"
 EndProject

@@ -14,7 +14,7 @@ The Postgres database is created as a Docker container.  The `Dockerfile` for it
 As noted in the `docker-compse.backend.yml` file run by `run-backend.sh`, there is a file required that is left out of source control in order to set up the database.  For a first-time clone, you must create a `.env.docker` file within this directory.  The template is as follows.
 
 ```ini
-POSTGRES_PASSWORD=unad
+POSTGRES_PASSWORD=nudges
 POSTGRES_USER=postgres
 
 POSTGRES_MULTIPLE_DATABASES=userdb

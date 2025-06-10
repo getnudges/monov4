@@ -1,5 +1,5 @@
 networks:
-  UnAd:
+  Nudges:
     driver: bridge
 
 services:
@@ -9,7 +9,7 @@ services:
     container_name: maildev
     image: maildev/maildev:latest
     networks:
-      - UnAd
+      - Nudges
     ports:
       - "1080:1080"
 
@@ -17,7 +17,7 @@ services:
     hostname: keycloak
     container_name: keycloak
     networks:
-      - UnAd
+      - Nudges
     volumes:
       - ./keycloak/data:/opt/keycloak/data/import
     build:
@@ -50,14 +50,14 @@ services:
     depends_on:
       - keycloak
     networks:
-      - UnAd
+      - Nudges
 
   unleash:
     hostname: unleash
     container_name: unleash
     image: unleashorg/unleash-server:latest
     networks:
-      - UnAd
+      - Nudges
     ports:
       - "4444:4242"
     env_file:
@@ -73,7 +73,7 @@ services:
     volumes:
       - ./telemetry/otel-collector.yaml:/etc/otel-collector.yaml
     networks:
-      - UnAd
+      - Nudges
     ports:
       - "4317:4317"
       - "4318:4318"
@@ -102,7 +102,7 @@ services:
       - ./telemetry/tempo.yaml:/etc/tempo.yaml
       - ./telemetry/tempo:/tmp/tempo
     networks:
-      - UnAd
+      - Nudges
     ports:
       - "3200"
       - "4317"
@@ -112,7 +112,7 @@ services:
     image: grafana/loki:latest
     container_name: loki
     networks:
-      - UnAd
+      - Nudges
     ports:  
       - "3100:3100"
       - "9096:9096"
@@ -126,7 +126,7 @@ services:
     ports:  
       - "9080:9080"
     networks:
-      - UnAd
+      - Nudges
     command: -config.file=/etc/promtail/config.yaml
     volumes:
       - ./telemetry/promtail-config.yaml:/etc/promtail/config.yaml
@@ -142,7 +142,7 @@ services:
     volumes:
       - ./telemetry/prometheus.yaml:/etc/prometheus.yaml
     networks:
-      - UnAd
+      - Nudges
     ports:
       - "9090:9090"
       - "9464:9464"
@@ -158,7 +158,7 @@ services:
     ports:
       - "3000:3000"
     networks:
-      - UnAd
+      - Nudges
     depends_on:
       - otel-collector
 
@@ -167,7 +167,7 @@ services:
     container_name: redis
     image: redis:7-alpine
     networks:
-      - UnAd
+      - Nudges
     ports:
       - 6379:6379
 
@@ -177,7 +177,7 @@ services:
     build:
       context: ./db
     networks:
-      - UnAd
+      - Nudges
     ports:
       - "5432:5432"
     env_file:
@@ -187,7 +187,7 @@ services:
     hostname: stripe-cli
     container_name: stripe-cli
     networks:
-      - UnAd
+      - Nudges
     build:
       context: ./stripe
       dockerfile: cli.Dockerfile
@@ -199,7 +199,7 @@ services:
     hostname: warp-cache
     container_name: warp-cache
     networks:
-      - UnAd
+      - Nudges
     build:
       context: ./dotnet/Precision.WarpCache
       dockerfile: Server.Dockerfile
@@ -216,7 +216,7 @@ services:
     hostname: payment-processor-proxy
     container_name: payment-processor-proxy
     networks:
-      - UnAd
+      - Nudges
     build:
       context: ./stripe
       dockerfile: api.Dockerfile
@@ -228,7 +228,7 @@ services:
       context: ./dotnet/
       dockerfile: Migrator.Dockerfile
     networks:
-      - UnAd
+      - Nudges
     env_file:
       - ./dotnet/.env.docker
     depends_on:
@@ -239,7 +239,7 @@ services:
       context: ./dotnet
       dockerfile: DbSeeder.Dockerfile
     networks:
-      - UnAd
+      - Nudges
     env_file:
       - ./dotnet/.env.docker
     depends_on:
@@ -249,7 +249,7 @@ services:
     hostname: graph-monitor
     container_name: graph-monitor
     networks:
-      - UnAd
+      - Nudges
     build:
       context: ./dotnet
       dockerfile: GraphMonitor.Dockerfile
@@ -267,7 +267,7 @@ services:
     hostname: new-signup
     container_name: new-signup
     networks:
-      - UnAd
+      - Nudges
     build:
       context: ./web/new-signup
     ports:
@@ -283,7 +283,7 @@ services:
     hostname: new-admin
     container_name: new-admin
     networks:
-      - UnAd
+      - Nudges
     build:
       context: ./web/new-admin
     ports:
@@ -298,7 +298,7 @@ services:
     hostname: user-api
     container_name: user-api
     networks:
-      - UnAd
+      - Nudges
     build:
       context: ./dotnet
       dockerfile: ./UserApi.Dockerfile
@@ -328,7 +328,7 @@ services:
     hostname: localizer-api
     container_name: localizer-api
     networks:
-      - UnAd
+      - Nudges
     build:
       context: ./dotnet
       dockerfile: ./LocalizationApi.Dockerfile
@@ -343,7 +343,7 @@ services:
   notifications-listener:
     container_name: notifications-listener
     networks:
-      - UnAd
+      - Nudges
     build:
       context: ./dotnet
       dockerfile: ./KafkaConsumer.Dockerfile
@@ -368,7 +368,7 @@ services:
   payments-listener:
     container_name: payments-listener
     networks:
-      - UnAd
+      - Nudges
     build:
       context: ./dotnet
       dockerfile: ./KafkaConsumer.Dockerfile
@@ -394,7 +394,7 @@ services:
   plan-subscription-listener:
     container_name: plan-subscription-listener
     networks:
-      - UnAd
+      - Nudges
     build:
       context: ./dotnet
       dockerfile: ./KafkaConsumer.Dockerfile
@@ -419,7 +419,7 @@ services:
   plans-listener:
     container_name: plans-listener
     networks:
-      - UnAd
+      - Nudges
     build:
       context: ./dotnet
       dockerfile: ./KafkaConsumer.Dockerfile
@@ -445,7 +445,7 @@ services:
   price-tiers-listener:
     container_name: price-tiers-listener
     networks:
-      - UnAd
+      - Nudges
     build:
       context: ./dotnet
       dockerfile: ./KafkaConsumer.Dockerfile
@@ -471,7 +471,7 @@ services:
   clients-listener:
     container_name: clients-listener
     networks:
-      - UnAd
+      - Nudges
     build:
       context: ./dotnet
       dockerfile: ./KafkaConsumer.Dockerfile
@@ -497,7 +497,7 @@ services:
     hostname: product-api
     container_name: product-api
     networks:
-      - UnAd
+      - Nudges
     build:
       context: ./dotnet
       dockerfile: ./ProductApi.Dockerfile
@@ -520,7 +520,7 @@ services:
     hostname: payment-api
     container_name: payment-api
     networks:
-      - UnAd
+      - Nudges
     build:
       context: ./dotnet
       dockerfile: ./PaymentApi.Dockerfile
@@ -544,7 +544,7 @@ services:
     hostname: graphql-gateway
     container_name: graphql-gateway
     networks:
-      - UnAd
+      - Nudges
     build:
       context: ./dotnet
       dockerfile: ./GraphQLGateway.Dockerfile
@@ -566,7 +566,7 @@ services:
     hostname: auth-api
     container_name: auth-api
     networks:
-      - UnAd
+      - Nudges
     build:
       context: ./dotnet
       dockerfile: AuthApi.Dockerfile
@@ -593,7 +593,7 @@ services:
     hostname: ngrok
     container_name: ngrok
     networks:
-      - UnAd
+      - Nudges
     command:
       - "start"
       - "--all"
@@ -610,16 +610,16 @@ services:
     hostname: webhooks
     container_name: webhooks
     networks:
-      - UnAd
+      - Nudges
     build:
       context: ./dotnet
-      dockerfile: UnAd.Webhooks.Dockerfile
+      dockerfile: Nudges.Webhooks.Dockerfile
     ports:
       - "7071:7071"
     environment:
       ASPNETCORE_ENVIRONMENT: Development
       HTTP_PORTS: 7071
-      Logging__LogLevel__System.Net.Http.HttpClient.UnAdClient.LogicalHandler: Warning
+      Logging__LogLevel__System.Net.Http.HttpClient.NudgesClient.LogicalHandler: Warning
       Oidc__ClientId: webhooks
       FILEMAP: Oidc__ClientSecret=/run/secrets/webhooks-secret
     env_file:
@@ -635,7 +635,7 @@ services:
 
   zookeeper:
     networks:
-      - UnAd
+      - Nudges
     image: confluentinc/cp-zookeeper:7.9.0
     hostname: zookeeper
     container_name: zookeeper
@@ -647,7 +647,7 @@ services:
 
   kafka:
     networks:
-      - UnAd
+      - Nudges
     image: confluentinc/cp-server:7.9.0
     hostname: kafka
     container_name: kafka
@@ -675,7 +675,7 @@ services:
 
   kafka-ui:
     networks:
-      - UnAd
+      - Nudges
     container_name: kafka-ui
     image: provectuslabs/kafka-ui:latest
     ports:
@@ -695,7 +695,7 @@ services:
   schemaregistry:
     container_name: schemaregistry
     networks:
-      - UnAd
+      - Nudges
     image: confluentinc/cp-schema-registry:7.2.1
     ports:
       - 8085:8085
@@ -714,7 +714,7 @@ services:
   kafka-connect:
     container_name: kafka-connect
     networks:
-      - UnAd
+      - Nudges
     image: confluentinc/cp-kafka-connect:7.2.1
     ports:
       - 8083:8083
@@ -741,7 +741,7 @@ services:
 
   kafka-init-topics:
     networks:
-      - UnAd
+      - Nudges
     image: confluentinc/cp-kafka:7.9.0
     volumes:
       - ./message.json:/data/message.json

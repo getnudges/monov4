@@ -23,7 +23,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\UnAd.Data\UnAd.Data.csproj" />
-    <ProjectReference Include="..\..\UnAd.Redis\UnAd.Redis.csproj" />
+    <ProjectReference Include="..\..\Nudges.Data\Nudges.Data.csproj" />
+    <ProjectReference Include="..\..\Nudges.Redis\Nudges.Redis.csproj" />
   </ItemGroup>
 </Project>

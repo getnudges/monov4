@@ -5,7 +5,7 @@ on:
     branches:
       - main
     paths:
-      - 'web/unad-web/**'
+      - 'web/nudges-web/**'
   
 jobs:
   build:
@@ -29,5 +29,5 @@ jobs:
         run: npm run build -- --workspace=packages/db-models
       
       - name: Run tests
-        run: npm test -- --workspace=web/unad-web
+        run: npm test -- --workspace=web/nudges-web
       

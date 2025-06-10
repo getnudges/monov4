@@ -10,10 +10,10 @@ using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 using Precision.WarpCache.Grpc.Client;
-using UnAd.Auth;
-using UnAd.Auth.Web;
-using UnAd.Configuration.Extensions;
-using UnAd.Kafka;
+using Nudges.Auth;
+using Nudges.Auth.Web;
+using Nudges.Configuration.Extensions;
+using Nudges.Kafka;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -43,8 +43,8 @@ if (builder.Configuration.GetOltpEndpointUrl() is string url) {
                     options.Filter = context =>
                         context.Request.Method != "GET")
                 .AddSource([
-                    "UnAd.Kafka.KafkaMessageProducer",
-                    "UnAd.Telemetry.TracingMiddleware"
+                    "Nudges.Kafka.KafkaMessageProducer",
+                    "Nudges.Telemetry.TracingMiddleware"
                 ]))
         .WithLogging();
 

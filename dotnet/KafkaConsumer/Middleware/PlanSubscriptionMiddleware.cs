@@ -2,13 +2,13 @@ using Confluent.Kafka;
 using KafkaConsumer.Services;
 using Microsoft.Extensions.Logging;
 using Monads;
-using UnAd.Kafka;
-using UnAd.Kafka.Middleware;
+using Nudges.Kafka;
+using Nudges.Kafka.Middleware;
 
 namespace KafkaConsumer.Middleware;
 
 internal class PlanSubscriptionEventMiddleware(ILogger<PlanSubscriptionEventMiddleware> logger,
-                                               Func<IUnAdClient> unAdClientFactory,
+                                               Func<INudgesClient> nudgesClientFactory,
                                                IForeignProductService foreignProductService,
                                                KafkaMessageProducer<NotificationKey, NotificationEvent> notificationProducer,
                                                KafkaMessageProducer<ClientKey, ClientEvent> clientEventProducer) : IMessageMiddleware<PlanSubscriptionKey, PlanSubscriptionEvent> {
@@ -30,7 +30,7 @@ internal class PlanSubscriptionEventMiddleware(ILogger<PlanSubscriptionEventMidd
     }
 
     private async Task<Result<bool, Exception>> HandlePlanSubscriptionCreated(Guid planSubscriptionId, CancellationToken cancellationToken) {
-        using var client = new DisposableWrapper<IUnAdClient>(unAdClientFactory);
+        using var client = new DisposableWrapper<INudgesClient>(nudgesClientFactory);
 
         return await client.Instance.GetPlanSubscriptionById(planSubscriptionId, cancellationToken).Map(async sub =>
             await client.Instance.UpdateClient(new UpdateClientInput {

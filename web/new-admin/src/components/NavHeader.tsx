@@ -56,7 +56,7 @@ export default function NavHeader() {
           <Link href="/">
             <span className="mr-6 flex items-center space-x-2">
               <span className="hidden font-bold sm:inline-block">
-                UnAd Admin
+                Nudges Admin
               </span>
             </span>
           </Link>
@@ -81,7 +81,7 @@ export default function NavHeader() {
                 className="flex items-center"
                 onClick={() => setIsOpen(false)}
               >
-                <span className="font-bold">UnAd Admin</span>
+                <span className="font-bold">Nudges Admin</span>
               </span>
             </Link>
             <nav className="mt-6 flex flex-col space-y-4">

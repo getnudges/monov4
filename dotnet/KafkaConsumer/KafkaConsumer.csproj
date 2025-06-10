@@ -58,21 +58,21 @@
     <ProjectReference Include="..\Precision.WarpCache\Precision.WarpCache.Grpc.Client\Precision.WarpCache.Grpc.Client.csproj" />
     <ProjectReference Include="..\Precision.WarpCache\Precision.WarpCache.MemoryCache\Precision.WarpCache.MemoryCache.csproj" />
     <ProjectReference Include="..\Precision.WarpCache\Precision.WarpCache\Precision.WarpCache.csproj" />
-    <ProjectReference Include="..\UnAd.Auth.Web\UnAd.Auth.Web.csproj" />
-    <ProjectReference Include="..\UnAd.Auth\UnAd.Auth.csproj" />
-    <ProjectReference Include="..\UnAd.Kafka\UnAd.Kafka.csproj" />
-    <ProjectReference Include="..\UnAd.Localization.Client\UnAd.Localization.Client.csproj" />
-    <ProjectReference Include="..\UnAd.Models\UnAd.Models.csproj" />
-    <ProjectReference Include="..\UnAd.Stripe\UnAd.Stripe.csproj" />
+    <ProjectReference Include="..\Nudges.Auth.Web\Nudges.Auth.Web.csproj" />
+    <ProjectReference Include="..\Nudges.Auth\Nudges.Auth.csproj" />
+    <ProjectReference Include="..\Nudges.Kafka\Nudges.Kafka.csproj" />
+    <ProjectReference Include="..\Nudges.Localization.Client\Nudges.Localization.Client.csproj" />
+    <ProjectReference Include="..\Nudges.Models\Nudges.Models.csproj" />
+    <ProjectReference Include="..\Nudges.Stripe\Nudges.Stripe.csproj" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\UnAd.Configuration.Analyzers\UnAd.Configuration.Analyzers.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+    <ProjectReference Include="..\Nudges.Configuration.Analyzers\Nudges.Configuration.Analyzers.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
   </ItemGroup>
 
   <ItemGroup>
-    <InternalsVisibleTo Include="UnAd.Kafka.Tests.Unit" />
-    <InternalsVisibleTo Include="UnAd.Kafka.Tests.Integration" />
+    <InternalsVisibleTo Include="Nudges.Kafka.Tests.Unit" />
+    <InternalsVisibleTo Include="Nudges.Kafka.Tests.Integration" />
     <InternalsVisibleTo Include="DynamicProxyGenAssembly2" />
   </ItemGroup>
 </Project>

@@ -9,8 +9,8 @@ on:
         required: true
 
 env:
-  ECR_REPOSITORY: unad/auth-api
-  ECS_CLUSTER: unad-cluster
+  ECR_REPOSITORY: nudges/auth-api
+  ECS_CLUSTER: nudges-cluster
   ECS_SERVICE: auth-api
   CONTEXT_PATH: dotnet
   

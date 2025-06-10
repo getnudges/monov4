@@ -45,7 +45,7 @@ jobs:
 
           kill -9 $(lsof -t -i :5050)
         env:
-          ConnectionStrings__UserDb: "Host=localhost;Port=5050;Username=unad;Password=${{ secrets.DB_PASS }};Timeout=60;Database=userdb;"
+          ConnectionStrings__UserDb: "Host=localhost;Port=5050;Username=nudges;Password=${{ secrets.DB_PASS }};Timeout=60;Database=userdb;"
           STRIPE_API_KEY: ${{ secrets.STRIPE_API_KEY }}
   
       - name: Setup SSH Tunnel and Run Redis Seed
@@ -94,7 +94,7 @@ jobs:
 
           kill -9 $(lsof -t -i :5050)
         env:
-          ConnectionStrings__UserDb: "Host=localhost;Port=5050;Username=unad;Password=${{ secrets.DB_PASS }};Timeout=60;Database=userdb;"
+          ConnectionStrings__UserDb: "Host=localhost;Port=5050;Username=nudges;Password=${{ secrets.DB_PASS }};Timeout=60;Database=userdb;"
           STRIPE_API_KEY: ${{ secrets.STRIPE_API_KEY }}
   
       - name: Setup SSH Tunnel and Run Redis Seed

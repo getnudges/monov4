@@ -1,9 +1,9 @@
 using Confluent.Kafka;
 using Moq;
-using UnAd.Kafka.Middleware;
+using Nudges.Kafka.Middleware;
 using Xunit.Abstractions;
 
-namespace UnAd.Kafka.Tests.Unit;
+namespace Nudges.Kafka.Tests.Unit;
 
 public class MockErrorHandlingMiddleware<TKey, TValue>(ITestOutputHelper logger) : ErrorHandlingMiddleware<TKey, TValue> {
     protected override MessageContext<TKey, TValue> OnError(MessageContext<TKey, TValue> context, Exception ex) {

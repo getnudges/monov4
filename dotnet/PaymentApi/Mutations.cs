@@ -3,11 +3,11 @@ using HotChocolate.Authorization;
 using HotChocolate.Resolvers;
 using PaymentApi.Services;
 using PaymentApi.Types;
-using UnAd.Auth;
-using UnAd.Data.Payments;
-using UnAd.Data.Payments.Models;
-using UnAd.HotChocolate.Utils;
-using UnAd.Telemetry;
+using Nudges.Auth;
+using Nudges.Data.Payments;
+using Nudges.Data.Payments.Models;
+using Nudges.HotChocolate.Utils;
+using Nudges.Telemetry;
 
 namespace PaymentApi;
 

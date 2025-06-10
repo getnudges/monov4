@@ -1,5 +1,5 @@
 using Microsoft.Extensions.Hosting;
-using UnAd.Kafka.Middleware;
+using Nudges.Kafka.Middleware;
 
 namespace KafkaConsumer;
 

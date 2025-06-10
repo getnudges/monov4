@@ -5,9 +5,9 @@ VisualStudioVersion = 17.5.002.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DbSeeder", "tools\DbSeeder\DbSeeder.csproj", "{24797C53-EBF3-4C27-82A4-ECFD8C6D3152}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UnAd.Data", "UnAd.Data\UnAd.Data.csproj", "{EBEE5948-7BA1-48F0-922B-8BC6364BC1B5}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Nudges.Data", "Nudges.Data\Nudges.Data.csproj", "{EBEE5948-7BA1-48F0-922B-8BC6364BC1B5}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UnAd.Redis", "UnAd.Redis\UnAd.Redis.csproj", "{90EA9419-4646-4099-83D2-680F42ADB590}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Nudges.Redis", "Nudges.Redis\Nudges.Redis.csproj", "{90EA9419-4646-4099-83D2-680F42ADB590}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

@@ -1,7 +1,7 @@
 using HotChocolate.Authorization;
 using HotChocolate.Subscriptions;
-using UnAd.Auth;
-using UnAd.Data.Users.Models;
+using Nudges.Auth;
+using Nudges.Data.Users.Models;
 using UserApi.Models;
 
 namespace UserApi;

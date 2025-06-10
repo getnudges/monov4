@@ -3,13 +3,13 @@ using KafkaConsumer.Services;
 using Keycloak.AuthServices.Sdk.Admin;
 using Microsoft.Extensions.Logging;
 using Monads;
-using UnAd.Kafka;
-using UnAd.Kafka.Middleware;
+using Nudges.Kafka;
+using Nudges.Kafka.Middleware;
 
 namespace KafkaConsumer.Middleware;
 
 internal class ClientMessageMiddleware(ILogger<ClientMessageMiddleware> logger,
-                                       Func<IUnAdClient> unAdClientFactory,
+                                       Func<INudgesClient> nudgesClientFactory,
                                        IForeignProductService foreignProductService,
                                        IKeycloakUserClient keycloakUserClient,
                                        KafkaMessageProducer<NotificationKey, NotificationEvent> notificationProducer) : IMessageMiddleware<ClientKey, ClientEvent> {
@@ -33,7 +33,7 @@ internal class ClientMessageMiddleware(ILogger<ClientMessageMiddleware> logger,
     }
 
     private async Task<Result<bool, Exception>> HandleClientCreated(string clientNodeId, CancellationToken cancellationToken) {
-        using var client = new DisposableWrapper<IUnAdClient>(unAdClientFactory);
+        using var client = new DisposableWrapper<INudgesClient>(nudgesClientFactory);
 
         return await client.Instance.GetClient(clientNodeId, cancellationToken).Map(async clientInfo => {
             return await foreignProductService.CreateCustomer(
@@ -61,7 +61,7 @@ internal class ClientMessageMiddleware(ILogger<ClientMessageMiddleware> logger,
     }
 
     private Task<Result<bool, Exception>> HandleClientUpdated(string clientId, CancellationToken cancellationToken) {
-        //using var client = new DisposableWrapper<IUnAdClient>(unAdClientFactory);
+        //using var client = new DisposableWrapper<INudgesClient>(nudgesClientFactory);
         //var result = await client.Instance.GetClient.ExecuteAsync(clientId, cancellationToken);
 
         // TODO: send off a notification about the updated data

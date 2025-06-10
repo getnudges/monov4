@@ -1,4 +1,4 @@
-using UnAd.Data.Users.Models;
+using Nudges.Data.Users.Models;
 
 namespace UserApi;
 

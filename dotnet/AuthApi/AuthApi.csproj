@@ -28,13 +28,13 @@
     <ProjectReference Include="..\Nudges.Auth.Keycloak\Nudges.Auth.Keycloak.csproj" />
     <ProjectReference Include="..\Nudges.Configuration\Nudges.Configuration.csproj" />
     <ProjectReference Include="..\Precision.WarpCache\Precision.WarpCache.Grpc.Client\Precision.WarpCache.Grpc.Client.csproj" />
-    <ProjectReference Include="..\UnAd.Auth.Web\UnAd.Auth.Web.csproj" />
-    <ProjectReference Include="..\UnAd.Auth\UnAd.Auth.csproj" />
+    <ProjectReference Include="..\Nudges.Auth.Web\Nudges.Auth.Web.csproj" />
+    <ProjectReference Include="..\Nudges.Auth\Nudges.Auth.csproj" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\UnAd.Configuration.Analyzers\UnAd.Configuration.Analyzers.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
-    <ProjectReference Include="..\UnAd.Kafka\UnAd.Kafka.csproj" />
+    <ProjectReference Include="..\Nudges.Configuration.Analyzers\Nudges.Configuration.Analyzers.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+    <ProjectReference Include="..\Nudges.Kafka\Nudges.Kafka.csproj" />
   </ItemGroup>
 
   <ItemGroup>

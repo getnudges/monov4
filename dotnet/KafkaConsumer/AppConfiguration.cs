@@ -1,4 +1,4 @@
-using UnAd.Configuration;
+using Nudges.Configuration;
 
 namespace KafkaConsumer;
 

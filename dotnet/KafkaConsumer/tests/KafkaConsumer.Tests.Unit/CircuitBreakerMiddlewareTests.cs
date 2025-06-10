@@ -1,9 +1,9 @@
 using Confluent.Kafka;
 using Microsoft.Extensions.Time.Testing;
 using Moq;
-using UnAd.Kafka.Middleware;
+using Nudges.Kafka.Middleware;
 
-namespace UnAd.Kafka.Tests.Unit;
+namespace Nudges.Kafka.Tests.Unit;
 
 public class CircuitBreakerMiddlewareTests {
     private readonly FakeTimeProvider _fakeTimeProvider = new();

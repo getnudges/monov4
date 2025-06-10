@@ -7,10 +7,10 @@ using HotChocolate.Subscriptions;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.JsonWebTokens;
-using UnAd.Auth;
-using UnAd.Data.Users;
-using UnAd.Data.Users.Models;
-using UnAd.Kafka;
+using Nudges.Auth;
+using Nudges.Data.Users;
+using Nudges.Data.Users.Models;
+using Nudges.Kafka;
 
 namespace UserApi;
 

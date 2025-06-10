@@ -2,8 +2,8 @@ FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 
 WORKDIR /src
 COPY ProductApi.sln ./
-COPY UnAd.Data/*.csproj ./UnAd.Data/
-COPY UnAd.Auth.Web/*.csproj ./UnAd.Auth.Web/
+COPY Nudges.Data/*.csproj ./Nudges.Data/
+COPY Nudges.Auth.Web/*.csproj ./Nudges.Auth.Web/
 COPY ProductApi/*.csproj ./ProductApi/
 
 RUN dotnet restore

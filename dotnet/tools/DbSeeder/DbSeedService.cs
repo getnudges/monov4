@@ -1,9 +1,9 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using UnAd.Data.Payments;
-using UnAd.Data.Users;
-using UnAd.Data.Users.Models;
+using Nudges.Data.Payments;
+using Nudges.Data.Users;
+using Nudges.Data.Users.Models;
 
 namespace DbSeeder;
 
@@ -31,7 +31,7 @@ internal class DbSeedService(ILogger<DbSeedService> logger,
         if (defaultClient is null) {
             var newClient = context.Clients.Add(new Client {
                 Locale = "en-US",
-                Name = "UnAd",
+                Name = "Nudges",
                 PhoneNumber = DefaultClientPhone,
                 Slug = "test"
             });
@@ -44,7 +44,7 @@ internal class DbSeedService(ILogger<DbSeedService> logger,
         await using var context = await paymentDbContextFactory.CreateDbContextAsync(cancellationToken);
         var defaultClient = context.MerchantServices.Where(c => c.Id == id).FirstOrDefault();
         if (defaultClient is null) {
-            var newClient = context.MerchantServices.Add(new UnAd.Data.Payments.Models.MerchantService {
+            var newClient = context.MerchantServices.Add(new Nudges.Data.Payments.Models.MerchantService {
                 Id = id,
                 Name = name
             });

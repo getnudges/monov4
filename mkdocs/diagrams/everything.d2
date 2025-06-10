@@ -25,7 +25,7 @@ RDS: {
 
 ECS: {
   icon: "./icons/ecs.svg"
-  unad-cluster: {
+  nudges-cluster: {
     ...@ecs/containers
   }
 }
@@ -59,23 +59,23 @@ Admin: {
 S3.admin-ui -> Cloudfront
 S3 -> Cloudwatch
 
-Admin -> Cloudfront: portal.unad.tech
+Admin -> Cloudfront: portal.nudges.tech
 
-S3.admin-ui -> ECS.unad-cluster.graphql-gateway
-S3.admin-ui -> ECS.unad-cluster.auth-api
+S3.admin-ui -> ECS.nudges-cluster.graphql-gateway
+S3.admin-ui -> ECS.nudges-cluster.auth-api
 
-ECS.unad-cluster.graphql-gateway -> ECS.unad-cluster.user-api
-ECS.unad-cluster.graphql-gateway -> ECS.unad-cluster.payment-api
-ECS.unad-cluster.graphql-gateway -> ECS.unad-cluster.product-api
+ECS.nudges-cluster.graphql-gateway -> ECS.nudges-cluster.user-api
+ECS.nudges-cluster.graphql-gateway -> ECS.nudges-cluster.payment-api
+ECS.nudges-cluster.graphql-gateway -> ECS.nudges-cluster.product-api
 
-ECS.unad-cluster.user-api -> RDS.userdb
-ECS.unad-cluster.payment-api -> RDS.paymentdb
-ECS.unad-cluster.product-api -> RDS.productdb
-ECS.unad-cluster -> ElastiCache
+ECS.nudges-cluster.user-api -> RDS.userdb
+ECS.nudges-cluster.payment-api -> RDS.paymentdb
+ECS.nudges-cluster.product-api -> RDS.productdb
+ECS.nudges-cluster -> ElastiCache
 ECS -> S3: Logs
 
-Twilio -> ECS.unad-cluster.webhooks
-Stripe -> ECS.unad-cluster.webhooks
+Twilio -> ECS.nudges-cluster.webhooks
+Stripe -> ECS.nudges-cluster.webhooks
 
-ECS.unad-cluster.webhooks -> RDS.userdb
-ECS.unad-cluster.webhooks -> RDS.paymentdb
+ECS.nudges-cluster.webhooks -> RDS.userdb
+ECS.nudges-cluster.webhooks -> RDS.paymentdb

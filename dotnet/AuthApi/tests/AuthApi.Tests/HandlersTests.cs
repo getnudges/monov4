@@ -10,9 +10,9 @@ using Moq;
 using Nudges.Auth.Keycloak;
 using OtpNet;
 using Precision.WarpCache.Grpc.Client;
-using UnAd.Auth;
-using UnAd.Auth.Web;
-using UnAd.Kafka;
+using Nudges.Auth;
+using Nudges.Auth.Web;
+using Nudges.Kafka;
 
 namespace AuthApi.Tests;
 

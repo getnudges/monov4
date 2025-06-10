@@ -9,8 +9,8 @@ on:
         required: true
 
 env:
-  ECR_REPOSITORY: unad/user-api
-  ECS_CLUSTER: unad-cluster
+  ECR_REPOSITORY: nudges/user-api
+  ECS_CLUSTER: nudges-cluster
   ECS_SERVICE: user-api
   GRAPH_MONITOR: graph-monitor
   CONTEXT_PATH: dotnet
@@ -82,7 +82,7 @@ jobs:
         id: save-url
         run: |
           echo "${{ secrets.GRAPH_MONITOR_HEADERS }}" > headers
-          URL="http://${{ env.ECS_SERVICE }}.unad.local:3000/graphql"
+          URL="http://${{ env.ECS_SERVICE }}.nudges.local:3000/graphql"
           curl -s -f -H @headers -d "$URL" ${{ vars.GRAPH_MONITOR_URL }}/user-api
   
       - name: Stop graph-monitor
@@ -155,7 +155,7 @@ jobs:
         id: save-url
         run: |
           echo "${{ secrets.GRAPH_MONITOR_HEADERS }}" > headers
-          URL="http://${{ env.ECS_SERVICE }}.unad.local:3000/graphql"
+          URL="http://${{ env.ECS_SERVICE }}.nudges.local:3000/graphql"
           curl -s -f -H @headers -d "$URL" ${{ vars.GRAPH_MONITOR_URL }}/user-api
   
       - name: Stop graph-monitor
