@@ -1,0 +1,48 @@
+Client Subscription Flow: {
+  shape: sequence_diagram
+
+  User: {
+    label: "User"
+    shape: image
+    icon: ../icons/user.svg
+  }
+
+  Client: {
+    label: "Sign Up UI"
+    shape: image
+    icon: ../icons/firefox.svg
+  }
+
+  AuthAPI: {
+    label: "Auth API"
+    shape: image
+    icon: ../icons/auth.svg
+  }
+
+  GraphQLAPI: {
+    label: "GraphQL API"
+    shape: image
+    icon: ../icons/graphql.svg
+  }
+  KafkaConsumer: {
+    shape: image
+    icon: ../icons/kafka-icon.svg
+  }
+  Stripe: {
+    shape: image
+    icon: ../icons/stripe.svg
+  }
+  Webhooks: {
+    shape: image
+    icon: ../icons/webhook.svg
+  }
+
+  User -> Client: "Select Price Tier"
+  Client -> GraphQLAPI -> Stripe: "Create Checkout Session"
+  Stripe -> GraphQLAPI -> Client: "Return Checkout Session URL"
+  Client -> User: "Redirect to Checkout"
+  User -> Stripe: "Enter Payment Details"
+  Stripe -> Webhooks: "Payment Successful"
+  Webhooks -> GraphQLAPI: "Create Plan Subscription"
+  GraphQLAPI -> KafkaConsumer: "Plan Subscription Created Event"
+}

@@ -1,0 +1,78 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <InvariantGlobalization>false</InvariantGlobalization>
+    <UserSecretsId>cb119e69-2e23-4def-84bb-8ea69e0f9305</UserSecretsId>
+    <AssemblyName>listener</AssemblyName>
+    <PublishTrimmed>False</PublishTrimmed>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="tests\**" />
+    <EmbeddedResource Remove="tests\**" />
+    <GraphQL Remove="tests\**" />
+    <None Remove="tests\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <GraphQL Remove="GraphQL\Mutations\CreatePlanSubscription.graphql" />
+    <GraphQL Remove="GraphQL\Mutations\PatchPlan.graphql" />
+    <GraphQL Remove="GraphQL\Mutations\PatchPriceTier.graphql" />
+    <GraphQL Remove="GraphQL\Mutations\UpdateClient.graphql" />
+    <GraphQL Remove="GraphQL\Queries\GetClient.graphql" />
+    <GraphQL Remove="GraphQL\Queries\GetPlan.graphql" />
+    <GraphQL Remove="GraphQL\Queries\GetPlanSubscription.graphql" />
+    <GraphQL Remove="GraphQL\Queries\GetPlanSubscriptionById.graphql" />
+    <GraphQL Remove="GraphQL\Queries\GetPriceTier.graphql" />
+    <GraphQL Remove="GraphQL\Queries\GetPriceTierByForeignId.graphql" />
+    <GraphQL Remove="GraphQL\Queries\SubscribeToPlan.graphql" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Confluent.Kafka" Version="2.8.0" />
+    <PackageReference Include="Keycloak.AuthServices.Sdk" Version="2.6.1" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.UserSecrets" Version="9.0.3" />
+    <PackageReference Include="Microsoft.Extensions.Localization" Version="9.0.3" />
+    <PackageReference Include="OpenTelemetry.Exporter.Console" Version="1.11.2" />
+    <PackageReference Include="Polly" Version="8.5.2" />
+    <PackageReference Include="StrawberryShake.Server" Version="15.1.0" />
+    <PackageReference Include="StrawberryShake.Transport.Http" Version="15.1.0" />
+    <PackageReference Include="System.CommandLine" Version="2.0.0-beta4.22272.1" />
+    <PackageReference Include="System.Text.Json" Version="9.0.3" />
+    <PackageReference Include="Twilio" Version="7.9.1" />
+    <PackageReference Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.11.2" />
+    <PackageReference Include="OpenTelemetry.Exporter.Prometheus.AspNetCore" Version="1.11.0-beta.1" />
+    <PackageReference Include="OpenTelemetry.Extensions.Hosting" Version="1.11.2" />
+    <PackageReference Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.11.1" />
+    <PackageReference Include="OpenTelemetry.Instrumentation.Http" Version="1.11.1" />
+    <PackageReference Include="OpenTelemetry.Instrumentation.Runtime" Version="1.11.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Monads\Monads.csproj" />
+    <ProjectReference Include="..\Nudges.Configuration\Nudges.Configuration.csproj" />
+    <ProjectReference Include="..\Precision.WarpCache\Precision.WarpCache.Grpc.Client\Precision.WarpCache.Grpc.Client.csproj" />
+    <ProjectReference Include="..\Precision.WarpCache\Precision.WarpCache.MemoryCache\Precision.WarpCache.MemoryCache.csproj" />
+    <ProjectReference Include="..\Precision.WarpCache\Precision.WarpCache\Precision.WarpCache.csproj" />
+    <ProjectReference Include="..\UnAd.Auth.Web\UnAd.Auth.Web.csproj" />
+    <ProjectReference Include="..\UnAd.Auth\UnAd.Auth.csproj" />
+    <ProjectReference Include="..\UnAd.Kafka\UnAd.Kafka.csproj" />
+    <ProjectReference Include="..\UnAd.Localization.Client\UnAd.Localization.Client.csproj" />
+    <ProjectReference Include="..\UnAd.Models\UnAd.Models.csproj" />
+    <ProjectReference Include="..\UnAd.Stripe\UnAd.Stripe.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\UnAd.Configuration.Analyzers\UnAd.Configuration.Analyzers.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="UnAd.Kafka.Tests.Unit" />
+    <InternalsVisibleTo Include="UnAd.Kafka.Tests.Integration" />
+    <InternalsVisibleTo Include="DynamicProxyGenAssembly2" />
+  </ItemGroup>
+</Project>

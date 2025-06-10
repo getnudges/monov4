@@ -1,0 +1,91 @@
+name: Migrate DB on SSH Tunnel
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        type: environment
+        required: true
+
+env:
+  CONTEXT_PATH: dotnet
+  
+jobs:
+  run-dev:
+    runs-on: ubuntu-latest
+    environment: development
+    if: inputs.environment == 'development'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: '8.0'
+      
+      - name: Install dependencies
+        run: dotnet restore dotnet/UnAd.Data.Migrator.sln
+
+      - name: Generate Bundle
+        run: |
+          dotnet tool restore
+          dotnet ef migrations bundle \
+          --project ./UnAd.Data/UnAd.Data.csproj \
+          --startup-project ./tools/UnAd.Data.Migrator/UnAd.Data.Migrator.csproj \
+          --self-contained -r linux-x64
+          chmod +x efbundle
+        working-directory: dotnet
+    
+      - name: Setup SSH Tunnel and Run Migrations
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.JUMPBOX_SSH_PRIVATE_KEY }}" > ~/.ssh/jumpbox_ed25519
+          chmod 600 ~/.ssh/jumpbox_ed25519
+
+          ssh -i ~/.ssh/jumpbox_ed25519 -o StrictHostKeyChecking=no -L 5050:${{ vars.DB_HOST }}:${{ vars.DB_PORT }} ubuntu@${{ vars.JUMPBOX_HOST }} -N & echo $! > ssh_tunnel.pid
+
+          ConnectionStrings__UserDb="Host=localhost;Port=5050;Username=unad;Password=${{ secrets.DB_PASS }};Timeout=60;Database=userdb;" dotnet/efbundle
+
+          kill -9 $(lsof -t -i :5050)
+
+  run-prod:
+    runs-on: ubuntu-latest
+    environment: production
+    if: inputs.environment == 'production'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: '8.0'
+      
+      - name: Install dependencies
+        run: dotnet restore dotnet/UnAd.Data.Migrator.sln
+
+      - name: Generate Bundle
+        run: |
+          dotnet tool restore
+          dotnet ef migrations bundle \
+          --project ./UnAd.Data/UnAd.Data.csproj \
+          --startup-project ./tools/UnAd.Data.Migrator/UnAd.Data.Migrator.csproj \
+          --self-contained -r linux-x64
+          chmod +x efbundle
+        working-directory: dotnet
+    
+      - name: Setup SSH Tunnel and Run Migrations
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.JUMPBOX_SSH_PRIVATE_KEY }}" > ~/.ssh/jumpbox_ed25519
+          chmod 600 ~/.ssh/jumpbox_ed25519
+
+          ssh -i ~/.ssh/jumpbox_ed25519 -o StrictHostKeyChecking=no -L 5050:${{ vars.DB_HOST }}:${{ vars.DB_PORT }} ubuntu@${{ vars.JUMPBOX_HOST }} -N & echo $! > ssh_tunnel.pid
+
+          ConnectionStrings__UserDb="Host=localhost;Port=5050;Username=unad;Password=${{ secrets.DB_PASS }};Timeout=60;Database=userdb;" dotnet/efbundle
+
+          kill -9 $(lsof -t -i :5050)

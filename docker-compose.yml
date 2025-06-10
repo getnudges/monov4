@@ -1,0 +1,782 @@
+networks:
+  UnAd:
+    driver: bridge
+
+services:
+  
+  maildev:
+    hostname: maildev
+    container_name: maildev
+    image: maildev/maildev:latest
+    networks:
+      - UnAd
+    ports:
+      - "1080:1080"
+
+  keycloak:
+    hostname: keycloak
+    container_name: keycloak
+    networks:
+      - UnAd
+    volumes:
+      - ./keycloak/data:/opt/keycloak/data/import
+    build:
+      context: ./keycloak
+    command: >
+      start-dev 
+      --import-realm 
+      --hostname=http://keycloak.local:8081
+      --hostname-admin=http://keycloak.local:8081
+      --hostname-backchannel-dynamic=false
+      --hostname-strict=true
+      --proxy-headers=xforwarded
+      --spi-cookie-cookie-secure=none
+    env_file:
+      - ./keycloak/.env.docker
+    depends_on:
+      - postgres
+      - maildev
+    ports:
+      - "8080:8080"
+
+  keycloak-proxy:
+    image: nginx:alpine
+    container_name: keycloak-proxy
+    hostname: keycloak-proxy
+    volumes:
+      - ./keycloak/proxy.conf:/etc/nginx/conf.d/default.conf:ro
+    ports:
+      - "8081:80"
+    depends_on:
+      - keycloak
+    networks:
+      - UnAd
+
+  unleash:
+    hostname: unleash
+    container_name: unleash
+    image: unleashorg/unleash-server:latest
+    networks:
+      - UnAd
+    ports:
+      - "4444:4242"
+    env_file:
+      - ./unleash/.env.docker
+    depends_on:
+      - postgres
+
+  otel-collector:
+    image: otel/opentelemetry-collector:latest
+    hostname: otel-collector
+    container_name: otel-collector
+    command: ["--config=/etc/otel-collector.yaml"]
+    volumes:
+      - ./telemetry/otel-collector.yaml:/etc/otel-collector.yaml
+    networks:
+      - UnAd
+    ports:
+      - "4317:4317"
+      - "4318:4318"
+    depends_on:
+      - prometheus
+      - tempo
+      - loki
+      - promtail
+
+  init-tempo:
+    image: &tempoImage grafana/tempo:latest
+    user: root
+    entrypoint:
+      - "chown"
+      - "10001:10001"
+      - "/var/tempo"
+    volumes:
+      - ./telemetry/tempo:/var/tempo
+
+  tempo:
+    hostname: tempo
+    container_name: tempo
+    image: *tempoImage
+    command: ["-config.file=/etc/tempo.yaml"]
+    volumes:
+      - ./telemetry/tempo.yaml:/etc/tempo.yaml
+      - ./telemetry/tempo:/tmp/tempo
+    networks:
+      - UnAd
+    ports:
+      - "3200"
+      - "4317"
+      - "4318"
+
+  loki:
+    image: grafana/loki:latest
+    container_name: loki
+    networks:
+      - UnAd
+    ports:  
+      - "3100:3100"
+      - "9096:9096"
+    command: -config.file=/etc/loki/config.yaml
+    volumes:
+      - ./telemetry/loki-config.yaml:/etc/loki/config.yaml
+
+  promtail:
+    image: grafana/promtail:latest
+    container_name: promtail
+    ports:  
+      - "9080:9080"
+    networks:
+      - UnAd
+    command: -config.file=/etc/promtail/config.yaml
+    volumes:
+      - ./telemetry/promtail-config.yaml:/etc/promtail/config.yaml
+      - ./telemetry/promtail:/tmp/promtail
+
+
+  prometheus:
+    hostname: prometheus
+    container_name: prometheus
+    image: prom/prometheus
+    command:
+      - --config.file=/etc/prometheus.yaml
+    volumes:
+      - ./telemetry/prometheus.yaml:/etc/prometheus.yaml
+    networks:
+      - UnAd
+    ports:
+      - "9090:9090"
+      - "9464:9464"
+
+  grafana:
+    hostname: grafana
+    container_name: grafana
+    image: grafana/grafana
+    volumes:
+      - ./telemetry/grafana-datasources.yaml:/etc/grafana/provisioning/datasources/datasources.yaml
+    env_file:
+      - ./telemetry/.env.docker
+    ports:
+      - "3000:3000"
+    networks:
+      - UnAd
+    depends_on:
+      - otel-collector
+
+  redis:
+    hostname: redis
+    container_name: redis
+    image: redis:7-alpine
+    networks:
+      - UnAd
+    ports:
+      - 6379:6379
+
+  postgres:
+    hostname: postgres
+    container_name: postgres
+    build:
+      context: ./db
+    networks:
+      - UnAd
+    ports:
+      - "5432:5432"
+    env_file:
+      - ./db/.env.docker
+
+  stripe-cli:
+    hostname: stripe-cli
+    container_name: stripe-cli
+    networks:
+      - UnAd
+    build:
+      context: ./stripe
+      dockerfile: cli.Dockerfile
+    command: listen --forward-to host.docker.internal:7071/api/StripeWebhookHandler?code=test
+    env_file:
+      - ./dotnet/.env.docker
+
+  warp-cache:
+    hostname: warp-cache
+    container_name: warp-cache
+    networks:
+      - UnAd
+    build:
+      context: ./dotnet/Precision.WarpCache
+      dockerfile: Server.Dockerfile
+    ports:
+      - "7777:7777"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - Kestrel__EndpointDefaults__Protocols=Http2
+      - Kestrel__Endpoints__gRPC__Url=http://*:7777
+    env_file:
+      - ./dotnet/.env.docker
+
+  payment-processor-proxy:
+    hostname: payment-processor-proxy
+    container_name: payment-processor-proxy
+    networks:
+      - UnAd
+    build:
+      context: ./stripe
+      dockerfile: api.Dockerfile
+    ports:
+      - "4243:4243"
+
+  db-migrator:
+    build:
+      context: ./dotnet/
+      dockerfile: Migrator.Dockerfile
+    networks:
+      - UnAd
+    env_file:
+      - ./dotnet/.env.docker
+    depends_on:
+      - postgres
+
+  db-seeder:
+    build:
+      context: ./dotnet
+      dockerfile: DbSeeder.Dockerfile
+    networks:
+      - UnAd
+    env_file:
+      - ./dotnet/.env.docker
+    depends_on:
+      - postgres
+
+  graph-monitor:
+    hostname: graph-monitor
+    container_name: graph-monitor
+    networks:
+      - UnAd
+    build:
+      context: ./dotnet
+      dockerfile: GraphMonitor.Dockerfile
+    ports:
+      - "5145:5145"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - HTTP_PORTS=5145
+    env_file:
+      - ./dotnet/.env.docker
+    depends_on:
+      - warp-cache
+
+  new-signup:
+    hostname: new-signup
+    container_name: new-signup
+    networks:
+      - UnAd
+    build:
+      context: ./web/new-signup
+    ports:
+      - "6060:3000"
+    environment:
+      - PORT=3000
+    depends_on:
+      - graphql-gateway
+      - auth-api
+      - notifications-listener
+
+  new-admin:
+    hostname: new-admin
+    container_name: new-admin
+    networks:
+      - UnAd
+    build:
+      context: ./web/new-admin
+    ports:
+      - "5050:5050"
+    environment:
+      PORT: 5050
+    depends_on:
+      - graphql-gateway
+      - auth-api
+
+  user-api:
+    hostname: user-api
+    container_name: user-api
+    networks:
+      - UnAd
+    build:
+      context: ./dotnet
+      dockerfile: ./UserApi.Dockerfile
+      secrets:
+        - graph-monitor-headers
+      args:
+        - GRAPH_MONITOR_URL=http://host.docker.internal:5145
+    ports:
+      - "5300:5300"
+    extra_hosts:
+      - "keycloak.local:host-gateway"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      HTTP_PORTS: 5300
+      Keycloak__resource: auth-api
+      Logging__LogLevel__Default: Debug
+    env_file:
+      - ./dotnet/.env.docker
+    secrets:
+      - user-api-secret
+    depends_on:
+      - postgres
+      - redis
+      - unleash
+
+  localizer-api:
+    hostname: localizer-api
+    container_name: localizer-api
+    networks:
+      - UnAd
+    build:
+      context: ./dotnet
+      dockerfile: ./LocalizationApi.Dockerfile
+    ports:
+      - "8888:8888"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - Kestrel__Endpoints__gRPC__Url=http://*:8888
+    env_file:
+      - ./dotnet/.env.docker
+
+  notifications-listener:
+    container_name: notifications-listener
+    networks:
+      - UnAd
+    build:
+      context: ./dotnet
+      dockerfile: ./KafkaConsumer.Dockerfile
+    environment:
+      DOTNET_ENVIRONMENT: Development
+      ASPNETCORE_ENVIRONMENT: Development
+      HTTP_PORTS: 7100
+      Oidc__ClientId: kafka-consumer
+      FILEMAP: Oidc__ClientSecret=/run/secrets/kafka-consumer-secret
+    ports:
+      - "7100"
+    env_file:
+      - ./dotnet/.env.docker
+    secrets:
+      - kafka-consumer-secret
+    command: notifications
+    depends_on:
+      - kafka
+      - warp-cache
+      - graphql-gateway
+
+  payments-listener:
+    container_name: payments-listener
+    networks:
+      - UnAd
+    build:
+      context: ./dotnet
+      dockerfile: ./KafkaConsumer.Dockerfile
+    environment:
+      DOTNET_ENVIRONMENT: Development
+      ASPNETCORE_ENVIRONMENT: Development
+      HTTP_PORTS: 7100
+      Oidc__ClientId: kafka-consumer
+      FILEMAP: Oidc__ClientSecret=/run/secrets/kafka-consumer-secret
+    ports:
+      - "7100"
+    env_file:
+      - ./dotnet/.env.docker
+    secrets:
+      - kafka-consumer-secret
+    command: payments
+    depends_on:
+      - kafka
+      - warp-cache
+      - graphql-gateway
+      - payment-processor-proxy
+
+  plan-subscription-listener:
+    container_name: plan-subscription-listener
+    networks:
+      - UnAd
+    build:
+      context: ./dotnet
+      dockerfile: ./KafkaConsumer.Dockerfile
+    environment:
+      DOTNET_ENVIRONMENT: Development
+      ASPNETCORE_ENVIRONMENT: Development
+      HTTP_PORTS: 7100
+      Oidc__ClientId: kafka-consumer
+      FILEMAP: Oidc__ClientSecret=/run/secrets/kafka-consumer-secret
+    ports:
+      - "7100"
+    env_file:
+      - ./dotnet/.env.docker
+    secrets:
+      - kafka-consumer-secret
+    command: plan-subscriptions
+    depends_on:
+      - kafka
+      - warp-cache
+      - graphql-gateway
+
+  plans-listener:
+    container_name: plans-listener
+    networks:
+      - UnAd
+    build:
+      context: ./dotnet
+      dockerfile: ./KafkaConsumer.Dockerfile
+    environment:
+      DOTNET_ENVIRONMENT: Development
+      ASPNETCORE_ENVIRONMENT: Development
+      HTTP_PORTS: 7100
+      Oidc__ClientId: kafka-consumer
+      FILEMAP: Oidc__ClientSecret=/run/secrets/kafka-consumer-secret
+    ports:
+      - "7100"
+    env_file:
+      - ./dotnet/.env.docker
+    secrets:
+      - kafka-consumer-secret
+    command: plans
+    depends_on:
+      - kafka
+      - warp-cache
+      - graphql-gateway
+      - payment-processor-proxy
+
+  price-tiers-listener:
+    container_name: price-tiers-listener
+    networks:
+      - UnAd
+    build:
+      context: ./dotnet
+      dockerfile: ./KafkaConsumer.Dockerfile
+    environment:
+      DOTNET_ENVIRONMENT: Development
+      ASPNETCORE_ENVIRONMENT: Development
+      HTTP_PORTS: 7100
+      Oidc__ClientId: kafka-consumer
+      FILEMAP: Oidc__ClientSecret=/run/secrets/kafka-consumer-secret
+    ports:
+      - "7100"
+    env_file:
+      - ./dotnet/.env.docker
+    secrets:
+      - kafka-consumer-secret
+    command: price-tiers
+    depends_on:
+      - kafka
+      - warp-cache
+      - graphql-gateway
+      - payment-processor-proxy
+
+  clients-listener:
+    container_name: clients-listener
+    networks:
+      - UnAd
+    build:
+      context: ./dotnet
+      dockerfile: ./KafkaConsumer.Dockerfile
+    environment:
+      DOTNET_ENVIRONMENT: Development
+      ASPNETCORE_ENVIRONMENT: Development
+      HTTP_PORTS: 7100
+      Oidc__ClientId: kafka-consumer
+      FILEMAP: Oidc__ClientSecret=/run/secrets/kafka-consumer-secret
+    ports:
+      - "7100"
+    env_file:
+      - ./dotnet/.env.docker
+    secrets:
+      - kafka-consumer-secret
+    command: clients
+    depends_on:
+      - kafka
+      - warp-cache
+      - graphql-gateway
+
+  product-api:
+    hostname: product-api
+    container_name: product-api
+    networks:
+      - UnAd
+    build:
+      context: ./dotnet
+      dockerfile: ./ProductApi.Dockerfile
+      secrets:
+        - graph-monitor-headers
+    ports:
+      - "5200:5200"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      HTTP_PORTS: 5200
+    env_file:
+      - ./dotnet/.env.docker
+    secrets:
+      - product-api-secret
+    depends_on:
+      - postgres
+      - warp-cache
+
+  payment-api:
+    hostname: payment-api
+    container_name: payment-api
+    networks:
+      - UnAd
+    build:
+      context: ./dotnet
+      dockerfile: ./PaymentApi.Dockerfile
+      secrets:
+        - graph-monitor-headers
+    ports:
+      - "5400:5400"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      HTTP_PORTS: 5400
+    env_file:
+      - ./dotnet/.env.docker
+    secrets:
+      - payment-api-secret
+    depends_on:
+      - postgres
+      - redis
+      - payment-processor-proxy
+
+  graphql-gateway:
+    hostname: graphql-gateway
+    container_name: graphql-gateway
+    networks:
+      - UnAd
+    build:
+      context: ./dotnet
+      dockerfile: ./GraphQLGateway.Dockerfile
+      secrets:
+        - graph-monitor-headers
+      args:
+        - GRAPH_MONITOR_URL=http://host.docker.internal:5145
+    ports:
+      - "5900:5900"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - HTTP_PORTS=5900
+    env_file:
+      - ./dotnet/.env.docker
+    depends_on:
+      - warp-cache
+
+  auth-api:
+    hostname: auth-api
+    container_name: auth-api
+    networks:
+      - UnAd
+    build:
+      context: ./dotnet
+      dockerfile: AuthApi.Dockerfile
+    ports:
+      - "5555:5555"
+    extra_hosts:
+      - "keycloak.local:host-gateway"
+    env_file:
+      - ./dotnet/.env.docker
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      HTTP_PORTS: 5555
+      Oidc__ClientId: auth-api
+      FILEMAP: Oidc__ClientSecret=/run/secrets/auth-api-secret
+    secrets:
+      - auth-api-secret
+    depends_on:
+      - kafka
+      - warp-cache
+      - keycloak
+
+  ngrok:
+    image: ngrok/ngrok:latest
+    hostname: ngrok
+    container_name: ngrok
+    networks:
+      - UnAd
+    command:
+      - "start"
+      - "--all"
+      - "--config"
+      - "/etc/ngrok.yml"
+      - "--log-level"
+      - "info"
+    volumes:
+      - ./ngrok/ngrok.yml:/etc/ngrok.yml
+    ports:
+      - 4040:4040
+
+  webhooks:
+    hostname: webhooks
+    container_name: webhooks
+    networks:
+      - UnAd
+    build:
+      context: ./dotnet
+      dockerfile: UnAd.Webhooks.Dockerfile
+    ports:
+      - "7071:7071"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      HTTP_PORTS: 7071
+      Logging__LogLevel__System.Net.Http.HttpClient.UnAdClient.LogicalHandler: Warning
+      Oidc__ClientId: webhooks
+      FILEMAP: Oidc__ClientSecret=/run/secrets/webhooks-secret
+    env_file:
+      - ./dotnet/.env.docker
+    secrets:
+      - webhooks-secret
+    depends_on:
+      - warp-cache
+      - graphql-gateway
+      - ngrok
+      - stripe-cli
+      - payment-processor-proxy
+
+  zookeeper:
+    networks:
+      - UnAd
+    image: confluentinc/cp-zookeeper:7.9.0
+    hostname: zookeeper
+    container_name: zookeeper
+    ports:
+      - "2181"
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+
+  kafka:
+    networks:
+      - UnAd
+    image: confluentinc/cp-server:7.9.0
+    hostname: kafka
+    container_name: kafka
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+      - "9997"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: "zookeeper:2181"
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://kafka:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_CONFLUENT_LICENSE_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_CONFLUENT_BALANCER_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_JMX_PORT: 9997
+      KAFKA_JMX_HOSTNAME: kafka
+      KAFKA_LOG_RETENTION_HOURS: 1
+      KAFKA_LOG_SEGMENT_BYTES: 10485760
+      KAFKA_HEAP_OPTS: "-Xms256M -Xmx512M"
+
+  kafka-ui:
+    networks:
+      - UnAd
+    container_name: kafka-ui
+    image: provectuslabs/kafka-ui:latest
+    ports:
+      - 8090:8080
+    depends_on:
+      - kafka
+      - schemaregistry
+      - kafka-connect
+    environment:
+      KAFKA_CLUSTERS_0_NAME: local
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:29092
+      KAFKA_CLUSTERS_0_METRICS_PORT: 9997
+      KAFKA_CLUSTERS_0_KAFKACONNECT_0_NAME: first
+      KAFKA_CLUSTERS_0_KAFKACONNECT_0_ADDRESS: http://kafka-connect:8083
+      DYNAMIC_CONFIG_ENABLED: 'true'
+
+  schemaregistry:
+    container_name: schemaregistry
+    networks:
+      - UnAd
+    image: confluentinc/cp-schema-registry:7.2.1
+    ports:
+      - 8085:8085
+    depends_on:
+      - kafka
+    environment:
+      SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: PLAINTEXT://kafka:29092
+      SCHEMA_REGISTRY_KAFKASTORE_SECURITY_PROTOCOL: PLAINTEXT
+      SCHEMA_REGISTRY_HOST_NAME: schemaregistry
+      SCHEMA_REGISTRY_LISTENERS: http://schemaregistry:8085
+
+      SCHEMA_REGISTRY_SCHEMA_REGISTRY_INTER_INSTANCE_PROTOCOL: "http"
+      SCHEMA_REGISTRY_LOG4J_ROOT_LOGLEVEL: INFO
+      SCHEMA_REGISTRY_KAFKASTORE_TOPIC: _schemas
+
+  kafka-connect:
+    container_name: kafka-connect
+    networks:
+      - UnAd
+    image: confluentinc/cp-kafka-connect:7.2.1
+    ports:
+      - 8083:8083
+    depends_on:
+      - kafka
+      - schemaregistry
+    environment:
+      CONNECT_BOOTSTRAP_SERVERS: kafka:29092
+      CONNECT_GROUP_ID: compose-connect-group
+      CONNECT_CONFIG_STORAGE_TOPIC: _connect_configs
+      CONNECT_CONFIG_STORAGE_REPLICATION_FACTOR: 1
+      CONNECT_OFFSET_STORAGE_TOPIC: _connect_offset
+      CONNECT_OFFSET_STORAGE_REPLICATION_FACTOR: 1
+      CONNECT_STATUS_STORAGE_TOPIC: _connect_status
+      CONNECT_STATUS_STORAGE_REPLICATION_FACTOR: 1
+      CONNECT_KEY_CONVERTER: org.apache.kafka.connect.storage.StringConverter
+      CONNECT_KEY_CONVERTER_SCHEMA_REGISTRY_URL: http://schemaregistry:8085
+      CONNECT_VALUE_CONVERTER: org.apache.kafka.connect.storage.StringConverter
+      CONNECT_VALUE_CONVERTER_SCHEMA_REGISTRY_URL: http://schemaregistry:8085
+      CONNECT_INTERNAL_KEY_CONVERTER: org.apache.kafka.connect.json.JsonConverter
+      CONNECT_INTERNAL_VALUE_CONVERTER: org.apache.kafka.connect.json.JsonConverter
+      CONNECT_REST_ADVERTISED_HOST_NAME: kafka-connect
+      CONNECT_PLUGIN_PATH: "/usr/share/java,/usr/share/confluent-hub-components"
+
+  kafka-init-topics:
+    networks:
+      - UnAd
+    image: confluentinc/cp-kafka:7.9.0
+    volumes:
+      - ./message.json:/data/message.json
+    depends_on:
+      - kafka
+    command: "bash -c 'echo Waiting for Kafka to be ready... && \
+      cub kafka-ready -b kafka:29092 1 30 && \
+
+      kafka-topics --create --topic subscriptions         --partitions 2 --replication-factor 1 --if-not-exists --bootstrap-server kafka:29092 && \
+      kafka-topics --create --topic notifications         --partitions 2 --replication-factor 1 --if-not-exists --bootstrap-server kafka:29092 && \
+      kafka-topics --create --topic payments              --partitions 2 --replication-factor 1 --if-not-exists --bootstrap-server kafka:29092 && \
+      kafka-topics --create --topic clients               --partitions 2 --replication-factor 1 --if-not-exists --bootstrap-server kafka:29092 && \
+      kafka-topics --create --topic plans                 --partitions 2 --replication-factor 1 --if-not-exists --bootstrap-server kafka:29092 && \
+      kafka-topics --create --topic price-tiers           --partitions 2 --replication-factor 1 --if-not-exists --bootstrap-server kafka:29092 && \
+      kafka-topics --create --topic plan-subscriptions    --partitions 2 --replication-factor 1 --if-not-exists --bootstrap-server kafka:29092 && \
+
+      kafka-topics --create --topic test --partitions 1 --replication-factor 1 --if-not-exists --bootstrap-server kafka:29092 && \
+      kafka-console-producer --bootstrap-server kafka:29092 --topic test < /data/message.json'"
+
+secrets:
+  graph-monitor-headers:
+    file: ./dotnet/GraphMonitor/headers
+  auth-api-secret:
+    file: ./keycloak/auth-api.secret.txt
+  kafka-consumer-secret:
+    file: ./keycloak/kafka-consumer.secret.txt
+  payment-api-secret:
+    file: ./keycloak/payment-api.secret.txt
+  product-api-secret:
+    file: ./keycloak/product-api.secret.txt
+  user-api-secret:
+    file: ./keycloak/user-api.secret.txt
+  webhooks-secret:
+    file: ./keycloak/webhooks-api.secret.txt
+
+volumes:
+  tempo:
+    driver: local

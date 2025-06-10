@@ -1,0 +1,5 @@
+query GetPlanSubscriptionById($id: UUID!) {
+  planSubscriptionById(id: $id) {
+    clientId
+  }
+}

@@ -1,0 +1,121 @@
+direction: down
+
+prerequisites: |`sql
+  -- Prerequisites
+  CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+`| {
+  near: top-center
+  style: {
+    stroke: transparent
+  }
+}
+
+plan: {
+  link: '/data/productdb/#plan-table'
+  shape: sql_table
+  id: INT {constraint: [SERIAL; primary_key]}
+  name: VARCHAR(100) NOT NULL {constraint: NOT NULL}
+  description: TEXT
+  icon_url: VARCHAR(1000)
+  is_active: BOOLEAN {constraint: DEFAULT (TRUE)}
+  # status: VARCHAR(20) {constraint: DEFAULT ('INACTIVE')}
+}
+
+plan_features: {
+  link: '/data/productdb/#plan_features-table'
+  shape: sql_table
+  plan_id: INT REFERENCES plan(id) {constraint: [primary_key; foreign_key]}
+  max_messages: INT {constraint: NOT NULL}
+  support_tier: VARCHAR(100)
+  ai_support: BOOLEAN {constraint: DEFAULT (FALSE)}
+}
+
+
+price_tier: {
+  link: '/data/productdb/#price_tier-table'
+  shape: sql_table
+  id: INT {constraint: [SERIAL; primary_key]}
+  plan_id: INT REFERENCES plan(id) {constraint: foreign_key}
+  price: NUMERIC(10, 2) {constraint: NOT NULL}
+  duration: INTERVAL {constraint: NOT NULL}
+
+  name: VARCHAR(100) {constraint: NOT NULL}
+  description: TEXT
+  icon_url: VARCHAR(1000)
+  status: VARCHAR(20) {constraint: DEFAULT ('INACTIVE')}
+  created_at: TIMESTAMPTZ {constraint: DEFAULT (NOW())}
+}
+plan_subscription: {
+  link: '/data/productdb/#plan_subscription-table'
+  shape: sql_table
+  id: UUID {constraint: [SERIAL; primary_key; DEFAULT (uuid_generate_v4())]}
+  price_tier_id: INT REFERENCES price_tier(id) {constraint: foreign_key}
+  start_date: TIMESTAMPTZ {constraint: NOT NULL}
+  end_date: TIMESTAMPTZ {constraint: NOT NULL}
+  status: VARCHAR(20) {constraint: [DEFAULT ('INACTIVE')]}
+  client_id: UUID NOT {constraint: NOT NULL}
+  payment_confirmation_id: UUID {constraint: NOT NULL}
+
+  created_at: TIMESTAMPTZ {constraint: DEFAULT (NOW())}
+}
+
+trial_offer: {
+  link: '/data/productdb/#trial_offer-table'
+  shape: sql_table
+
+  id: UUID {constraint: [SERIAL; primary_key]}
+  price_tier_id: INT REFERENCES price_tier(id) {constraint: foreign_key}
+  duration: INTERVAL {constraint: NOT NULL}
+  name: VARCHAR(100) {constraint: NOT NULL}
+  description: TEXT
+  expiry_date: TIMESTAMPTZ
+  
+  created_at: TIMESTAMPTZ {constraint: DEFAULT (NOW())}
+}
+
+trial: {
+  link: '/data/productdb/#trial-table'
+  shape: sql_table
+
+  id: UUID {constraint: [SERIAL; primary_key]}
+  trial_offer_id: UUID REFERENCES trial_offer(id) {constraint: foreign_key}
+  plan_subscription_id: UUID REFERENCES plan_subscription(id) {constraint: foreign_key}
+  
+  created_at: TIMESTAMPTZ {constraint: DEFAULT (NOW())}
+}
+
+discount_code: {
+  link: '/data/productdb/#discount_code-table'
+  shape: sql_table
+
+  id: UUID {constraint: [SERIAL; primary_key]}
+  price_tier_id: INT REFERENCES price_tier(id) {constraint: foreign_key}  
+  code: VARCHAR(100) {constraint: NOT NULL}
+  value: NUMERIC(10, 2) {constraint: NOT NULL}
+  duration: INTERVAL
+  name: VARCHAR(100) {constraint: NOT NULL}
+  description: TEXT
+  expiry_date: TIMESTAMPTZ
+
+  created_at: TIMESTAMPTZ {constraint: DEFAULT (NOW())}
+}
+
+discount: {
+  link: '/data/productdb/#discount-table'
+  shape: sql_table
+  
+  id: UUID {constraint: [SERIAL; primary_key]}
+  discount_code_id: UUID REFERENCES discount_code(id) {constraint: foreign_key}
+  plan_subscription_id: UUID REFERENCES plan_subscription(id) {constraint: foreign_key}
+  
+  created_at: TIMESTAMPTZ {constraint: DEFAULT (NOW())}
+}
+
+price_tier.plan_id -> plan.id
+plan_features.plan_id -> plan.id
+plan_subscription.price_tier_id -> price_tier.id
+trial.trial_offer_id -> trial_offer.id
+trial.plan_subscription_id -> plan_subscription.id
+discount_code.price_tier_id -> price_tier.id
+discount.discount_code_id -> discount_code.id
+discount.plan_subscription_id -> plan_subscription.id

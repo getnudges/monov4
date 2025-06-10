@@ -1,0 +1,15 @@
+{
+  "profiles": {
+    "Precision.WarpCache.Grpc": {
+      "commandName": "Project",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "Kestrel__Endpoints__gRPC__Url": "http://localhost:7777",
+        "Kestrel__EndpointDefaults__Protocols": "Http2"
+      }
+    },
+    "Container (Dockerfile)": {
+      "commandName": "Docker"
+    }
+  }
+}

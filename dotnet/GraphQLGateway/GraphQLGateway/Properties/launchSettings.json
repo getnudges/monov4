@@ -1,0 +1,23 @@
+{
+  "profiles": {
+    "http": {
+      "commandName": "Project",
+      "launchUrl": "graphql",
+      "applicationUrl": "http://::5900",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "OTLP_ENDPOINT_URL": "http://localhost:4317"
+      }
+    },
+    "export": {
+      "commandName": "Project",
+      "commandLineArgs": "schema export --output schema.graphql",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "REDIS_URL": "redis://localhost"
+      },
+      "dotnetRunMessages": true
+    }
+  },
+  "$schema": "https://json.schemastore.org/launchsettings.json"
+}

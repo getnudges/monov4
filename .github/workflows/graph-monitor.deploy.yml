@@ -1,0 +1,124 @@
+name: Build and Deploy graph-monitor to ECS
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        type: environment
+        required: true
+
+env:
+  ECR_REPOSITORY: unad/graph-monitor
+  ECS_CLUSTER: unad-cluster
+  ECS_SERVICE: graph-monitor
+  CONTEXT_PATH: dotnet/GraphMonitor
+  
+jobs:
+  build-dev:
+    runs-on: ubuntu-latest
+    environment: development
+    if: inputs.environment == 'development'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+
+      # TODO: https://docs.docker.com/build/cache/backends/gha/
+      - name: Build and tag Docker image
+        id: build-image
+        uses: docker/build-push-action@v2
+        with:
+          context: ${{ env.CONTEXT_PATH }}
+          push: true
+          tags: |
+            ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ github.sha }}
+            ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:latest
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+
+      - name: Get ECS task definition
+        run: aws ecs describe-task-definition --task $ECS_SERVICE --query 'taskDefinition' > task.json
+          
+      - name: Update ECS task definition
+        id: render-ecs-container
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: task.json
+          container-name: ${{ env.ECS_SERVICE }}
+          image: ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ github.sha }}
+  
+      - name: Deploy to ECS
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+        with:
+          task-definition: ${{ steps.render-ecs-container.outputs.task-definition }}
+          service: ${{ env.ECS_SERVICE }}
+          cluster: ${{ env.ECS_CLUSTER }}
+
+      - name: Wait for deployment to stabilize
+        run: aws ecs wait services-stable --services $ECS_SERVICE --cluster $ECS_CLUSTER
+      
+
+  build-prod:
+    runs-on: ubuntu-latest
+    environment: production
+    if: inputs.environment == 'production'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+
+      # TODO: https://docs.docker.com/build/cache/backends/gha/
+      - name: Build and tag Docker image
+        id: build-image
+        uses: docker/build-push-action@v2
+        with:
+          context: ${{ env.CONTEXT_PATH }}
+          push: true
+          tags: |
+            ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ github.sha }}
+            ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:latest
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+
+      - name: Get ECS task definition
+        run: aws ecs describe-task-definition --task $ECS_SERVICE --query 'taskDefinition' > task.json
+          
+      - name: Update ECS task definition
+        id: render-ecs-container
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: task.json
+          container-name: ${{ env.ECS_SERVICE }}
+          image: ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ github.sha }}
+  
+      - name: Deploy to ECS
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+        with:
+          task-definition: ${{ steps.render-ecs-container.outputs.task-definition }}
+          service: ${{ env.ECS_SERVICE }}
+          cluster: ${{ env.ECS_CLUSTER }}
+
+      - name: Wait for deployment to stabilize
+        run: aws ecs wait services-stable --services $ECS_SERVICE --cluster $ECS_CLUSTER
+      

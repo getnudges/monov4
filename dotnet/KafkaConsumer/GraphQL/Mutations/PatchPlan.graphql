@@ -1,0 +1,12 @@
+mutation PatchPlan($input: PatchPlanInput!) {
+  patchPlan(input: $input) {
+    errors {
+      ... on PlanNotFoundError {
+        message
+      }
+    }
+    plan {
+      id
+    }
+  }
+}

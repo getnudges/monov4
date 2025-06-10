@@ -1,0 +1,18 @@
+{
+  "profiles": {
+    "seed db": {
+      "commandName": "Project",
+      "commandLineArgs": "db",
+      "environmentVariables": {
+        "DOTNET_ENVIRONMENT": "Development"
+      }
+    },
+    "listen redis": {
+      "commandName": "Project",
+      "commandLineArgs": "redis",
+      "environmentVariables": {
+        "DOTNET_ENVIRONMENT": "Development"
+      }
+    }
+  }
+}

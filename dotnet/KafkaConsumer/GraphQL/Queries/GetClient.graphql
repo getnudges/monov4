@@ -1,0 +1,7 @@
+query GetClient($id: ID!) {
+    client(id: $id) {
+        phoneNumber
+        name
+        locale
+    }
+}

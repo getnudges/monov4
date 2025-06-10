@@ -1,0 +1,15 @@
+mutation CreatePlanSubscription($input: CreatePlanSubscriptionInput!) {
+  createPlanSubscription(input: $input) {
+    errors {
+      ... on Error {
+        message
+      }
+    }
+    planSubscription {
+      id
+      client {
+        phoneNumber
+      }
+    }
+  }
+}

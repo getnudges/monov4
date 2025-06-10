@@ -1,0 +1,7 @@
+.gitignore
+node_modules
+components.json
+eslint.config.js
+README.md
+.git
+*.tsbuildinfo

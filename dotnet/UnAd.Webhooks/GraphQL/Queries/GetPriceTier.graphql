@@ -1,0 +1,17 @@
+query GetPriceTier($id: ID!) {
+  priceTier(id: $id) {
+    id
+    planId
+    createdAt
+    description
+    duration
+    iconUrl
+    name
+    planId
+    price
+    foreignServiceId
+    plan {
+      foreignServiceId
+    }
+  }
+}

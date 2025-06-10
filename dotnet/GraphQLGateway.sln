@@ -1,0 +1,47 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.8.34525.116
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GraphQLGateway", "GraphQLGateway\GraphQLGateway\GraphQLGateway.csproj", "{566057E2-B8BA-41C3-BED3-EDB8089AF596}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GraphQLGateway.Tests.Unit", "GraphQLGateway\GraphQLGateway.Tests.Integration\GraphQLGateway.Tests.Unit.csproj", "{CD3A1145-A7F4-4412-8E34-70E96DEC959C}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GraphQLGateway.Tests.Integration", "GraphQLGateway\GraphQLGateway.Tests.Unit\GraphQLGateway.Tests.Integration.csproj", "{1B3D9A74-F65A-4FD7-BC73-6068279E7C68}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{8EC462FD-D22E-90A8-E5CE-7E832BA40C5D}"
+	ProjectSection(SolutionItems) = preProject
+		.editorconfig = .editorconfig
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Precision.WarpCache.Grpc.Client", "Precision.WarpCache\Precision.WarpCache.Grpc.Client\Precision.WarpCache.Grpc.Client.csproj", "{41061286-70D3-7C46-826E-8906697A9942}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{566057E2-B8BA-41C3-BED3-EDB8089AF596}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{566057E2-B8BA-41C3-BED3-EDB8089AF596}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{566057E2-B8BA-41C3-BED3-EDB8089AF596}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{566057E2-B8BA-41C3-BED3-EDB8089AF596}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CD3A1145-A7F4-4412-8E34-70E96DEC959C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CD3A1145-A7F4-4412-8E34-70E96DEC959C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CD3A1145-A7F4-4412-8E34-70E96DEC959C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CD3A1145-A7F4-4412-8E34-70E96DEC959C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1B3D9A74-F65A-4FD7-BC73-6068279E7C68}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1B3D9A74-F65A-4FD7-BC73-6068279E7C68}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1B3D9A74-F65A-4FD7-BC73-6068279E7C68}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1B3D9A74-F65A-4FD7-BC73-6068279E7C68}.Release|Any CPU.Build.0 = Release|Any CPU
+		{41061286-70D3-7C46-826E-8906697A9942}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{41061286-70D3-7C46-826E-8906697A9942}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{41061286-70D3-7C46-826E-8906697A9942}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{41061286-70D3-7C46-826E-8906697A9942}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {84B1B3B8-90C4-4F89-A30A-3FE1475FAEE9}
+	EndGlobalSection
+EndGlobal

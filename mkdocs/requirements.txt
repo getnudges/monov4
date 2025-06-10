@@ -1,0 +1,4 @@
+mkdocs
+mkdocs-material
+mkdocs-d2-plugin
+mkdocs-exclude

@@ -1,0 +1,23 @@
+@GraphMonitor_HostAddress = http://localhost:5145
+@ApiKey = test
+# valid store
+GET {{GraphMonitor_HostAddress}}/test-api
+Accept: text/plain
+X-Api-Key: {{ApiKey}}
+
+###
+
+# no api key
+GET {{GraphMonitor_HostAddress}}/test-api
+Accept: text/plain
+
+###
+
+# valid store
+POST {{GraphMonitor_HostAddress}}/test-api
+Accept: application/json
+Content-Type: text/plain
+X-Api-Key: {{ApiKey}}
+
+http://localhost:5145/graphql
+###

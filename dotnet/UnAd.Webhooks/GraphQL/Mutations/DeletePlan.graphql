@@ -1,0 +1,12 @@
+mutation DeletePlan($input: DeletePlanInput!) {
+  deletePlan(input: $input) {
+    plan {
+      id
+    }
+    errors {
+      ... on Error {
+        message
+      }
+    }
+  }
+}

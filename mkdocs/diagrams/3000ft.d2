@@ -1,0 +1,44 @@
+# https://icons.terrastruct.com/ for icons
+
+ElastiCache: {
+  shape: image
+  icon: ./icons/elasticache.svg
+}
+
+RDS: {
+  icon: ./icons/aurora.svg
+  label: "RDS"
+  userdb: {
+    label: "userdb"
+    shape: cylinder
+    style.multiple: true
+  }
+}
+
+ECS: {
+  icon: "./icons/ecs.svg"
+  unad-cluster: {
+    webhooks: {
+      shape: image
+      icon: ./icons/ecs-instance.svg
+    }
+    signup-site: {
+      shape: image
+      icon: ./icons/ecs-instance.svg
+    }
+  }
+}
+
+S3: {
+  icon: ./icons/s3.svg
+  Cloudwatch: {
+    shape: image
+    icon: ./icons/cloudwatch.svg
+  }
+}
+
+ECS.unad-cluster.webhooks -> RDS.userdb
+ECS.unad-cluster.webhooks -> ElastiCache
+ECS.unad-cluster.signup-site -> RDS.userdb
+ECS.unad-cluster.signup-site -> ElastiCache
+ECS.unad-cluster -> S3.Cloudwatch: Logs

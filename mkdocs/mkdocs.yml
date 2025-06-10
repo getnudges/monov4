@@ -1,0 +1,67 @@
+site_name: UnAd System Documentation
+site_url: https://docs.UnAd.io/
+remote_branch: docs
+
+nav:
+  - "Introduction": "index.md"
+  - "AWS Account Access": "aws-access.md"
+  - "Developer Setup": "dev-machine-setup.md"
+  - "Scripts": "scripts.md"
+  - "Docker": "docker.md"
+  - "infrastructure.md"
+  - Integrations:
+    - "Stripe": "integrations/stripe.md"
+    - "Twilio": "integrations/twilio.md"
+  - Terraform:
+    - "Terraform": "terraform/index.md"
+    - "Terraform Modules": "terraform/modules.md"
+  - AWS Services:
+    - "S3": "aws/s3.md"
+    - "ECS": "aws/ecs.md"
+  - Database:
+    - "Overview": "data/index.md"
+    - "Users": "data/userdb.md"
+    - "Payments": "data/paymentdb.md"
+    - "Products": "data/productdb.md"
+
+
+extra_css: [css/docs.css]
+
+plugins:
+  - d2:
+      dark_theme: 200
+      theme: 0
+  - search
+  - exclude:
+      glob:
+        - snippets/*
+
+theme:
+  name: material
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+
+markdown_extensions:
+  - pymdownx.snippets
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.superfences
+  - pymdownx.details
+  - admonition
+  - footnotes
+  - attr_list
+  - toc:
+      permalink: True
+
+
+

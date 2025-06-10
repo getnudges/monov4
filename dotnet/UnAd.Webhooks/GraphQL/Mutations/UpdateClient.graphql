@@ -1,0 +1,9 @@
+mutation UpdateClient($input: UpdateClientInput!) {
+  updateClient(input: $input) {
+    errors {
+      ... on Error {
+        message
+      }
+    }
+  }
+}

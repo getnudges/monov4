@@ -1,0 +1,47 @@
+name: Build and Deploy admin-ui to ECS
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        type: environment
+        required: true
+
+env:
+  ECR_REPOSITORY: unad/admin-ui
+  ECS_CLUSTER: unad-cluster
+  ECS_SERVICE: admin-ui
+  PROJECT_PATH: web/admin-ui
+  
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    environment: development
+    if: inputs.environment == 'development'
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v1
+      with:
+        node-version: '20'
+
+    - name: Install dependencies
+      run: npm install
+
+    - name: Build
+      run: npm run build
+      working-directory: ${{ env.PROJECT_PATH }}
+
+    - name: Deploy to S3
+      uses: jakejarvis/s3-sync-action@v0.5.1
+      with:
+        args: --acl public-read --delete
+      env:
+        AWS_S3_BUCKET: ${{ vars.ADMIN_SITE_S3_BUCKET }}
+        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        AWS_REGION: ${{ vars.AWS_REGION }}
+        SOURCE_DIR: '${{ env.PROJECT_PATH }}/build'
+    

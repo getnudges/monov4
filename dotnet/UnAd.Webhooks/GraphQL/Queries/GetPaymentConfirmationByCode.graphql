@@ -1,0 +1,5 @@
+query GetPaymentConfirmationByCode($confirmationCode: String!) {
+    paymentConfirmationByCode(confirmationCode: $confirmationCode) {
+        id
+    }
+}

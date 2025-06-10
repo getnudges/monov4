@@ -1,0 +1,64 @@
+Client Subscription Flow: {
+  shape: sequence_diagram
+
+  User: {
+    label: "User"
+    shape: image
+    icon: ../icons/user.svg
+  }
+
+  Client: {
+    label: "Sign Up UI"
+    shape: image
+    icon: ../icons/firefox.svg
+  }
+
+  AuthAPI: {
+    label: "Auth API"
+    shape: image
+    icon: ../icons/auth.svg
+  }
+
+  GraphQLAPI: {
+    label: "GraphQL API"
+    shape: image
+    icon: ../icons/graphql.svg
+  }
+
+  # Sign Up Flow
+  User -> Client: "Enter Phone Number"
+  Client -> AuthAPI: "Generate OTP"
+  AuthAPI -> User: "Send OTP"
+  User -> Client: "Enter OTP"
+  Client -> AuthAPI: "Verify OTP"
+  AuthAPI -> Client: "OTP Verified"
+  Client -> GraphQLAPI: "Create Client (kicks off Async Flow)"
+  Client -> User: "Redirect to Plan Selection"
+}
+
+Async Flow: {
+  shape: sequence_diagram
+
+  GraphQLAPI: {
+    label: "GraphQL API"
+    shape: image
+    icon: ../icons/graphql.svg
+  }
+  KafkaConsumer: {
+    shape: image
+    icon: ../icons/kafka-icon.svg
+  }
+  Stripe: {
+    shape: image
+    icon: ../icons/stripe.svg
+  }
+  Webhooks: {
+    shape: image
+    icon: ../icons/webhook.svg
+  }
+
+  GraphQLAPI -> KafkaConsumer: "Client Created Event"
+  KafkaConsumer -> Stripe: "Create Customer"
+  Stripe -> Webhooks: "Customer Created"
+  Webhooks -> GraphQLAPI: "Update Client with Customer ID"
+}

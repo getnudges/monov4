@@ -1,0 +1,192 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <!-- 
+    Microsoft ResX Schema 
+    
+    Version 2.0
+    
+    The primary goals of this format is to allow a simple XML format 
+    that is mostly human readable. The generation and parsing of the 
+    various data types are done through the TypeConverter classes 
+    associated with the data types.
+    
+    Example:
+    
+    ... ado.net/XML headers & schema ...
+    <resheader name="resmimetype">text/microsoft-resx</resheader>
+    <resheader name="version">2.0</resheader>
+    <resheader name="reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
+    <resheader name="writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
+    <data name="Name1"><value>this is my long string</value><comment>this is a comment</comment></data>
+    <data name="Color1" type="System.Drawing.Color, System.Drawing">Blue</data>
+    <data name="Bitmap1" mimetype="application/x-microsoft.net.object.binary.base64">
+        <value>[base64 mime encoded serialized .NET Framework object]</value>
+    </data>
+    <data name="Icon1" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
+        <value>[base64 mime encoded string representing a byte array form of the .NET Framework object]</value>
+        <comment>This is a comment</comment>
+    </data>
+                
+    There are any number of "resheader" rows that contain simple 
+    name/value pairs.
+    
+    Each data row contains a name, and value. The row also contains a 
+    type or mimetype. Type corresponds to a .NET class that support 
+    text/value conversion through the TypeConverter architecture. 
+    Classes that don't support this are serialized and stored with the 
+    mimetype set.
+    
+    The mimetype is used for serialized objects, and tells the 
+    ResXResourceReader how to depersist the object. This is currently not 
+    extensible. For a given mimetype the value must be set accordingly:
+    
+    Note - application/x-microsoft.net.object.binary.base64 is the format 
+    that the ResXResourceWriter will generate, however the reader can 
+    read any of the formats listed below.
+    
+    mimetype: application/x-microsoft.net.object.binary.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
+            : and then encoded with base64 encoding.
+    
+    mimetype: application/x-microsoft.net.object.soap.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Soap.SoapFormatter
+            : and then encoded with base64 encoding.
+
+    mimetype: application/x-microsoft.net.object.bytearray.base64
+    value   : The object must be serialized into a byte array 
+            : using a System.ComponentModel.TypeConverter
+            : and then encoded with base64 encoding.
+    -->
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="AnnouncementCancelled" xml:space="preserve">
+    <value>Anuncio cancelado.</value>
+  </data>
+  <data name="AnnouncementConfirm" xml:space="preserve">
+    <value>Confirme que desea enviar el siguiente anuncio:\\n\\n{smsBody}\\n\\nResponda con 'SEND' para enviar el anuncio o 'CANCEL' para cancelar.</value>
+  </data>
+  <data name="AnnouncementSent" xml:space="preserve">
+    <value>¡Su anuncio ha sido enviado a {count} suscriptores!</value>
+  </data>
+  <data name="AnnouncementTemplate" xml:space="preserve">
+    <value>¡{clientName} tiene un anuncio para ti!\\n\\n{smsBody}{link}</value>
+  </data>
+  <data name="ClientHelpMessage" xml:space="preserve">
+    <value>Comandos disponibles:\\n\\n- 'COMMANDS' para este mensaje\\n- 'STOP' para bloquear la comunicación desde este número\\n\\nTodos los demás mensajes se enviarán como anuncios a sus suscriptores.\\n\\nPuede ver su cuenta en {accountUrl}\\nPuede administrar su suscripción en {subUrl}\\n\\nSu enlace de suscripción para compartir es {shareUrl}</value>
+  </data>
+  <data name="NoMessagesRemaining" xml:space="preserve">
+    <value>Se han agotado los anuncios para enviar en este período de suscripción.</value>
+  </data>
+  <data name="NoPendingAnnouncement" xml:space="preserve">
+    <value>No tiene ningún anuncio pendiente para enviar.</value>
+  </data>
+  <data name="NotCustomer" xml:space="preserve">
+    <value>Parece que no es cliente de Un-Ad. Puede registrarse en https://unad.tech/</value>
+  </data>
+  <data name="NotInStopMode" xml:space="preserve">
+    <value>Envíe la palabra UNSUBSCRIBE para cancelar la suscripción a los anuncios.</value>
+  </data>
+  <data name="NotSubscriber" xml:space="preserve">
+    <value>Parece que no es suscriptor de Un-Ad.</value>
+  </data>
+  <data name="SubscriberHelpMessage" xml:space="preserve">
+    <value>Puede cancelar la suscripción a los anuncios enviando UNSUBSCRIBE a este número.</value>
+  </data>
+  <data name="SubscriptionNotActive" xml:space="preserve">
+    <value>Su suscripción no está activa. Por favor, contacte con soporte en support@theunad.com</value>
+  </data>
+  <data name="SupportMessage" xml:space="preserve">
+    <value>Para obtener ayuda, envíe un correo electrónico a support@theunad.com</value>
+  </data>
+  <data name="UnsubscribeAllSuccess" xml:space="preserve">
+    <value>Se ha cancelado su suscripción a todos los anuncios.</value>
+  </data>
+  <data name="UnsubscribeInvalidSelection" xml:space="preserve">
+    <value>Selección no válida. Elija de la lista anterior.</value>
+  </data>
+  <data name="UnsubscribeListEntry" xml:space="preserve">
+    <value>{index}) {clientName} - Responda con STOP {index} para cancelar la suscripción</value>
+  </data>
+  <data name="UnsubscribeListTemplate" xml:space="preserve">
+    <value>Está suscrito a los siguientes negocios:\\n\\n{list}\\n\\nEnvíe 'STOP ALL' para cancelar la suscripción a todos los anuncios.</value>
+  </data>
+  <data name="UnsubscribeSuccess" xml:space="preserve">
+    <value>Ha cancelado su suscripción a {clientName}.</value>
+  </data>
+  <data name="ClientOtpVerified" xml:space="preserve">
+    <value>¡Bienvenido a UnAd! Ahora que tiene una cuenta, puede continuar en su navegador o visitar {url} en cualquier momento para completar su registro.</value>
+  </data>
+  <data name="SendOtp" xml:space="preserve">
+    <value>Su código OTP es {otp}</value>
+  </data>
+  <data name="PriceTierUpdate" xml:space="preserve">
+    <value>Nivel de precio {priceTierId} actualizado</value>
+  </data>
+  <data name="Anything" xml:space="preserve">
+    <value>{body}</value>
+  </data>
+  <data name="NewSubscriberWelcome" xml:space="preserve">
+    <value>You have been successfully subscribed to receive announcements from {name}!</value>
+  </data>
+  <data name="ClientNewSubscriber" xml:space="preserve">
+    <value>You got a new subscriber!  That makes {count} so far!</value>
+  </data>
+</root>

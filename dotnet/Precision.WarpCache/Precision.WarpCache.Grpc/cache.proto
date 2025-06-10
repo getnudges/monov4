@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+option csharp_namespace = "Precision.WarpCache";
+
+service CacheGrpcService {
+    rpc Get (CacheRequest) returns (CacheResponse);
+    rpc Set (CacheRequest) returns (CacheResponse);
+    rpc Remove (CacheRequest) returns (CacheResponse);
+}
+
+message CacheRequest {
+    string key = 1;
+    string value = 2;
+    int64 expiration = 3; // Expiration time in seconds
+}
+
+message CacheResponse {
+    string value = 2;
+    bool success = 3;
+}

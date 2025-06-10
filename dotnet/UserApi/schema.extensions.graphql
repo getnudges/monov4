@@ -1,0 +1,3 @@
+extend type Client {
+	subscription: PlanSubscription
+}

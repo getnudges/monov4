@@ -1,0 +1,61 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+    <PropertyGroup>
+        <TargetFramework>net9.0</TargetFramework>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+        <UserSecretsId>c58f7845-0d92-40f2-83b1-aa413293feff</UserSecretsId>
+        <PublishAot>true</PublishAot>
+  </PropertyGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\UnAd.Auth\UnAd.Auth.csproj" />
+      <ProjectReference Include="..\UnAd.Data\UnAd.Data.csproj" />
+      <ProjectReference Include="..\UnAd.Kafka\UnAd.Kafka.csproj" />
+      <ProjectReference Include="..\UnAd.Redis\UnAd.Redis.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <PackageReference Include="Confluent.Kafka" Version="2.5.3" />
+      <PackageReference Include="HotChocolate.Subscriptions.Redis" Version="13.9.12" />
+      <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.8">
+        <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        <PrivateAssets>all</PrivateAssets>
+      </PackageReference>
+      <PackageReference Include="HotChocolate.AspNetCore.Authorization" Version="13.9.12" />
+      <PackageReference Include="HotChocolate.AspNetCore.CommandLine" Version="13.9.12" />
+      <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.8" />
+      <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.8" />
+      <PackageReference Include="Microsoft.Extensions.Http" Version="8.0.0" />
+      <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.0.8" />
+      <PackageReference Include="HotChocolate.AspNetCore" Version="13.9.12" />
+      <PackageReference Include="HotChocolate.Data.EntityFramework" Version="13.9.12" />
+      <PackageReference Include="Stripe.net" Version="45.11.0" />
+      <PackageReference Include="Twilio" Version="7.3.0" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Compile Remove="tests\**" />
+      <Compile Remove="TypeExtensions\**" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <EmbeddedResource Remove="tests\**" />
+      <EmbeddedResource Remove="TypeExtensions\**" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Content Remove="tests\**" />
+      <Content Remove="TypeExtensions\**" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <None Remove="tests\**" />
+      <None Remove="TypeExtensions\**" />
+    </ItemGroup>
+
+</Project>
+
+
+

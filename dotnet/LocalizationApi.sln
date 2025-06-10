@@ -1,0 +1,36 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.13.35825.156
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LocalizationApi", "LocalizationApi\LocalizationApi.csproj", "{F29E3EF8-5999-41E1-8EED-28FDF2BB1AC9}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{8EC462FD-D22E-90A8-E5CE-7E832BA40C5D}"
+	ProjectSection(SolutionItems) = preProject
+		.filenesting.json = .filenesting.json
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UnAd.Localization.Client", "UnAd.Localization.Client\UnAd.Localization.Client.csproj", "{47D7FD81-41E2-1B5C-AE85-E4F1CF771A6C}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{F29E3EF8-5999-41E1-8EED-28FDF2BB1AC9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F29E3EF8-5999-41E1-8EED-28FDF2BB1AC9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F29E3EF8-5999-41E1-8EED-28FDF2BB1AC9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F29E3EF8-5999-41E1-8EED-28FDF2BB1AC9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{47D7FD81-41E2-1B5C-AE85-E4F1CF771A6C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{47D7FD81-41E2-1B5C-AE85-E4F1CF771A6C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{47D7FD81-41E2-1B5C-AE85-E4F1CF771A6C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{47D7FD81-41E2-1B5C-AE85-E4F1CF771A6C}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {E9B04F85-0D48-4368-8ED3-43667D754AD9}
+	EndGlobalSection
+EndGlobal

@@ -1,0 +1,27 @@
+query GetPlan($id: ID!) {
+  plan(id: $id) {
+    description
+    features {
+      aiSupport
+      maxMessages
+      planId
+      supportTier
+    }
+    foreignServiceId
+    iconUrl
+    id
+    isActive
+    name
+    priceTiers {
+      createdAt
+      description
+      duration
+      iconUrl
+      id
+      name
+      planId
+      price
+      foreignServiceId
+    }
+  }
+}

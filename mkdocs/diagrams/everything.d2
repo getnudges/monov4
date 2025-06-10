@@ -1,0 +1,81 @@
+# https://icons.terrastruct.com/ for icons
+
+ElastiCache: {
+  shape: image
+  icon: ./icons/elasticache.svg
+}
+
+Twilio: {
+  label: ""
+  shape: image
+  icon: ./icons/twilio.svg
+}
+
+Stripe: {
+  label: ""
+  shape: image
+  icon: ./icons/stripe.svg
+}
+
+RDS: {
+  icon: ./icons/aurora.svg
+  label: "RDS"
+  ...@rds/dbs
+}
+
+ECS: {
+  icon: "./icons/ecs.svg"
+  unad-cluster: {
+    ...@ecs/containers
+  }
+}
+
+Cloudfront: {
+  shape: image
+  icon: ./icons/cloudfront.svg
+}
+Cloudwatch: {
+  shape: image
+  icon: ./icons/cloudwatch.svg
+}
+
+S3: {
+  icon: ./icons/s3.svg
+  admin-ui: {
+    icon: ./icons/react.svg
+  }
+}
+
+MSK: {
+  shape: image
+  icon: ./icons/msk.svg
+}
+
+Admin: {
+  shape: image
+  icon: ./icons/admin-user.svg
+}
+
+S3.admin-ui -> Cloudfront
+S3 -> Cloudwatch
+
+Admin -> Cloudfront: portal.unad.tech
+
+S3.admin-ui -> ECS.unad-cluster.graphql-gateway
+S3.admin-ui -> ECS.unad-cluster.auth-api
+
+ECS.unad-cluster.graphql-gateway -> ECS.unad-cluster.user-api
+ECS.unad-cluster.graphql-gateway -> ECS.unad-cluster.payment-api
+ECS.unad-cluster.graphql-gateway -> ECS.unad-cluster.product-api
+
+ECS.unad-cluster.user-api -> RDS.userdb
+ECS.unad-cluster.payment-api -> RDS.paymentdb
+ECS.unad-cluster.product-api -> RDS.productdb
+ECS.unad-cluster -> ElastiCache
+ECS -> S3: Logs
+
+Twilio -> ECS.unad-cluster.webhooks
+Stripe -> ECS.unad-cluster.webhooks
+
+ECS.unad-cluster.webhooks -> RDS.userdb
+ECS.unad-cluster.webhooks -> RDS.paymentdb

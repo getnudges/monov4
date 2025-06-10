@@ -1,0 +1,26 @@
+import { FC, ReactNode } from "react";
+import NavHeader from "./NavHeader";
+
+interface ResponsiveLayoutProps {
+  children: ReactNode;
+}
+
+const ResponsiveLayout: FC<ResponsiveLayoutProps> = ({ children }) => {
+  return (
+    <div className="flex flex-col min-h-screen min-w-full">
+      <NavHeader />
+
+      <main className="flex-grow w-full">
+        <div className="mx-auto px-4 py-6 sm:py-8">{children}</div>
+      </main>
+
+      <footer className="bg-secondary text-secondary-foreground">
+        <div className="container mx-auto px-4 py-4 sm:py-6 text-center text-sm sm:text-base">
+          <p>&copy; {new Date().getFullYear()} UnAd. All rights reserved.</p>
+        </div>
+      </footer>
+    </div>
+  );
+};
+
+export default ResponsiveLayout;

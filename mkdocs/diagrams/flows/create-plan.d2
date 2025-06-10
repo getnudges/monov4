@@ -1,0 +1,52 @@
+Create Plan Flow: {
+  shape: sequence_diagram
+
+  Client: {
+    label: "Admin UI"
+    shape: image
+    icon: ./icons/firefox.svg
+  }
+  ProductDb: {
+    label: "ProductDb"
+    shape: image
+    icon: ./icons/database.svg
+  }
+  GraphQLAPI: {
+    label: "GraphQL API"
+    shape: image
+    icon: ./icons/graphql.svg
+  }
+  Kafka: {
+    shape: image
+    icon: ./icons/kafka-icon.svg
+  }
+  KafkaConsumer: {
+    shape: image
+    icon: ./icons/process.svg
+  }
+  Stripe: {
+    shape: image
+    icon: ./icons/stripe.svg
+  }
+  Webhooks: {
+    shape: image
+    icon: ./icons/webhook.svg
+  }
+
+  Client -> GraphQLAPI: "Create Plan"
+  GraphQLAPI -> ProductDb: "Save Plan + Price Tiers"
+  GraphQLAPI -> Kafka: "Produce Plan Created Event"
+  Kafka -> KafkaConsumer: "Consume Plan Created Event"
+  KafkaConsumer -> Stripe: "Create Product"
+  Stripe -> Webhooks: "Send product.created webhook"
+  Webhooks -> GraphQLAPI -> ProductDb: "Patch Plan with Stripe Product ID"
+  GraphQLAPI -> Client: "Update UI with Stripe Product ID"
+  GraphQLAPI -> ProductDb: "Create Price Tiers"
+  GraphQLAPI -> Kafka: "Produce Price Tier Created Event(s)"
+  Kafka -> KafkaConsumer: "Consume Price Tier Created Event(s)"
+  KafkaConsumer -> Stripe: "Create Price(s)"
+  Stripe -> Webhooks: "Send price.created webhooks"
+  Webhooks -> GraphQLAPI: "Update Price Tiers with Stripe Price IDs"
+  GraphQLAPI -> ProductDb: "Patch Price Tiers"
+  GraphQLAPI -> Client: "Update UI with Stripe Price IDs"
+}

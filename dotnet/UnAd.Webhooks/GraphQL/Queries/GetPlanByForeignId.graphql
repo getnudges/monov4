@@ -1,0 +1,9 @@
+query GetPlanByForeignId($id: String!) {
+  planByForeignId(id: $id) {
+    id
+    priceTiers {
+      id
+      foreignServiceId
+    }
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "isRoot": true,
+  "tools": {
+    "hotchocolate.fusion.commandline": {
+      "version": "15.0.3",
+      "commands": ["fusion"],
+      "rollForward": false
+    },
+    "dotnet-ef": {
+      "version": "9.0.3",
+      "commands": ["dotnet-ef"],
+      "rollForward": false
+    },
+    "strawberryshake.tools": {
+      "version": "15.0.3",
+      "commands": ["dotnet-graphql"],
+      "rollForward": false
+    }
+  }
+}

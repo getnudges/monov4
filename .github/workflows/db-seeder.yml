@@ -1,0 +1,111 @@
+name: Seed DB on SSH Tunnel
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        type: environment
+        required: true
+      target:
+        description: 'Seed target'
+        required: true
+jobs:
+  build-dev:
+    runs-on: ubuntu-latest
+    environment: development
+    if: inputs.environment == 'development'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: '8.0'
+      
+      - name: Build seeder
+        run: |
+          dotnet publish dotnet/DbSeeder/DbSeeder.csproj -c Release -o app/ /p:UseAppHost=true
+    
+      - name: Setup SSH Keys
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.JUMPBOX_SSH_PRIVATE_KEY }}" > ~/.ssh/jumpbox_ed25519
+          chmod 600 ~/.ssh/jumpbox_ed25519
+
+      - name: Setup SSH Tunnel and Run DB Seed
+        if: github.event.inputs.target == 'db'
+        run: |
+          ssh -i ~/.ssh/jumpbox_ed25519 -o StrictHostKeyChecking=no -L 5050:${{ vars.DB_HOST }}:${{ vars.DB_PORT }} ubuntu@${{ vars.JUMPBOX_HOST }} -N & \
+          echo $! > ssh_tunnel.pid
+
+          ./app/seed db
+
+          kill -9 $(lsof -t -i :5050)
+        env:
+          ConnectionStrings__UserDb: "Host=localhost;Port=5050;Username=unad;Password=${{ secrets.DB_PASS }};Timeout=60;Database=userdb;"
+          STRIPE_API_KEY: ${{ secrets.STRIPE_API_KEY }}
+  
+      - name: Setup SSH Tunnel and Run Redis Seed
+        if: github.event.inputs.target == 'redis'
+        run: |
+          ssh -i ~/.ssh/jumpbox_ed25519 -o StrictHostKeyChecking=no -L 5050:${{ vars.REDIS_HOST }}:${{ vars.REDIS_PORT }} ubuntu@${{ vars.JUMPBOX_HOST }} -N & \
+          echo $! > ssh_tunnel.pid
+
+          ./app/seed redis
+
+          kill -9 $(lsof -t -i :5050)
+        env:
+          REDIS_URL: "localhost:5050,abortConnect=false"
+          STRIPE_API_KEY: ${{ secrets.STRIPE_API_KEY }}
+
+  build-prod:
+    runs-on: ubuntu-latest
+    environment: production
+    if: inputs.environment == 'production'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: '8.0'
+      
+      - name: Build seeder
+        run: |
+          dotnet publish dotnet/DbSeeder/DbSeeder.csproj -c Release -o app/ /p:UseAppHost=true
+    
+      - name: Setup SSH Keys
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.JUMPBOX_SSH_PRIVATE_KEY }}" > ~/.ssh/jumpbox_ed25519
+          chmod 600 ~/.ssh/jumpbox_ed25519
+
+      - name: Setup SSH Tunnel and Run DB Seed
+        if: github.event.inputs.target == 'db'
+        run: |
+          ssh -i ~/.ssh/jumpbox_ed25519 -o StrictHostKeyChecking=no -L 5050:${{ vars.DB_HOST }}:${{ vars.DB_PORT }} ubuntu@${{ vars.JUMPBOX_HOST }} -N & \
+          echo $! > ssh_tunnel.pid
+
+          ./app/seed db
+
+          kill -9 $(lsof -t -i :5050)
+        env:
+          ConnectionStrings__UserDb: "Host=localhost;Port=5050;Username=unad;Password=${{ secrets.DB_PASS }};Timeout=60;Database=userdb;"
+          STRIPE_API_KEY: ${{ secrets.STRIPE_API_KEY }}
+  
+      - name: Setup SSH Tunnel and Run Redis Seed
+        if: github.event.inputs.target == 'redis'
+        run: |
+          ssh -i ~/.ssh/jumpbox_ed25519 -o StrictHostKeyChecking=no -L 5050:${{ vars.REDIS_HOST }}:${{ vars.REDIS_PORT }} ubuntu@${{ vars.JUMPBOX_HOST }} -N & \
+          echo $! > ssh_tunnel.pid
+
+          ./app/seed redis
+
+          kill -9 $(lsof -t -i :5050)
+        env:
+          REDIS_URL: "localhost:5050,abortConnect=false"
+          STRIPE_API_KEY: ${{ secrets.STRIPE_API_KEY }}

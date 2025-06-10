@@ -1,0 +1,12 @@
+mutation PatchPriceTier($input: PatchPriceTierInput!) {
+  patchPriceTier(input: $input) {
+    errors {
+      ... on Error {
+        message
+      }
+    }
+    plan {
+      id
+    }
+  }
+}

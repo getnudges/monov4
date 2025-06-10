@@ -1,0 +1,14 @@
+merchant_service: {
+  shape: sql_table
+  id: SERIAL {constraint: primary_key}
+  name: VARCHAR(100) {constraint: NOT NULL}
+}
+
+payment_confirmation: {
+  shape: sql_table
+  id: UUID PRIMARY KEY DEFAULT uuid_generate_v4() {constraint: primary_key}
+  merchant_service_id: INT REFERENCES merchant_service(id) {constraint: foreign_key}
+  confirmation_code: VARCHAR(300) {constraint: NOT NULL}
+}
+
+payment_confirmation.merchant_service_id -> merchant_service.id

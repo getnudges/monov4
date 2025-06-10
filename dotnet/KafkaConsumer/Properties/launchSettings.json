@@ -1,0 +1,64 @@
+{
+  "profiles": {
+    "listen notifications": {
+      "commandName": "Project",
+      "commandLineArgs": "notifications",
+      "environmentVariables": {
+        "DOTNET_ENVIRONMENT": "Development",
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "OTLP_ENDPOINT_URL": "http://localhost:4317",
+        "HTTP_PORTS": "7100"
+      }
+    },
+    "listen plans": {
+      "commandName": "Project",
+      "commandLineArgs": "plans",
+      "environmentVariables": {
+        "DOTNET_ENVIRONMENT": "Development",
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "OTLP_ENDPOINT_URL": "http://localhost:4317",
+        "HTTP_PORTS": "7100"
+      }
+    },
+    "listen payments": {
+      "commandName": "Project",
+      "commandLineArgs": "payments",
+      "environmentVariables": {
+        "DOTNET_ENVIRONMENT": "Development",
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "OTLP_ENDPOINT_URL": "http://localhost:4317",
+        "HTTP_PORTS": "7100"
+      }
+    },
+    "listen clients": {
+      "commandName": "Project",
+      "commandLineArgs": "clients",
+      "environmentVariables": {
+        "DOTNET_ENVIRONMENT": "Development",
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "OTLP_ENDPOINT_URL": "http://localhost:4317",
+        "HTTP_PORTS": "7100"
+      }
+    },
+    "listen price-tiers": {
+      "commandName": "Project",
+      "commandLineArgs": "price-tiers",
+      "environmentVariables": {
+        "DOTNET_ENVIRONMENT": "Development",
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "OTLP_ENDPOINT_URL": "http://localhost:4317",
+        "HTTP_PORTS": "7100"
+      }
+    },
+    "listen plan-subscriptions": {
+      "commandName": "Project",
+      "commandLineArgs": "plan-subscriptions",
+      "environmentVariables": {
+        "DOTNET_ENVIRONMENT": "Development",
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "OTLP_ENDPOINT_URL": "http://localhost:4317",
+        "HTTP_PORTS": "7100"
+      }
+    }
+  }
+}

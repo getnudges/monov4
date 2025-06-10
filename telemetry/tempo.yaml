@@ -1,0 +1,31 @@
+server:
+  http_listen_port: 3200
+
+distributor:
+  receivers:
+    otlp:
+      protocols:
+        http:
+          endpoint: 0.0.0.0:4318
+        grpc:
+          endpoint: 0.0.0.0:4317
+
+storage:
+  trace:
+    backend: local
+    wal:
+      path: /tmp/tempo/wal
+    local:
+      path: /tmp/tempo/blocks
+
+metrics_generator:
+  storage:
+    path: /tmp/tempo/generator
+  processor:
+    span_metrics:
+      filter_policies:
+        - include:
+            match_type: strict
+            attributes:
+              - key: kind
+                value: SPAN_KIND_SERVER

@@ -1,0 +1,35 @@
+syntax = "proto3";
+
+option csharp_namespace = "LocalizationApi";
+
+package localization;
+
+// The localization service definition
+service LocalizationGrpcService {
+  // Gets a localized string based on a resource key and optional parameters
+  rpc GetLocalizedString (LocalizationRequest) returns (LocalizationResponse);
+}
+
+// The request message containing the resource key and substitution parameters
+message LocalizationRequest {
+  // The resource key to look up
+  string resource_key = 1;
+
+  string locale = 2;
+  
+  // Key-value pairs for parameter substitution in the localized string
+  map<string, string> parameters = 3;
+}
+
+// The response message containing the localized string
+message LocalizationResponse {
+  // The localized string with parameters applied
+  string localized_string = 1;
+  
+  // Indicates whether the request was successful
+  bool success = 2;
+  
+  // Error message if the localization failed
+  string error_message = 3;
+}
+

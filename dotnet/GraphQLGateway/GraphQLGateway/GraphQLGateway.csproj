@@ -1,0 +1,41 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+
+    <PropertyGroup>
+        <TargetFramework>net9.0</TargetFramework>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+      <UserSecretsId>46d3bcf6-8d8d-4526-98eb-5c76c887c1d0</UserSecretsId>
+  </PropertyGroup>
+
+    <ItemGroup>
+      <PackageReference Include="HotChocolate.AspNetCore.CommandLine" Version="15.1.0" />
+      <PackageReference Include="HotChocolate.Fusion" Version="15.1.0" />
+      <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="9.0.3" />
+      <PackageReference Include="Microsoft.AspNetCore.HeaderPropagation" Version="9.0.3" />
+      <PackageReference Include="Microsoft.Extensions.Http" Version="9.0.3" />
+      <PackageReference Include="OpenTelemetry.Exporter.Console" Version="1.11.2" />
+      <PackageReference Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.11.2" />
+      <PackageReference Include="OpenTelemetry.Exporter.Prometheus.AspNetCore" Version="1.11.0-beta.1" />
+      <PackageReference Include="OpenTelemetry.Extensions.Hosting" Version="1.11.2" />
+      <PackageReference Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.11.1" />
+      <PackageReference Include="OpenTelemetry.Instrumentation.Http" Version="1.11.1" />
+      <PackageReference Include="OpenTelemetry.Instrumentation.Runtime" Version="1.11.1" />
+      <PackageReference Include="Polly" Version="8.5.2" />
+      <PackageReference Include="Microsoft.Extensions.Http.Polly" Version="9.0.3" />
+      <PackageReference Include="HotChocolate.Data.EntityFramework" Version="15.1.0" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Content Include="*.fgp" CopyToOutputDirectory="Always" />
+      <Content Include="*.graphql" CopyToOutputDirectory="Always" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\..\Precision.WarpCache\Precision.WarpCache.Grpc.Client\Precision.WarpCache.Grpc.Client.csproj" />
+    </ItemGroup>
+
+</Project>
+
+
+

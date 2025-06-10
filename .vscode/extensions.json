@@ -1,0 +1,25 @@
+{
+    "recommendations": [
+        "dbaeumer.vscode-eslint",
+        "dotenv.dotenv-vscode",
+        "eamodio.gitlens",
+        "editorconfig.editorconfig",
+        "esbenp.prettier-vscode",
+        "github.vscode-github-actions",
+        "github.vscode-pull-request-github",
+        "graphql.vscode-graphql",
+        "graphql.vscode-graphql-syntax",
+        "gruntfuggly.todo-tree",
+        "hashicorp.terraform",
+        "jock.svg",
+        "meta.relay",
+        "ms-azuretools.vscode-docker",
+        "ms-vscode.live-server",
+        "ms-vsliveshare.vsliveshare",
+        "redhat.vscode-yaml",
+        "streetsidesoftware.code-spell-checker",
+        "streetsidesoftware.code-spell-checker-spanish",
+        "wallabyjs.wallaby-vscode",
+        "yoavbls.pretty-ts-errors"
+    ]
+}

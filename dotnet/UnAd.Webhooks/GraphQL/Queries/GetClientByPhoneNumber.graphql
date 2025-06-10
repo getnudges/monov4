@@ -1,0 +1,15 @@
+query GetClientByPhoneNumber($phoneNumber: String!) {
+  clientByPhoneNumber(phoneNumber: $phoneNumber) {
+    locale
+    subscription {
+      status
+    }
+    subscribers {
+      nodes {
+        id
+        fullPhone
+        locale
+      }
+    }
+  }
+}

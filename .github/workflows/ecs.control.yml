@@ -1,0 +1,87 @@
+name: Update ECS service
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        type: environment
+        required: true
+      action:
+        description: 'Action to perform (update, stop, start)'
+        required: true
+      service:
+        description: 'Name of the ECS service to update'
+        required: true
+
+env:
+  ECS_CLUSTER: unad-cluster
+  
+jobs:
+  run-dev:
+    runs-on: ubuntu-latest
+    environment: development
+    if: inputs.environment == 'development'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+        
+      - name: Update ECS service
+        if: github.event.inputs.action == 'update'
+        run: |
+          aws ecs update-service --cluster $ECS_CLUSTER --service ${{ github.event.inputs.service }} --force-new-deployment
+  
+      - name: Stop ECS service
+        if: github.event.inputs.action == 'stop'
+        run: |
+          aws ecs update-service --cluster $ECS_CLUSTER --service ${{ github.event.inputs.service }} --desired-count 0
+  
+      - name: Start ECS service
+        if: github.event.inputs.action == 'start'
+        run: |
+          aws ecs update-service --cluster $ECS_CLUSTER --service ${{ github.event.inputs.service }} --desired-count 1
+  run-prod:
+    runs-on: ubuntu-latest
+    environment: production
+    if: inputs.environment == 'production'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+        
+      - name: Update ECS service
+        if: github.event.inputs.action == 'update'
+        run: |
+          aws ecs update-service --cluster $ECS_CLUSTER --service ${{ github.event.inputs.service }} --force-new-deployment
+  
+      - name: Stop ECS service
+        if: github.event.inputs.action == 'stop'
+        run: |
+          aws ecs update-service --cluster $ECS_CLUSTER --service ${{ github.event.inputs.service }} --desired-count 0
+  
+      - name: Start ECS service
+        if: github.event.inputs.action == 'start'
+        run: |
+          aws ecs update-service --cluster $ECS_CLUSTER --service ${{ github.event.inputs.service }} --desired-count 1
+      

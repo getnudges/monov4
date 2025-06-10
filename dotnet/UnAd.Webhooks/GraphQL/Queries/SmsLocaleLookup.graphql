@@ -1,0 +1,8 @@
+query SmsLocaleLookup($phoneNumber: String!) {
+    clientByPhoneNumber(phoneNumber: $phoneNumber) {
+        locale
+    }
+    subscriberByPhoneNumber(phoneNumber: $phoneNumber) {
+      locale
+    }
+}

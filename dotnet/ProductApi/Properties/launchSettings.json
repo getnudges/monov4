@@ -1,0 +1,21 @@
+{
+  "profiles": {
+    "http": {
+      "commandName": "Project",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "OTLP_ENDPOINT_URL": "http://localhost:4317"
+      },
+      "dotnetRunMessages": true,
+      "applicationUrl": "http://::5200"
+    },
+    "export": {
+      "commandName": "Project",
+      "commandLineArgs": "schema export --output schema.graphql",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      },
+      "dotnetRunMessages": true
+    }
+  }
+}

@@ -1,0 +1,8 @@
+query GetClientByCustomerId($customerId: String!) {
+    clientByCustomerId(customerId: $customerId) {
+        clientId
+        phoneNumber
+        name
+        locale
+    }
+}

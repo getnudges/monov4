@@ -1,0 +1,3 @@
+#root {
+    @apply min-w-full mx-auto sm:max-w-screen-xl max-w-screen-lg;
+  }
