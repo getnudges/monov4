@@ -1,6 +1,9 @@
-if ($PSVersionTable.Platform -eq 'Unix') {
-    $env:COMPOSE_BAKE="true"
-}
+# if ($PSVersionTable.Platform -eq 'Unix') {
+$env:COMPOSE_BAKE = "true"
+# }
+
+# Generate environment files if they don't exist
+./initialize-env.ps1
     
 docker-compose up -d keycloak
 
