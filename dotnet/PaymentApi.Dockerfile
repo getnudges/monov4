@@ -1,3 +1,4 @@
+# syntax=docker/dockerfile:1
 FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 ARG GRAPH_MONITOR_URL
 
@@ -14,13 +15,16 @@ COPY Nudges.HotChocolate.Utils/*.csproj ./Nudges.HotChocolate.Utils/
 COPY PaymentApi/*.csproj ./PaymentApi/
 COPY Nudges.Configuration/*.csproj ./Nudges.Configuration/
 
-RUN dotnet restore PaymentApi/PaymentApi.csproj
+RUN --mount=type=cache,target=/root/.nuget/packages \
+    dotnet restore PaymentApi/PaymentApi.csproj
 COPY . .
 WORKDIR /src/PaymentApi
-RUN dotnet build PaymentApi.csproj -c Release -o /app
+RUN --mount=type=cache,target=/root/.nuget/packages \
+    dotnet build PaymentApi.csproj -c Release -o /app
 
 FROM build AS publish
-RUN dotnet publish PaymentApi.csproj -c Release -o /src/publish /p:UseAppHost=false
+RUN --mount=type=cache,target=/root/.nuget/packages \
+    dotnet publish PaymentApi.csproj -c Release -o /src/publish /p:UseAppHost=false
 
 FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS final
 WORKDIR /app

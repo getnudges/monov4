@@ -20,17 +20,19 @@ services:
       - Nudges
     volumes:
       - ./keycloak/data:/opt/keycloak/data/import
+      - ./keycloak/certs:/opt/keycloak/certs
     build:
       context: ./keycloak
     command: >
       start-dev 
       --import-realm 
-      --hostname=http://keycloak.local:8081
-      --hostname-admin=http://keycloak.local:8081
+      --hostname=https://keycloak.local:8081
+      --hostname-admin=https://keycloak.local:8081
       --hostname-backchannel-dynamic=false
       --hostname-strict=true
       --proxy-headers=xforwarded
-      --spi-cookie-cookie-secure=none
+      --https-certificate-file=/opt/keycloak/certs/tls.crt
+      --https-certificate-key-file=/opt/keycloak/certs/tls.key
     env_file:
       - ./keycloak/.env.docker
     depends_on:
@@ -38,6 +40,12 @@ services:
       - maildev
     ports:
       - "8080:8080"
+    # healthcheck:
+    #   test: ["CMD-SHELL", "exec 3<>/dev/tcp/localhost/9000 && echo -e 'GET /health/ready HTTP/1.1\\r\\nHost: localhost\\r\\nConnection: close\\r\\n\\r\\n' >&3 && cat <&3 | grep -q '200 OK'"]
+    #   interval: 10s
+    #   timeout: 5s
+    #   retries: 30
+    #   start_period: 60s
 
   keycloak-proxy:
     image: nginx:alpine
@@ -45,6 +53,7 @@ services:
     hostname: keycloak-proxy
     volumes:
       - ./keycloak/proxy.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./keycloak/certs:/etc/nginx/certs:ro
     ports:
       - "8081:80"
     depends_on:
@@ -286,6 +295,9 @@ services:
       - Nudges
     build:
       context: ./web/new-admin
+    volumes:
+      - ./keycloak/certs/admin.crt:/etc/nginx/certs/admin.crt:ro
+      - ./keycloak/certs/admin.key:/etc/nginx/certs/admin.key:ro
     ports:
       - "5050:5050"
     environment:

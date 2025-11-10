@@ -12,6 +12,7 @@ FROM nginx:1.25-alpine AS runner
 
 RUN rm /etc/nginx/conf.d/default.conf
 COPY admin-ui.nginx.conf /etc/nginx/conf.d/default.conf
+RUN mkdir -p /etc/nginx/certs
 
 COPY --from=builder /app/dist /usr/share/nginx/html
 ENTRYPOINT ["nginx", "-g", "daemon off;"]

@@ -1,6 +1,6 @@
 # get-secrets.ps1
 # Load admin credentials from .env file
-$envContent = Get-Content -Path "$PSScriptRoot/.env"
+$envContent = Get-Content -Path "$PSScriptRoot/.env.docker"
 $envVars = @{}
 
 foreach ($line in $envContent) {
@@ -15,8 +15,9 @@ foreach ($line in $envContent) {
 
 $keycloakUrl = $envVars["KC_URL"]
 $realm = $envVars["KC_REALM"]
-$adminUser = $envVars["KC_ADMIN_USER"]
-$adminPassword = $envVars["KC_ADMIN_PASSWORD"]
+$adminUser = $envVars["KEYCLOAK_ADMIN"]
+$adminPassword = $envVars["KEYCLOAK_ADMIN_PASSWORD"]
+
 
 # Get admin token
 $tokenResponse = Invoke-RestMethod -Method Post `
