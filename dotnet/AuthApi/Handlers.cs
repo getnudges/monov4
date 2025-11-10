@@ -114,6 +114,7 @@ internal static class Handlers {
         var isDev = httpContext.RequestServices.GetRequiredService<IWebHostEnvironment>().IsDevelopment();
         httpContext.Response.Cookies.Append("TokenId", tokenId, new CookieOptions {
             HttpOnly = true,
+            Secure = true,
             SameSite = isDev ? SameSiteMode.Lax : SameSiteMode.Strict,
             Expires = DateTimeOffset.UtcNow.AddSeconds(token.ExpiresIn)
         });

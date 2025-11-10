@@ -3,7 +3,6 @@ networks:
     driver: bridge
 
 services:
-  
   maildev:
     hostname: maildev
     container_name: maildev
@@ -26,8 +25,8 @@ services:
     command: >
       start-dev 
       --import-realm 
-      --hostname=https://keycloak.local:8081
-      --hostname-admin=https://keycloak.local:8081
+      --hostname=http://keycloak.local:8081
+      --hostname-admin=http://keycloak.local:8081
       --hostname-backchannel-dynamic=false
       --hostname-strict=true
       --proxy-headers=xforwarded
@@ -38,22 +37,18 @@ services:
     depends_on:
       - postgres
       - maildev
-    ports:
-      - "8080:8080"
     # healthcheck:
     #   test: ["CMD-SHELL", "exec 3<>/dev/tcp/localhost/9000 && echo -e 'GET /health/ready HTTP/1.1\\r\\nHost: localhost\\r\\nConnection: close\\r\\n\\r\\n' >&3 && cat <&3 | grep -q '200 OK'"]
     #   interval: 10s
     #   timeout: 5s
     #   retries: 30
     #   start_period: 60s
-
   keycloak-proxy:
     image: nginx:alpine
     container_name: keycloak-proxy
     hostname: keycloak-proxy
     volumes:
       - ./keycloak/proxy.conf:/etc/nginx/conf.d/default.conf:ro
-      - ./keycloak/certs:/etc/nginx/certs:ro
     ports:
       - "8081:80"
     depends_on:
@@ -122,7 +117,7 @@ services:
     container_name: loki
     networks:
       - Nudges
-    ports:  
+    ports:
       - "3100:3100"
       - "9096:9096"
     command: -config.file=/etc/loki/config.yaml
@@ -132,7 +127,7 @@ services:
   promtail:
     image: grafana/promtail:latest
     container_name: promtail
-    ports:  
+    ports:
       - "9080:9080"
     networks:
       - Nudges
@@ -140,7 +135,6 @@ services:
     volumes:
       - ./telemetry/promtail-config.yaml:/etc/promtail/config.yaml
       - ./telemetry/promtail:/tmp/promtail
-
 
   prometheus:
     hostname: prometheus
@@ -295,9 +289,6 @@ services:
       - Nudges
     build:
       context: ./web/new-admin
-    volumes:
-      - ./keycloak/certs/admin.crt:/etc/nginx/certs/admin.crt:ro
-      - ./keycloak/certs/admin.key:/etc/nginx/certs/admin.key:ro
     ports:
       - "5050:5050"
     environment:
@@ -702,7 +693,7 @@ services:
       KAFKA_CLUSTERS_0_METRICS_PORT: 9997
       KAFKA_CLUSTERS_0_KAFKACONNECT_0_NAME: first
       KAFKA_CLUSTERS_0_KAFKACONNECT_0_ADDRESS: http://kafka-connect:8083
-      DYNAMIC_CONFIG_ENABLED: 'true'
+      DYNAMIC_CONFIG_ENABLED: "true"
 
   schemaregistry:
     container_name: schemaregistry
