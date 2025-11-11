@@ -74,10 +74,10 @@ internal static class Handlers {
 
         // TODO: Clean up
         var op = await result.Match(err => Results.Problem(err.Message), async () =>
-            await tokenClient.GetTokenAsync(credentials.PhoneNumber, tempPassword).Map(async token => {
+            await tokenClient.GetUserTokenAsync(credentials.PhoneNumber, tempPassword).Map(async token => {
                 var tokenId = Guid.NewGuid().ToString("N");
                 await cache.SetToken(tokenId, token.AccessToken, token.ExpiresIn);
-                AttachTokenIdCookie(httpContext, token, tokenId);
+                httpContext.AttachTokenIdCookie(token, tokenId);
                 return Results.Ok();
             }));
 
@@ -105,23 +105,13 @@ internal static class Handlers {
             await cache.RemoveOidcState(state);
             var tokenId = Guid.NewGuid().ToString("N");
             await cache.SetToken(tokenId, token.AccessToken, token.ExpiresIn);
-            AttachTokenIdCookie(httpContext, token, tokenId);
+            httpContext.AttachTokenIdCookie(token, tokenId);
             return Results.Redirect(oauthState.RedirectUri);
         }, e => Results.Problem(e.Message));
     }
 
-    private static void AttachTokenIdCookie(HttpContext httpContext, TokenResponse token, string tokenId) {
-        var isDev = httpContext.RequestServices.GetRequiredService<IWebHostEnvironment>().IsDevelopment();
-        httpContext.Response.Cookies.Append("TokenId", tokenId, new CookieOptions {
-            HttpOnly = true,
-            Secure = true,
-            SameSite = isDev ? SameSiteMode.Lax : SameSiteMode.Strict,
-            Expires = DateTimeOffset.UtcNow.AddSeconds(token.ExpiresIn)
-        });
-    }
-
     public static async Task<IResult> OAuthLogin(string redirectUri, IConfiguration config, IOptions<OidcConfig> oidcConfig, HttpContext httpContext, ICacheClient<string> cache) {
-        var baseUrl = new Uri($"{config.GetOidcServerUrl()}/realms/{oidcConfig.Value.Realm}/protocol/openid-connect/auth");
+        var baseUrl = new Uri($"{config.GetOidcServerAuthUrl()}/realms/{oidcConfig.Value.Realm}/protocol/openid-connect/auth");
         var host = httpContext.Request.Headers["X-Forwarded-Host"].FirstOrDefault() ?? httpContext.Request.Host.Host;
         var port = httpContext.Request.Headers["X-Forwarded-Port"].FirstOrDefault() ?? httpContext.Request.Host.Port?.ToString(CultureInfo.InvariantCulture)
                    ?? (httpContext.Request.Scheme == "https" ? "443" : "80");
@@ -173,6 +163,14 @@ internal static class HttpRequestExtensions {
         }
         return locale;
     }
+
+    public static void AttachTokenIdCookie(this HttpContext httpContext, TokenResponse token, string tokenId) =>
+        httpContext.Response.Cookies.Append("TokenId", tokenId, new CookieOptions {
+            HttpOnly = true,
+            Secure = true,
+            SameSite = SameSiteMode.Lax,
+            Expires = DateTimeOffset.UtcNow.AddSeconds(token.ExpiresIn)
+        });
 }
 
 public record struct OAuthState(string RedirectUri, string InternalRedirect, Guid Nonce);

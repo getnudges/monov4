@@ -131,7 +131,7 @@ public class HandlersTests {
             });
         _mockCache.Setup(c => c.GetAsync($"otp:{credentials.PhoneNumber}:secret", It.IsAny<CancellationToken>())).ReturnsAsync("base32Key");
         var otp = new Totp(Base32Encoding.ToBytes("base32Key"), 300);
-        _mockTokenClient.Setup(a => a.GetTokenAsync(credentials.PhoneNumber, It.IsAny<string>()))
+        _mockTokenClient.Setup(a => a.GetUserTokenAsync(credentials.PhoneNumber, It.IsAny<string>()))
             .Returns(Task.FromResult(Result.Success<TokenResponse, OidcException>(new TokenResponse("", 0))));
         _mockTokenClient.Setup(a => a.CreateUser(It.IsAny<UserRepresentation>()))
             .Returns(Task.FromResult(Maybe<OidcException>.None));

@@ -4,7 +4,7 @@
   "extensions": {
     "strawberryShake": {
       "name": "NudgesClient",
-      "url": "http://localhost:5900/graphql/",
+      "url": "https://localhost:5900/graphql/",
       "records": {
         "inputs": false,
         "entities": false

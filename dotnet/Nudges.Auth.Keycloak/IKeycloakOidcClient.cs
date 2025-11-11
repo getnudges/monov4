@@ -13,7 +13,7 @@ public interface IKeycloakOidcClient {
     /// </summary>
     /// <param name="username">User's username</param>
     /// <param name="password">User's password</param>
-    public Task<Result<TokenResponse, OidcException>> GetTokenAsync(string username, string password);
+    public Task<Result<TokenResponse, OidcException>> GetUserTokenAsync(string username, string password);
     /// <summary>
     /// Retrieves a token from Keycloak using the authorization code grant type.
     /// </summary>

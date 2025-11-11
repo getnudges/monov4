@@ -28,14 +28,14 @@ export default defineConfig({
     port: 6060,
     proxy: {
       "^/auth/.*": {
-        target: "http://localhost:5555",
+        target: "https://localhost:5555",
         rewrite(path) {
           return path.replace(/^\/auth/, "");
         },
         changeOrigin: true,
       },
       "/graphql": {
-        target: "http://localhost:5900",
+        target: "https://localhost:5900",
         ws: true,
         rewriteWsOrigin: true,
       },

@@ -2,13 +2,13 @@ using System.Net.Http.Json;
 using System.Text.Json.Serialization;
 using System.Text.Json.Serialization.Metadata;
 using Keycloak.AuthServices.Sdk.Admin.Models;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Monads;
-using Nudges.Auth;
 
 namespace Nudges.Auth.Keycloak;
 
-public sealed class KeycloakOidcClient(HttpClient client, IOptions<OidcConfig> config) : IKeycloakOidcClient {
+public sealed class KeycloakOidcClient(HttpClient client, IOptions<OidcConfig> config, ILogger<KeycloakOidcClient> logger) : IKeycloakOidcClient, IDisposable {
     private readonly HttpClient _client = client;
     private readonly OidcConfig _config = config.Value;
 
@@ -17,22 +17,28 @@ public sealed class KeycloakOidcClient(HttpClient client, IOptions<OidcConfig> c
             var response = await _client.SendAsync(request);
             if (!response.IsSuccessStatusCode) {
                 var body = await response.Content.ReadFromJsonAsync(AuthApiErrorContext.Default.AuthApiError);
-                return body is null
-                    ? new OidcException("Could not parse error response")
-                    : OidcException.FromApiError(body);
+                if (body is null) {
+                    return new OidcException("Could not parse error response");
+                }
+                var exception = OidcException.FromApiError(body);
+                logger.LogRequestError("Request failed: {Error}", exception);
+                return exception;
             }
 
             var result = await response.Content.ReadFromJsonAsync(jsonTypeInfo);
             if (result is null) {
-                return new OidcException($"Could not parse {typeof(T)} response.");
+                var exception = new OidcException($"Could not parse {typeof(T)} response.");
+                logger.LogRequestError("Could not parse {Type} response.", exception);
+                return exception;
             }
             return result;
         } catch (Exception ex) {
+            logger.LogRequestError("Request failed: {Message}", ex);
             return OidcException.FromException("Request failed.", ex);
         }
     }
 
-    public async Task<Result<TokenResponse, OidcException>> GetTokenAsync(string username, string password) {
+    public async Task<Result<TokenResponse, OidcException>> GetUserTokenAsync(string username, string password) {
         var request = new HttpRequestMessage(HttpMethod.Post, $"/realms/{_config.Realm}/protocol/openid-connect/token") {
             Content = new FormUrlEncodedContent(new Dictionary<string, string> {
                 { "client_id", _config.ClientId },
@@ -63,14 +69,15 @@ public sealed class KeycloakOidcClient(HttpClient client, IOptions<OidcConfig> c
     private async Task<Result<TokenResponse, OidcException>> GetAdminToken() {
         var request = new HttpRequestMessage(HttpMethod.Post, $"/realms/master/protocol/openid-connect/token") {
             Content = new FormUrlEncodedContent(new Dictionary<string, string> {
-                { "client_id", _config.AdminCredentials.AdminClientId },
-                { "grant_type", "password" },
-                { "username", _config.AdminCredentials.Username },
-                { "password", _config.AdminCredentials.Password },
+                { "client_id", _config.ClientId },
+                { "client_secret", _config.ClientSecret },
+                { "grant_type", "client_credentials" },
             })
         };
         return await SendRequestAsync(request, TokenResponseContext.Default.TokenResponse);
     }
+
+
 
     public async Task<Maybe<OidcException>> CreateUser(UserRepresentation userRepresentation) =>
         await GetAdminToken().MapError(async adminToken => {
@@ -92,6 +99,7 @@ public sealed class KeycloakOidcClient(HttpClient client, IOptions<OidcConfig> c
                 return OidcException.FromException("Could not retrieve token.", e);
             }
         });
+    public void Dispose() => _client.Dispose();
 }
 
 public class OidcException : Exception {

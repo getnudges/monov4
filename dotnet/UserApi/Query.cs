@@ -123,10 +123,23 @@ public sealed class QueryObjectType : ObjectType<Query> {
             .Type<UserType>()
             .Resolve(async context => {
                 var user = context.GetUser();
+
+                if (user?.FindAll(ClaimTypes.Role).Select(c => c.Value).ToList() is not { } roles) {
+                    return null;
+                }
+
                 using var dbContext = await context.Services.GetRequiredService<IDbContextFactory<UserDbContext>>().CreateDbContextAsync();
-                var roles = user?.FindAll(ClaimTypes.Role).Select(c => c.Value).ToList();
-                if ((roles?.Any(r => r == ClaimValues.Roles.Admin) == true || roles?.Any(r => r == ClaimValues.Roles.Service) == true) && user?.FindFirst(WellKnownClaims.Sub)?.Value is string adminSub) {
-                    var client = await dbContext.Clients.FirstOrDefaultAsync(s => s.Subject == adminSub);
+
+                if (roles?.Any(r => r == ClaimValues.Roles.Subscriber) == true && user?.FindFirst(WellKnownClaims.PhoneNumber)?.Value is string subPhone) {
+                    return await dbContext.Subscribers.FirstOrDefaultAsync(s => s.PhoneNumber == subPhone);
+                }
+
+                if (roles?.Any(r => r == ClaimValues.Roles.Client) == true && user?.FindFirst(ClaimTypes.NameIdentifier)?.Value is string clientSub) {
+                    return await dbContext.Clients.FirstOrDefaultAsync(s => s.Subject == clientSub);
+                }
+
+                if (user?.FindFirst(WellKnownClaims.Sub)?.Value is string userSub) {
+                    var client = await dbContext.Clients.FirstOrDefaultAsync(s => s.Subject == userSub);
                     if (client is null) {
                         return null;
                     }
@@ -135,12 +148,6 @@ public sealed class QueryObjectType : ObjectType<Query> {
                         return null;
                     }
                     return admin;
-                }
-                if (roles?.Any(r => r == ClaimValues.Roles.Client) == true && user?.FindFirst(ClaimTypes.NameIdentifier)?.Value is string clientSub) {
-                    return await dbContext.Clients.FirstOrDefaultAsync(s => s.Subject == clientSub);
-                }
-                if (roles?.Any(r => r == ClaimValues.Roles.Subscriber) == true && user?.FindFirst(WellKnownClaims.PhoneNumber)?.Value is string subPhone) {
-                    return await dbContext.Subscribers.FirstOrDefaultAsync(s => s.PhoneNumber == subPhone);
                 }
                 return null;
             });

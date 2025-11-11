@@ -5,6 +5,7 @@ node_modules/
 !.env.project
 !.env.vault
 !.env.template
+!.env.master.template
 
 # Local .terraform directories
 **/.terraform/*

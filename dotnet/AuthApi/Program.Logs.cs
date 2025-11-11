@@ -2,6 +2,8 @@
 internal static partial class HandlerLogs {
     [LoggerMessage(Level = LogLevel.Warning)]
     public static partial void LogException(this ILogger<Program> logger, string message, Exception exception);
+    [LoggerMessage(Level = LogLevel.Warning)]
+    public static partial void LogRequestException(this ILogger<Program> logger, string message, Exception exception);
 
     [LoggerMessage(Level = LogLevel.Warning, Message = "Could not generate OTP")]
     public static partial void LogOtpGenerationException(this ILogger<Program> logger, Exception exception);
