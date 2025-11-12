@@ -3,17 +3,17 @@
   "isRoot": true,
   "tools": {
     "hotchocolate.fusion.commandline": {
-      "version": "15.1.0",
+      "version": "15.1.11",
       "commands": ["fusion"],
       "rollForward": false
     },
     "dotnet-ef": {
-      "version": "9.0.3",
+      "version": "9.0.10",
       "commands": ["dotnet-ef"],
       "rollForward": false
     },
     "strawberryshake.tools": {
-      "version": "15.1.0",
+      "version": "15.1.11",
       "commands": ["dotnet-graphql"],
       "rollForward": false
     }

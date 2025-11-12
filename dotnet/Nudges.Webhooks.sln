@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 17
-VisualStudioVersion = 17.8.34525.116
+# Visual Studio Version 18
+VisualStudioVersion = 18.0.11205.157 d18.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Nudges.Webhooks", "Nudges.Webhooks\Nudges.Webhooks.csproj", "{503BBBCF-AAE6-4999-B470-4E047DA61286}"
 EndProject
@@ -24,6 +24,8 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Precision.WarpCache.Grpc.Client", "Precision.WarpCache\Precision.WarpCache.Grpc.Client\Precision.WarpCache.Grpc.Client.csproj", "{41061286-70D3-7C46-826E-8906697A9942}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Nudges.Configuration", "Nudges.Configuration\Nudges.Configuration.csproj", "{7C641EF9-4E3B-D2C4-01D4-309E455DB67B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Nudges.Kafka.Events", "Nudges.Kafka.Events\Nudges.Kafka.Events.csproj", "{CF98B33A-84CB-0F8B-E6D2-C43702DD72B5}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -75,6 +77,10 @@ Global
 		{7C641EF9-4E3B-D2C4-01D4-309E455DB67B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7C641EF9-4E3B-D2C4-01D4-309E455DB67B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7C641EF9-4E3B-D2C4-01D4-309E455DB67B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CF98B33A-84CB-0F8B-E6D2-C43702DD72B5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CF98B33A-84CB-0F8B-E6D2-C43702DD72B5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CF98B33A-84CB-0F8B-E6D2-C43702DD72B5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CF98B33A-84CB-0F8B-E6D2-C43702DD72B5}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

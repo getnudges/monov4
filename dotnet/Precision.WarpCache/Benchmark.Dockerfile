@@ -1,5 +1,5 @@
 # Use .NET 9 SDK as the base image
-FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /app
 
 # Copy project and restore dependencies

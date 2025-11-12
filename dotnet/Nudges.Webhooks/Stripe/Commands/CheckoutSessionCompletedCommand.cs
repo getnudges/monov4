@@ -21,7 +21,7 @@ internal sealed class CheckoutSessionCompletedCommand(INudgesClient nudgesClient
                     ClientId = client.ClientId,
                     PaymentConfirmationId = confirmation.PaymentConfirmationId,
                     // TODO: First() is not safe here, obviously
-                    PriceTierForeignServiceId = invoice.Lines.First().Price.Id,
+                    PriceTierForeignServiceId = invoice.Lines.First().Id,
                 }, cancellationToken));
         });
 

@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
-    <TargetFramework>net9.0</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <InvariantGlobalization>false</InvariantGlobalization>
@@ -26,29 +26,27 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.AspNetCore.HeaderPropagation" Version="9.0.3" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="9.0.3" />
-    <PackageReference Include="Microsoft.Extensions.Localization" Version="9.0.3" />
-    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.4" />
+    <PackageReference Include="Microsoft.AspNetCore.HeaderPropagation" Version="10.0.0" />
     <PackageReference Include="OpenTelemetry.Instrumentation.GrpcNetClient" Version="1.11.0-beta.2" />
-    <PackageReference Include="Polly" Version="8.5.2" />
+    <PackageReference Include="Polly" Version="8.6.4" />
     <PackageReference Include="Polly.Contrib.WaitAndRetry" Version="1.1.1" />
-    <PackageReference Include="StrawberryShake.Server" Version="15.1.0" />
-    <PackageReference Include="StrawberryShake.Transport.Http" Version="15.1.0" />
-    <PackageReference Include="Stripe.net" Version="47.4.0" />
-    <PackageReference Include="Twilio" Version="7.9.1" />
-    <PackageReference Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.11.2" />
-    <PackageReference Include="OpenTelemetry.Exporter.Console" Version="1.11.2" />
+    <PackageReference Include="StrawberryShake.Server" Version="15.1.11" />
+    <PackageReference Include="StrawberryShake.Transport.Http" Version="15.1.11" />
+    <PackageReference Include="Stripe.net" Version="49.2.0" />
+    <PackageReference Include="Twilio" Version="7.13.6" />
+    <PackageReference Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.13.1" />
+    <PackageReference Include="OpenTelemetry.Exporter.Console" Version="1.13.1" />
     <PackageReference Include="OpenTelemetry.Exporter.Prometheus.AspNetCore" Version="1.11.0-beta.1" />
-    <PackageReference Include="OpenTelemetry.Extensions.Hosting" Version="1.11.2" />
-    <PackageReference Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.11.1" />
-    <PackageReference Include="OpenTelemetry.Instrumentation.Http" Version="1.11.1" />
-    <PackageReference Include="OpenTelemetry.Instrumentation.Runtime" Version="1.11.1" />
+    <PackageReference Include="OpenTelemetry.Extensions.Hosting" Version="1.13.1" />
+    <PackageReference Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.13.0" />
+    <PackageReference Include="OpenTelemetry.Instrumentation.Http" Version="1.13.0" />
+    <PackageReference Include="OpenTelemetry.Instrumentation.Runtime" Version="1.13.0" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Monads\Monads.csproj" />
     <ProjectReference Include="..\Nudges.Configuration\Nudges.Configuration.csproj" />
+    <ProjectReference Include="..\Nudges.Kafka.Events\Nudges.Kafka.Events.csproj" />
     <ProjectReference Include="..\Precision.WarpCache\Precision.WarpCache.Grpc.Client\Precision.WarpCache.Grpc.Client.csproj" />
     <ProjectReference Include="..\Precision.WarpCache\Precision.WarpCache.MemoryCache\Precision.WarpCache.MemoryCache.csproj" />
     <ProjectReference Include="..\Precision.WarpCache\Precision.WarpCache\Precision.WarpCache.csproj" />

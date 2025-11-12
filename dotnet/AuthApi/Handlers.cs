@@ -115,7 +115,18 @@ internal static class Handlers {
                 ?? httpContext.Request.GetRequestCulture();
 
             if (!string.IsNullOrEmpty(phoneNumber)) {
-                await eventProducer.ProduceUserLoggedIn(phoneNumber, locale, httpContext.RequestAborted);
+                var cts = CancellationTokenSource.CreateLinkedTokenSource(httpContext.RequestAborted);
+                cts.CancelAfter(TimeSpan.FromSeconds(2));
+                /*
+                 * NOTE:
+                 * This call can hang if it can't connect to Kafka.  We need to address that.
+                 */
+                await eventProducer.ProduceUserLoggedIn(phoneNumber, locale, cts.Token).ContinueWith(t => {
+                    if (t.IsFaulted) {
+                        var logger = httpContext.RequestServices.GetRequiredService<ILogger<Program>>();
+                        logger.LogError(t.Exception, "Failed to produce UserLoggedIn event for phone number {PhoneNumber}", phoneNumber);
+                    }
+                }, TaskScheduler.Default);
             }
             return Results.Redirect(oauthState.RedirectUri);
         }, e => Results.Problem(e.Message));

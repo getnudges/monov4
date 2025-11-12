@@ -2,7 +2,7 @@ ARG ConnectionStrings__UserDb
 ARG ConnectionStrings__ProductDb
 ARG ConnectionStrings__PaymentDb
 
-FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 
 WORKDIR /src
 
@@ -43,7 +43,7 @@ RUN dotnet ef migrations bundle \
 RUN chmod +x ./efbundle
 RUN mv ./efbundle ./migratePaymentDb
 
-FROM mcr.microsoft.com/dotnet/runtime:9.0 AS exec
+FROM mcr.microsoft.com/dotnet/runtime:10.0 AS exec
 
 ENV ConnectionStrings__UserDb="$ConnectionStrings__UserDb"
 ENV ConnectionStrings__ProductDb="$ConnectionStrings__ProductDb"

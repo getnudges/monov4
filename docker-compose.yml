@@ -287,9 +287,9 @@ services:
       - "5050:5050"
     environment:
       PORT: 5050
-    depends_on:
-      - graphql-gateway
-      - auth-api
+    # depends_on:
+    #   - graphql-gateway
+    #   - auth-api
 
   user-api:
     hostname: user-api
@@ -662,8 +662,6 @@ services:
     image: confluentinc/cp-server:7.9.0
     hostname: kafka
     container_name: kafka
-    depends_on:
-      - zookeeper
     ports:
       - "9092:9092"
       - "9997"
@@ -683,6 +681,8 @@ services:
       KAFKA_LOG_RETENTION_HOURS: 1
       KAFKA_LOG_SEGMENT_BYTES: 10485760
       KAFKA_HEAP_OPTS: "-Xms256M -Xmx512M"
+    depends_on:
+      - zookeeper
 
   kafka-ui:
     networks:

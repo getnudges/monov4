@@ -72,7 +72,7 @@ public class ModelProducerGenerator : IIncrementalGenerator {
                         activity?.SetTag("kafka.topic", topic);
                         activity?.SetTag("message.key", key?.ToString());
                         activity?.Start();
-                        var result = _producer.ProduceAsync(topic, new global::Confluent.Kafka.Message<{{model.KeyNamespace}}.{{model.KeyTypeName}}, {{model.ModelNamespace}}.{{model.ModelTypeName}}> {
+                        var resultTask = _producer.ProduceAsync(topic, new global::Confluent.Kafka.Message<{{model.KeyNamespace}}.{{model.KeyTypeName}}, {{model.ModelNamespace}}.{{model.ModelTypeName}}> {
                             Key = key,
                             Value = data,
                             Headers = [
@@ -80,8 +80,15 @@ public class ModelProducerGenerator : IIncrementalGenerator {
                                 new global::Confluent.Kafka.Header("tracestate", global::System.Text.Encoding.UTF8.GetBytes(activity?.Context.TraceState ?? string.Empty))
                             ]
                         }, cancellationToken);
-                        activity?.SetStatus(global::System.Diagnostics.ActivityStatusCode.Ok);
-                        return result;
+                        _ = resultTask.ContinueWith(t => {
+                            if (t.IsFaulted) {
+                                activity?.SetStatus(ActivityStatusCode.Error);
+                                activity?.SetTag("exception.message", t.Exception?.GetBaseException().Message);
+                            } else {
+                                activity?.SetStatus(ActivityStatusCode.Ok);
+                            }
+                        }, TaskScheduler.Default);
+                        return resultTask;
                     } catch (global::System.Exception ex) {
                         activity?.SetStatus(ActivityStatusCode.Error);
                         activity?.SetTag("exception.message", ex.Message);

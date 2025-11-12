@@ -8,12 +8,14 @@ using Nudges.Localization.Client;
 using Nudges.Webhooks.GraphQL;
 using Nudges.Webhooks.Twilio;
 using Nudges.Webhooks.Twilio.Commands;
+using Nudges.Kafka.Events;
 
 namespace Nudges.Webhooks.Endpoints.Handlers;
 
 internal sealed partial class AnnouncementCommand(INudgesClient nudgesClient,
                                                   ICacheClient<string> cache,
-                                                  ILocalizationClient localizer) : ITwilioEventCommand {
+                                                  ILocalizationClient localizer,
+                                                  KafkaMessageProducer<NotificationKey, NotificationEvent> notificationProducer) : ITwilioEventCommand {
 
     public static readonly Regex Regex = RegexMatcher();
     [GeneratedRegex(@".*", RegexOptions.IgnoreCase | RegexOptions.Compiled, "en-US")]
@@ -28,6 +30,7 @@ internal sealed partial class AnnouncementCommand(INudgesClient nudgesClient,
             var body = await localizer.GetLocalizedStringAsync("AnnouncementConfirm", client.Locale, new Dictionary<string, string>() {
                     { "smsBody", context.SmsBody }
                 });
+            // TODO: KafkaConsumer should handle this
             var message = new MessagingResponse().Message(body);
             return message;
         });

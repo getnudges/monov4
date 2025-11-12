@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 ARG GRAPH_MONITOR_URL
 
 WORKDIR /src
@@ -66,7 +66,7 @@ FROM fusion AS publish
 WORKDIR /src/GraphQLGateway/GraphQLGateway/
 RUN dotnet publish "GraphQLGateway.csproj" -c Release -o /src/publish /p:UseAppHost=false
 
-FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS final
+FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
 WORKDIR /app
 COPY --from=publish /src/publish .
 ENTRYPOINT ["dotnet", "GraphQLGateway.dll"]

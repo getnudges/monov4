@@ -1,13 +1,14 @@
 {
   "profiles": {
-    "http": {
+    "https": {
       "commandName": "Project",
       "dotnetRunMessages": true,
       "launchBrowser": false,
-      "applicationUrl": "http://::5555",
+      "applicationUrl": "https://::5555",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development",
-        "OTLP_ENDPOINT_URL": "http://localhost:4317"
+        "OTLP_ENDPOINT_URL": "http://localhost:4317",
+        "IGNORE_SSL_CERT_VALIDATION": "true"
       }
     }
   },

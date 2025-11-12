@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 17
-VisualStudioVersion = 17.9.34723.18
+# Visual Studio Version 18
+VisualStudioVersion = 18.0.11205.157 d18.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AuthApi", "AuthApi\AuthApi.csproj", "{D272D4FA-D385-46FB-96F7-847B9DFF6338}"
 EndProject
@@ -28,6 +28,8 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Nudges.Configuration", "Nudges.Configuration\Nudges.Configuration.csproj", "{0FFC9C46-F1C0-432F-9CF6-3B46C3D9E51E}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Nudges.Kafka.Events", "Nudges.Kafka.Events\Nudges.Kafka.Events.csproj", "{FC94AB1A-E57B-48E0-8F93-C1566C8716FC}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Nudges.Kafka.Analyzers", "Nudges.Kafka.Analyzers\Nudges.Kafka.Analyzers.csproj", "{09777520-2D20-421C-F4A9-C523537E4EEC}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -87,6 +89,10 @@ Global
 		{FC94AB1A-E57B-48E0-8F93-C1566C8716FC}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{FC94AB1A-E57B-48E0-8F93-C1566C8716FC}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{FC94AB1A-E57B-48E0-8F93-C1566C8716FC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{09777520-2D20-421C-F4A9-C523537E4EEC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{09777520-2D20-421C-F4A9-C523537E4EEC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{09777520-2D20-421C-F4A9-C523537E4EEC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{09777520-2D20-421C-F4A9-C523537E4EEC}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

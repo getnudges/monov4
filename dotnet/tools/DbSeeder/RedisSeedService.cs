@@ -6,7 +6,7 @@ using Nudges.Redis;
 
 namespace DbSeeder;
 
-internal class RedisSeedService(ILogger<RedisSeedService> logger,
+internal sealed class RedisSeedService(ILogger<RedisSeedService> logger,
                            IStripeClient stripe,
                            IConnectionMultiplexer redis,
                            IHostApplicationLifetime appLifetime) : IHostedService {

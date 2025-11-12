@@ -20,6 +20,7 @@ using Nudges.Webhooks.Endpoints.Handlers;
 using Nudges.Webhooks.Stripe;
 using Nudges.Webhooks.Stripe.Commands;
 using Nudges.Webhooks.Twilio;
+using Nudges.Kafka.Events;
 
 var builder = WebApplication.CreateSlimBuilder(args);
 

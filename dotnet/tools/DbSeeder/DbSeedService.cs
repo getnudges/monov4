@@ -7,7 +7,7 @@ using Nudges.Data.Users.Models;
 
 namespace DbSeeder;
 
-internal class DbSeedService(ILogger<DbSeedService> logger,
+internal sealed class DbSeedService(ILogger<DbSeedService> logger,
                              IDbContextFactory<UserDbContext> userDbContextFactory,
                              IDbContextFactory<PaymentDbContext> paymentDbContextFactory,
                              IHostApplicationLifetime appLifetime) : IHostedService {

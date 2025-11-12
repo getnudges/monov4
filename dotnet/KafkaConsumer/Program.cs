@@ -37,24 +37,25 @@ var paymentsCmd = new Command("payments");
 var clientsCmd = new Command("clients");
 var userAuthCmd = new Command("user-authentication");
 
-notificationsCmd.SetHandler(() => CreateBaseHost(args, "notifications").ConfigureNotificationHandler().Build().RunAsync());
-plansCmd.SetHandler(() => CreateBaseHost(args, "plans").ConfigurePlanEventHandler().Build().RunAsync());
-priceTierCmd.SetHandler(() => CreateBaseHost(args, "price-tiers").ConfigurePriceTierEventHandler().Build().RunAsync());
-paymentsCmd.SetHandler(() => CreateBaseHost(args, "payments").ConfigurePaymentEventHandler().Build().RunAsync());
-planSubscriptionsCmd.SetHandler(() => CreateBaseHost(args, "plan-subscriptions").ConfigurePlanSubscriptionHandler().Build().RunAsync());
-clientsCmd.SetHandler(() => CreateBaseHost(args, "clients").ConfigureClientHandler().Build().RunAsync());
-userAuthCmd.SetHandler(() => CreateBaseHost(args, "user-authentication").ConfigureUserAuthenticationHandler().Build().RunAsync());
+notificationsCmd.SetAction(r => CreateBaseHost(args, "notifications").ConfigureNotificationHandler().Build().RunAsync());
+plansCmd.SetAction(r => CreateBaseHost(args, "plans").ConfigurePlanEventHandler().Build().RunAsync());
+priceTierCmd.SetAction(r => CreateBaseHost(args, "price-tiers").ConfigurePriceTierEventHandler().Build().RunAsync());
+paymentsCmd.SetAction(r => CreateBaseHost(args, "payments").ConfigurePaymentEventHandler().Build().RunAsync());
+planSubscriptionsCmd.SetAction(r => CreateBaseHost(args, "plan-subscriptions").ConfigurePlanSubscriptionHandler().Build().RunAsync());
+clientsCmd.SetAction(r => CreateBaseHost(args, "clients").ConfigureClientHandler().Build().RunAsync());
+userAuthCmd.SetAction(r => CreateBaseHost(args, "user-authentication").ConfigureUserAuthenticationHandler().Build().RunAsync());
 
-var rootCommand = new RootCommand();
-rootCommand.AddCommand(notificationsCmd);
-rootCommand.AddCommand(plansCmd);
-rootCommand.AddCommand(priceTierCmd);
-rootCommand.AddCommand(paymentsCmd);
-rootCommand.AddCommand(planSubscriptionsCmd);
-rootCommand.AddCommand(clientsCmd);
-rootCommand.AddCommand(userAuthCmd);
+var rootCommand = new RootCommand {
+    notificationsCmd,
+    plansCmd,
+    priceTierCmd,
+    paymentsCmd,
+    planSubscriptionsCmd,
+    clientsCmd,
+    userAuthCmd
+};
 
-await rootCommand.InvokeAsync(args);
+await rootCommand.Parse(args).InvokeAsync();
 
 static IHostBuilder CreateBaseHost(string[] args, string name) =>
     Host.CreateDefaultBuilder(args)

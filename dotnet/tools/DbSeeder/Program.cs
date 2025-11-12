@@ -54,11 +54,12 @@ static IHostBuilder CreateRedisHostBuilder(string[] args) =>
 var redisCommand = new Command("redis");
 var dbCommand = new Command("db");
 
-var rootCommand = new RootCommand();
-rootCommand.AddCommand(redisCommand);
-rootCommand.AddCommand(dbCommand);
+var rootCommand = new RootCommand {
+    redisCommand,
+    dbCommand
+};
 
-redisCommand.SetHandler(async () => await CreateRedisHostBuilder(args).Build().RunAsync());
-dbCommand.SetHandler(async () => await CreateDbHostBuilder(args).Build().RunAsync());
+redisCommand.SetAction(async r => await CreateRedisHostBuilder(args).Build().RunAsync());
+dbCommand.SetAction(async r => await CreateDbHostBuilder(args).Build().RunAsync());
 
-await rootCommand.InvokeAsync(args);
+await rootCommand.Parse(args).InvokeAsync();
