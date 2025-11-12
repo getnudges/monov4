@@ -52,12 +52,13 @@ docker-compose up -d kafka
 docker-compose run --rm kafka-init-topics
 
 # setup the kafka listeners
-docker-compose up -d notifications-listener
-docker-compose up -d payments-listener
-docker-compose up -d clients-listener
-docker-compose up -d plans-listener
-docker-compose up -d plan-subscription-listener
-docker-compose up -d price-tiers-listener
+# docker-compose up -d notifications-listener
+# docker-compose up -d payments-listener
+# docker-compose up -d clients-listener
+# docker-compose up -d plans-listener
+# docker-compose up -d plan-subscription-listener
+# docker-compose up -d price-tiers-listener
+# docker-compose up -d user-authentication-listener
 
 # setup the webhook handler
 docker-compose up -d ngrok
@@ -65,4 +66,4 @@ docker-compose up -d webhooks
 
 # setup the UIs
 docker-compose up -d new-admin
-docker-compose up -d new-signup
+# docker-compose up -d new-signup

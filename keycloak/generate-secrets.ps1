@@ -1,4 +1,27 @@
 # get-secrets.ps1
+
+# Ignore SSL certificate validation
+if ($PSVersionTable.PSVersion.Major -ge 6) {
+    # PowerShell Core (6+)
+    $PSDefaultParameterValues['Invoke-RestMethod:SkipCertificateCheck'] = $true
+}
+else {
+    # Windows PowerShell (5.1 and earlier)
+    add-type @"
+using System.Net;
+using System.Security.Cryptography.X509Certificates;
+public class TrustAllCertsPolicy : ICertificatePolicy {
+    public bool CheckValidationResult(
+        ServicePoint srvPoint, X509Certificate certificate,
+        WebRequest request, int certificateProblem) {
+        return true;
+    }
+}
+"@
+    [System.Net.ServicePointManager]::CertificatePolicy = New-Object TrustAllCertsPolicy
+    [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12
+}
+
 # Load admin credentials from .env file
 $envContent = Get-Content -Path "$PSScriptRoot/.env.docker"
 $envVars = @{}

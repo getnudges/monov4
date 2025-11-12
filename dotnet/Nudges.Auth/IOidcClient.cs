@@ -24,4 +24,6 @@ public interface IOidcClient {
     /// </summary>
     /// <param name="userRepresentation"> Keycloak <see cref="UserRepresentation"/> object. (see <see href="https://www.keycloak.org/docs-api/latest/rest-api/index.html#UserRepresentation"/>)</param>
     public Task<Maybe<OidcException>> CreateUser(UserRepresentation userRepresentation, CancellationToken cancellationToken);
+
+    public Task<Result<List<UserRepresentation>, OidcException>> GetUserByUsername(string username, CancellationToken cancellationToken);
 }

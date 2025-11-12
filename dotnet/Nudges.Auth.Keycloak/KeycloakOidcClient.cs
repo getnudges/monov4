@@ -1,6 +1,7 @@
 using System.Net.Http.Json;
 using System.Text.Json.Serialization;
 using System.Text.Json.Serialization.Metadata;
+using Keycloak.AuthServices.Sdk.Admin.Models;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Monads;
@@ -20,20 +21,20 @@ public sealed class KeycloakOidcClient(HttpClient client, IOptions<OidcConfig> c
                     return new OidcException("Could not parse error response");
                 }
                 var exception = OidcException.FromApiError(body);
-                logger.LogRequestError("Request failed: {Error}", exception);
+                logger.LogRequestError(exception);
                 return exception;
             }
 
             var result = await response.Content.ReadFromJsonAsync(jsonTypeInfo, cancellationToken);
             if (result is null) {
                 var exception = new OidcException($"Could not parse {typeof(T)} response.");
-                logger.LogRequestError("Could not parse {Type} response.", exception);
+                logger.LogRequestError(exception);
                 return exception;
             }
             return result;
         } catch (Exception ex) {
-            logger.LogRequestError("Request failed: {Message}", ex);
-            return OidcException.FromException("Request failed.", ex);
+            logger.LogRequestError(ex);
+            return OidcException.FromException($"Request failed: {ex.Message}", ex);
         }
     }
 
@@ -49,6 +50,21 @@ public sealed class KeycloakOidcClient(HttpClient client, IOptions<OidcConfig> c
         };
         return await SendRequestAsync(request, TokenResponseContext.Default.TokenResponse, cancellationToken);
     }
+
+    public async Task<Result<List<UserRepresentation>, OidcException>> GetUserByUsername(string username, CancellationToken cancellationToken) =>
+        await GetAdminToken(cancellationToken).Map(async adminToken => {
+            var request = new HttpRequestMessage(HttpMethod.Get, $"/admin/realms/{_config.Realm}/users") {
+                Headers = { { "Authorization", $"Bearer {adminToken.AccessToken}" } },
+            };
+            try {
+                var response = await _client.SendAsync(request);
+                //var json = await response.Content.ReadAsStringAsync(cancellationToken);
+                var users = await response.Content.ReadFromJsonAsync(UserRepresentationContext.Default.ListUserRepresentation);
+                return users ?? [];
+            } catch (Exception e) {
+                return [];
+            }
+        });
 
     public async Task<Result<TokenResponse, OidcException>> GrantTokenAsync(string code, string codeVerifier, string redirectUri, CancellationToken cancellationToken) {
         var request = new HttpRequestMessage(HttpMethod.Post, $"/realms/{_config.Realm}/protocol/openid-connect/token") {
@@ -68,9 +84,11 @@ public sealed class KeycloakOidcClient(HttpClient client, IOptions<OidcConfig> c
     private async Task<Result<TokenResponse, OidcException>> GetAdminToken(CancellationToken cancellationToken) {
         var request = new HttpRequestMessage(HttpMethod.Post, $"/realms/master/protocol/openid-connect/token") {
             Content = new FormUrlEncodedContent(new Dictionary<string, string> {
-                { "client_id", _config.ClientId },
-                { "client_secret", _config.ClientSecret },
-                { "grant_type", "client_credentials" },
+                { "client_id", _config.AdminCredentials.AdminClientId },
+                { "username", _config.AdminCredentials.Username },
+                { "password", _config.AdminCredentials.Password },
+                //{ "client_secret", _config.ClientSecret },
+                { "grant_type", "password" },
             })
         };
         return await SendRequestAsync(request, TokenResponseContext.Default.TokenResponse, cancellationToken);
@@ -101,4 +119,5 @@ public sealed class KeycloakOidcClient(HttpClient client, IOptions<OidcConfig> c
 
 [JsonSourceGenerationOptions(PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase)]
 [JsonSerializable(typeof(UserRepresentation))]
+[JsonSerializable(typeof(List<UserRepresentation>))]
 public partial class UserRepresentationContext : JsonSerializerContext;

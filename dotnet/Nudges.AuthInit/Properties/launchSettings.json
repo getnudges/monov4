@@ -1,0 +1,11 @@
+{
+  "profiles": {
+    "Nudges.AuthInit": {
+      "commandName": "Project",
+      "commandLineArgs": "seed",
+      "environmentVariables": {
+        "Auth:Keycloak:BaseUrl": "https://keycloak.local:8443"
+      }
+    }
+  }
+}

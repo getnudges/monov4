@@ -490,6 +490,31 @@ services:
       - warp-cache
       - graphql-gateway
 
+  user-authentication-listener:
+    container_name: user-authentication-listener
+    networks:
+      - Nudges
+    build:
+      context: ./dotnet
+      dockerfile: ./KafkaConsumer.Dockerfile
+    environment:
+      DOTNET_ENVIRONMENT: Development
+      ASPNETCORE_ENVIRONMENT: Development
+      HTTP_PORTS: 7100
+      Oidc__ClientId: kafka-consumer
+      FILEMAP: Oidc__ClientSecret=/run/secrets/kafka-consumer-secret
+    ports:
+      - "7100"
+    env_file:
+      - ./dotnet/.env.docker
+    secrets:
+      - kafka-consumer-secret
+    command: user-authentication
+    depends_on:
+      - kafka
+      - warp-cache
+      - graphql-gateway
+
   product-api:
     hostname: product-api
     container_name: product-api
@@ -768,6 +793,7 @@ services:
       kafka-topics --create --topic plans                 --partitions 2 --replication-factor 1 --if-not-exists --bootstrap-server kafka:29092 && \
       kafka-topics --create --topic price-tiers           --partitions 2 --replication-factor 1 --if-not-exists --bootstrap-server kafka:29092 && \
       kafka-topics --create --topic plan-subscriptions    --partitions 2 --replication-factor 1 --if-not-exists --bootstrap-server kafka:29092 && \
+      kafka-topics --create --topic user-authentication   --partitions 2 --replication-factor 1 --if-not-exists --bootstrap-server kafka:29092 && \
 
       kafka-topics --create --topic test --partitions 1 --replication-factor 1 --if-not-exists --bootstrap-server kafka:29092 && \
       kafka-console-producer --bootstrap-server kafka:29092 --topic test < /data/message.json'"
