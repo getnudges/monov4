@@ -10,6 +10,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Nudges.Configuration\Nudges.Configuration.csproj" />
+    <ProjectReference Include="..\Nudges.Kafka.Events\Nudges.Kafka.Events.csproj" />
     <ProjectReference Include="..\Precision.WarpCache\Precision.WarpCache.Grpc.Client\Precision.WarpCache.Grpc.Client.csproj" />
     <ProjectReference Include="..\Nudges.Auth.Web\Nudges.Auth.Web.csproj" />
     <ProjectReference Include="..\Nudges.Auth\Nudges.Auth.csproj" />

@@ -14,13 +14,10 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Confluent.Kafka" Version="2.8.0" />
-    <PackageReference Include="System.Linq.Async" Version="6.0.1" />
-    <PackageReference Include="System.Text.Json" Version="9.0.3" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\Nudges.Kafka.Analyzers\Nudges.Kafka.Analyzers.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+    <PackageReference Include="Confluent.Kafka" Version="[2.12,3)" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="[9,10)" />
+    <PackageReference Include="System.Text.Json" Version="[9,10)" />
+    <PackageReference Include="System.Linq.Async" Version="6.0.3" />
   </ItemGroup>
 
   <ItemGroup>

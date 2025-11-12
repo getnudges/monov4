@@ -1,7 +1,7 @@
 using System.Globalization;
 using Confluent.Kafka;
 
-namespace Nudges.Kafka;
+namespace Nudges.Kafka.Events;
 
 public record NotificationKey(string EventType, string EventKey) {
     public static NotificationKey EndSubscription(string planSubscriptionNodeId) =>
@@ -29,7 +29,7 @@ public record NotificationEvent(string ResourceKey, string Locale, Dictionary<st
 }
 
 public static class NotificationProducerExtensions {
-    public static Task<DeliveryResult<NotificationKey, NotificationEvent>> ProduceSendOtp(
+    public static Task<DeliveryResult<NotificationKey, NotificationEvent>> ProduceOtpRequested(
         this KafkaMessageProducer<NotificationKey, NotificationEvent> producer, string phoneNumber, string locale, string otp, CancellationToken cancellationToken) {
         ArgumentNullException.ThrowIfNull(producer);
         ArgumentException.ThrowIfNullOrEmpty(phoneNumber);

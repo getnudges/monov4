@@ -9,6 +9,7 @@ using Nudges.Data.Products.Models;
 using Nudges.Kafka;
 using Nudges.Models;
 using Nudges.Telemetry;
+using Nudges.Kafka.Events;
 
 namespace ProductApi;
 

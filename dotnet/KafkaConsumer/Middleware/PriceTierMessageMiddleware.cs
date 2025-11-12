@@ -3,7 +3,7 @@ using KafkaConsumer.GraphQL;
 using KafkaConsumer.Services;
 using Microsoft.Extensions.Logging;
 using Monads;
-using Nudges.Kafka;
+using Nudges.Kafka.Events;
 using Nudges.Kafka.Middleware;
 
 namespace KafkaConsumer.Middleware;

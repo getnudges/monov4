@@ -3,15 +3,14 @@ using KafkaConsumer.Services;
 using Microsoft.Extensions.Logging;
 using Monads;
 using Nudges.Kafka;
+using Nudges.Kafka.Events;
 using Nudges.Kafka.Middleware;
 
 namespace KafkaConsumer.Middleware;
 
 internal class PlanSubscriptionEventMiddleware(ILogger<PlanSubscriptionEventMiddleware> logger,
                                                Func<INudgesClient> nudgesClientFactory,
-                                               IForeignProductService foreignProductService,
-                                               KafkaMessageProducer<NotificationKey, NotificationEvent> notificationProducer,
-                                               KafkaMessageProducer<ClientKey, ClientEvent> clientEventProducer) : IMessageMiddleware<PlanSubscriptionKey, PlanSubscriptionEvent> {
+                                               KafkaMessageProducer<NotificationKey, NotificationEvent> notificationProducer) : IMessageMiddleware<PlanSubscriptionKey, PlanSubscriptionEvent> {
 
     public async Task<MessageContext<PlanSubscriptionKey, PlanSubscriptionEvent>> InvokeAsync(MessageContext<PlanSubscriptionKey, PlanSubscriptionEvent> context, MessageHandler<PlanSubscriptionKey, PlanSubscriptionEvent> next) {
         await HandleMessageAsync(context.ConsumeResult, context.CancellationToken).Match(

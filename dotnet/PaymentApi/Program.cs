@@ -1,6 +1,13 @@
 using Confluent.Kafka;
+using Keycloak.AuthServices.Authentication;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization.Infrastructure;
 using Microsoft.EntityFrameworkCore;
+using Nudges.Auth;
+using Nudges.Configuration.Extensions;
+using Nudges.Data.Payments;
+using Nudges.Kafka;
+using Nudges.Kafka.Events;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
@@ -9,14 +16,6 @@ using PaymentApi;
 using PaymentApi.Services;
 using StackExchange.Redis;
 using Stripe;
-using Nudges.Auth;
-using Nudges.Auth.Web;
-using Nudges.Data.Payments;
-using Nudges.Kafka;
-using Nudges.Configuration.Extensions;
-using Keycloak.AuthServices.Authentication;
-using Microsoft.IdentityModel.Tokens;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
 
 var builder = WebApplication.CreateBuilder(args);
 

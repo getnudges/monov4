@@ -11,6 +11,7 @@ using Nudges.Auth;
 using Nudges.Data.Users;
 using Nudges.Data.Users.Models;
 using Nudges.Kafka;
+using Nudges.Kafka.Events;
 
 namespace UserApi;
 

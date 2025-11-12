@@ -27,6 +27,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Nudges.Auth.Keycloak", "Nud
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Nudges.Configuration", "Nudges.Configuration\Nudges.Configuration.csproj", "{0FFC9C46-F1C0-432F-9CF6-3B46C3D9E51E}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Nudges.Kafka.Events", "Nudges.Kafka.Events\Nudges.Kafka.Events.csproj", "{FC94AB1A-E57B-48E0-8F93-C1566C8716FC}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -81,6 +83,10 @@ Global
 		{0FFC9C46-F1C0-432F-9CF6-3B46C3D9E51E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0FFC9C46-F1C0-432F-9CF6-3B46C3D9E51E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0FFC9C46-F1C0-432F-9CF6-3B46C3D9E51E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FC94AB1A-E57B-48E0-8F93-C1566C8716FC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FC94AB1A-E57B-48E0-8F93-C1566C8716FC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FC94AB1A-E57B-48E0-8F93-C1566C8716FC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FC94AB1A-E57B-48E0-8F93-C1566C8716FC}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

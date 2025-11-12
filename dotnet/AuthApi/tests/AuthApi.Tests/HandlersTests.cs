@@ -13,6 +13,7 @@ using Precision.WarpCache.Grpc.Client;
 using Nudges.Auth;
 using Nudges.Auth.Web;
 using Nudges.Kafka;
+using Nudges.Kafka.Events;
 
 namespace AuthApi.Tests;
 
@@ -39,13 +40,13 @@ public class HandlersTests {
         _mockVerifier = new Mock<IOtpVerifier>();
         _mockTokenClient = new Mock<IKeycloakOidcClient>();
 
-        _mockConfiguration.Setup(c => c[AppConfig.ApiTokenRequestKey]).Returns("test");
-        _mockConfiguration.Setup(c => c[AppConfig.SimpleAuthSigningKey]).Returns("test");
-        _mockConfiguration.Setup(c => c[AppConfig.ServerAuthSigningKey]).Returns("test");
+        //_mockConfiguration.Setup(c => c[AppConfig.ApiTokenRequestKey]).Returns("test");
+        //_mockConfiguration.Setup(c => c[AppConfig.SimpleAuthSigningKey]).Returns("test");
+        //_mockConfiguration.Setup(c => c[AppConfig.ServerAuthSigningKey]).Returns("test");
         _mockConfiguration.Setup(c => c[AppConfig.OidcServerUrl]).Returns("test");
         _mockConfiguration.Setup(c => c[AppConfig.OidcRealm]).Returns("test");
         _mockConfiguration.Setup(c => c[AppConfig.OidcClientId]).Returns("test");
-        _mockConfiguration.Setup(c => c[AppConfig.OidcClientSercret]).Returns("test");
+        //_mockConfiguration.Setup(c => c[AppConfig.OidcClientSercret]).Returns("test");
         _mockConfiguration.Setup(c => c[AppConfig.CacheServerAddress]).Returns("test");
         _mockConfiguration.Setup(c => c[AppConfig.KafkaBrokerList]).Returns("test");
 
@@ -131,9 +132,9 @@ public class HandlersTests {
             });
         _mockCache.Setup(c => c.GetAsync($"otp:{credentials.PhoneNumber}:secret", It.IsAny<CancellationToken>())).ReturnsAsync("base32Key");
         var otp = new Totp(Base32Encoding.ToBytes("base32Key"), 300);
-        _mockTokenClient.Setup(a => a.GetUserTokenAsync(credentials.PhoneNumber, It.IsAny<string>()))
+        _mockTokenClient.Setup(a => a.GetUserTokenAsync(credentials.PhoneNumber, It.IsAny<string>(), CancellationToken.None))
             .Returns(Task.FromResult(Result.Success<TokenResponse, OidcException>(new TokenResponse("", 0))));
-        _mockTokenClient.Setup(a => a.CreateUser(It.IsAny<UserRepresentation>()))
+        _mockTokenClient.Setup(a => a.CreateUser(It.IsAny<UserRepresentation>(), CancellationToken.None))
             .Returns(Task.FromResult(Maybe<OidcException>.None));
 
 

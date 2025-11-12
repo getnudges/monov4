@@ -1,4 +1,4 @@
-namespace Nudges.Kafka;
+namespace Nudges.Kafka.Events;
 
 public partial record PaymentKey(string EventType, string EventKey) {
 

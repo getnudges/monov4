@@ -1,22 +1,21 @@
 using System.Net.Http.Json;
 using System.Text.Json.Serialization;
 using System.Text.Json.Serialization.Metadata;
-using Keycloak.AuthServices.Sdk.Admin.Models;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Monads;
 
 namespace Nudges.Auth.Keycloak;
 
-public sealed class KeycloakOidcClient(HttpClient client, IOptions<OidcConfig> config, ILogger<KeycloakOidcClient> logger) : IKeycloakOidcClient, IDisposable {
+public sealed class KeycloakOidcClient(HttpClient client, IOptions<OidcConfig> config, ILogger<KeycloakOidcClient> logger) : IOidcClient, IDisposable {
     private readonly HttpClient _client = client;
     private readonly OidcConfig _config = config.Value;
 
-    private async Task<Result<T, OidcException>> SendRequestAsync<T>(HttpRequestMessage request, JsonTypeInfo<T> jsonTypeInfo) {
+    private async Task<Result<T, OidcException>> SendRequestAsync<T>(HttpRequestMessage request, JsonTypeInfo<T> jsonTypeInfo, CancellationToken cancellationToken) {
         try {
-            var response = await _client.SendAsync(request);
+            var response = await _client.SendAsync(request, cancellationToken);
             if (!response.IsSuccessStatusCode) {
-                var body = await response.Content.ReadFromJsonAsync(AuthApiErrorContext.Default.AuthApiError);
+                var body = await response.Content.ReadFromJsonAsync(AuthApiErrorContext.Default.AuthApiError, cancellationToken);
                 if (body is null) {
                     return new OidcException("Could not parse error response");
                 }
@@ -25,7 +24,7 @@ public sealed class KeycloakOidcClient(HttpClient client, IOptions<OidcConfig> c
                 return exception;
             }
 
-            var result = await response.Content.ReadFromJsonAsync(jsonTypeInfo);
+            var result = await response.Content.ReadFromJsonAsync(jsonTypeInfo, cancellationToken);
             if (result is null) {
                 var exception = new OidcException($"Could not parse {typeof(T)} response.");
                 logger.LogRequestError("Could not parse {Type} response.", exception);
@@ -38,7 +37,7 @@ public sealed class KeycloakOidcClient(HttpClient client, IOptions<OidcConfig> c
         }
     }
 
-    public async Task<Result<TokenResponse, OidcException>> GetUserTokenAsync(string username, string password) {
+    public async Task<Result<TokenResponse, OidcException>> GetUserTokenAsync(string username, string password, CancellationToken cancellationToken) {
         var request = new HttpRequestMessage(HttpMethod.Post, $"/realms/{_config.Realm}/protocol/openid-connect/token") {
             Content = new FormUrlEncodedContent(new Dictionary<string, string> {
                 { "client_id", _config.ClientId },
@@ -48,10 +47,10 @@ public sealed class KeycloakOidcClient(HttpClient client, IOptions<OidcConfig> c
                 { "password", password },
             })
         };
-        return await SendRequestAsync(request, TokenResponseContext.Default.TokenResponse);
+        return await SendRequestAsync(request, TokenResponseContext.Default.TokenResponse, cancellationToken);
     }
 
-    public async Task<Result<TokenResponse, OidcException>> GrantTokenAsync(string code, string codeVerifier, string redirectUri) {
+    public async Task<Result<TokenResponse, OidcException>> GrantTokenAsync(string code, string codeVerifier, string redirectUri, CancellationToken cancellationToken) {
         var request = new HttpRequestMessage(HttpMethod.Post, $"/realms/{_config.Realm}/protocol/openid-connect/token") {
             Content = new FormUrlEncodedContent(new Dictionary<string, string> {
                 { "client_id", _config.ClientId },
@@ -63,10 +62,10 @@ public sealed class KeycloakOidcClient(HttpClient client, IOptions<OidcConfig> c
             })
         };
 
-        return await SendRequestAsync(request, TokenResponseContext.Default.TokenResponse);
+        return await SendRequestAsync(request, TokenResponseContext.Default.TokenResponse, cancellationToken);
     }
 
-    private async Task<Result<TokenResponse, OidcException>> GetAdminToken() {
+    private async Task<Result<TokenResponse, OidcException>> GetAdminToken(CancellationToken cancellationToken) {
         var request = new HttpRequestMessage(HttpMethod.Post, $"/realms/master/protocol/openid-connect/token") {
             Content = new FormUrlEncodedContent(new Dictionary<string, string> {
                 { "client_id", _config.ClientId },
@@ -74,13 +73,11 @@ public sealed class KeycloakOidcClient(HttpClient client, IOptions<OidcConfig> c
                 { "grant_type", "client_credentials" },
             })
         };
-        return await SendRequestAsync(request, TokenResponseContext.Default.TokenResponse);
+        return await SendRequestAsync(request, TokenResponseContext.Default.TokenResponse, cancellationToken);
     }
 
-
-
-    public async Task<Maybe<OidcException>> CreateUser(UserRepresentation userRepresentation) =>
-        await GetAdminToken().MapError(async adminToken => {
+    public async Task<Maybe<OidcException>> CreateUser(UserRepresentation userRepresentation, CancellationToken cancellationToken) =>
+        await GetAdminToken(cancellationToken).MapError(async adminToken => {
             var request = new HttpRequestMessage(HttpMethod.Post, $"/admin/realms/{_config.Realm}/users") {
                 Headers = { { "Authorization", $"Bearer {adminToken.AccessToken}" } },
                 Content = JsonContent.Create(userRepresentation, UserRepresentationContext.Default.UserRepresentation)
@@ -102,23 +99,6 @@ public sealed class KeycloakOidcClient(HttpClient client, IOptions<OidcConfig> c
     public void Dispose() => _client.Dispose();
 }
 
-public class OidcException : Exception {
-    public AuthApiError? ApiError { get; init; }
-
-    public OidcException(string message) : base(message) { }
-
-    private OidcException(string message, AuthApiError? apiError = null, Exception? inner = null)
-        : base(message, inner) => ApiError = apiError;
-
-    public static OidcException FromApiError(AuthApiError error) =>
-        new(error.ErrorDescription ?? error.Error ?? "Unknown OIDC API error", error);
-
-    public static OidcException FromException(string message, Exception ex) =>
-        new(message, inner: ex);
-}
-
-[JsonSourceGenerationOptions(
-    GenerationMode = JsonSourceGenerationMode.Default,
-    PropertyNamingPolicy = JsonKnownNamingPolicy.SnakeCaseLower)]
+[JsonSourceGenerationOptions(PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase)]
 [JsonSerializable(typeof(UserRepresentation))]
 public partial class UserRepresentationContext : JsonSerializerContext;

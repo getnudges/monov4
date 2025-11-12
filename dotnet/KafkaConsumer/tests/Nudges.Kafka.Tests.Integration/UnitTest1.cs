@@ -7,6 +7,7 @@ using Microsoft.Extensions.Logging;
 using Moq;
 using StrawberryShake;
 using Nudges.Kafka.Middleware;
+using Nudges.Kafka.Events;
 
 namespace Nudges.Kafka.Tests.Integration;
 

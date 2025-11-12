@@ -7,11 +7,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "KafkaConsumer", "KafkaConsu
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Nudges.Kafka", "Nudges.Kafka\Nudges.Kafka.csproj", "{043B1046-7187-4561-BC4D-F3AEC4A83334}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{E3CBDCD3-A7E2-44D9-83AF-1100839C6E12}"
-	ProjectSection(SolutionItems) = preProject
-		KafkaConsumer\.filenesting.json = KafkaConsumer\.filenesting.json
-	EndProjectSection
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Monads", "Monads\Monads.csproj", "{E1C4236A-0382-41FC-99B9-6EE7C374CAEE}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Nudges.Models", "Nudges.Models\Nudges.Models.csproj", "{27DA5C31-6581-4954-B1AC-914A581CC2E4}"
@@ -41,6 +36,8 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Precision.WarpCache.MemoryCache", "Precision.WarpCache\Precision.WarpCache.MemoryCache\Precision.WarpCache.MemoryCache.csproj", "{ABD4E870-C725-C680-BD5C-F79D00748A1D}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Nudges.Configuration", "Nudges.Configuration\Nudges.Configuration.csproj", "{7C641EF9-4E3B-D2C4-01D4-309E455DB67B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Nudges.Kafka.Events", "Nudges.Kafka.Events\Nudges.Kafka.Events.csproj", "{CF98B33A-84CB-0F8B-E6D2-C43702DD72B5}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -116,6 +113,10 @@ Global
 		{7C641EF9-4E3B-D2C4-01D4-309E455DB67B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7C641EF9-4E3B-D2C4-01D4-309E455DB67B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7C641EF9-4E3B-D2C4-01D4-309E455DB67B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CF98B33A-84CB-0F8B-E6D2-C43702DD72B5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CF98B33A-84CB-0F8B-E6D2-C43702DD72B5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CF98B33A-84CB-0F8B-E6D2-C43702DD72B5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CF98B33A-84CB-0F8B-E6D2-C43702DD72B5}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

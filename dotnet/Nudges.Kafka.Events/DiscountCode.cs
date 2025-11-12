@@ -1,4 +1,4 @@
-namespace Nudges.Kafka;
+namespace Nudges.Kafka.Events;
 
 public partial record DiscountCodeKey(string EventType, string EventKey) {
     public override string ToString() => $"{EventType}:{EventKey}";

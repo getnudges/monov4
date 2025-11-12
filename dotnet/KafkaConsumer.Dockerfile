@@ -9,6 +9,7 @@ COPY KafkaConsumer.Docker.sln ./
 COPY KafkaConsumer/KafkaConsumer.csproj ./KafkaConsumer/
 COPY Nudges.Kafka/Nudges.Kafka.csproj ./Nudges.Kafka/
 COPY Nudges.Kafka.Analyzers/Nudges.Kafka.Analyzers.csproj ./Nudges.Kafka.Analyzers/
+COPY Nudges.Kafka.Events/Nudges.Kafka.Events.csproj ./Nudges.Kafka.Events/
 COPY Nudges.Redis/Nudges.Redis.csproj ./Nudges.Redis/
 COPY Nudges.Localization/Nudges.Localization.csproj ./Nudges.Localization/
 COPY Monads/Monads.csproj ./Monads/
@@ -29,6 +30,7 @@ RUN --mount=type=cache,target=/root/.nuget/packages \
 COPY KafkaConsumer/ ./KafkaConsumer/
 COPY Nudges.Kafka/ ./Nudges.Kafka/
 COPY Nudges.Kafka.Analyzers/ ./Nudges.Kafka.Analyzers/
+COPY Nudges.Kafka.Events/ ./Nudges.Kafka.Events/
 COPY Nudges.Redis/ ./Nudges.Redis/
 COPY Nudges.Localization/ ./Nudges.Localization/
 COPY Monads/ ./Monads/

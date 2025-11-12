@@ -17,6 +17,7 @@ using Nudges.Configuration.Extensions;
 using Keycloak.AuthServices.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
+using Nudges.Kafka.Events;
 
 var builder = WebApplication.CreateBuilder(args);
 

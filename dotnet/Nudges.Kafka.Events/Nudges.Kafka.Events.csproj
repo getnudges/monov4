@@ -6,12 +6,9 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
-  <ItemGroup>
-    <PackageReference Include="StackExchange.Redis" Version="2.9.32" />
-  </ItemGroup>
 
   <ItemGroup>
-    <InternalsVisibleTo Include="Nudges.Webhooks.Tests.Integration" />
+    <ProjectReference Include="..\Nudges.Kafka.Analyzers\Nudges.Kafka.Analyzers.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+    <ProjectReference Include="..\Nudges.Kafka\Nudges.Kafka.csproj" />
   </ItemGroup>
-
 </Project>

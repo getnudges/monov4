@@ -29,6 +29,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Nudges.HotChocolate.Utils",
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ProductApi.Tests.Unit", "ProductApi\tests\ProductApi.Tests.Unit\ProductApi.Tests.Unit.csproj", "{BFF7037E-159B-48C4-B0BC-2627896BC303}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Nudges.Kafka.Events", "Nudges.Kafka.Events\Nudges.Kafka.Events.csproj", "{CF98B33A-84CB-0F8B-E6D2-C43702DD72B5}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -79,6 +81,10 @@ Global
 		{BFF7037E-159B-48C4-B0BC-2627896BC303}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{BFF7037E-159B-48C4-B0BC-2627896BC303}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{BFF7037E-159B-48C4-B0BC-2627896BC303}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CF98B33A-84CB-0F8B-E6D2-C43702DD72B5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CF98B33A-84CB-0F8B-E6D2-C43702DD72B5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CF98B33A-84CB-0F8B-E6D2-C43702DD72B5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CF98B33A-84CB-0F8B-E6D2-C43702DD72B5}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

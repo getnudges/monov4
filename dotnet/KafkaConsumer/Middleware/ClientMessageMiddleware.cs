@@ -1,9 +1,9 @@
 using Confluent.Kafka;
 using KafkaConsumer.Services;
-using Keycloak.AuthServices.Sdk.Admin;
 using Microsoft.Extensions.Logging;
 using Monads;
 using Nudges.Kafka;
+using Nudges.Kafka.Events;
 using Nudges.Kafka.Middleware;
 
 namespace KafkaConsumer.Middleware;
@@ -11,7 +11,6 @@ namespace KafkaConsumer.Middleware;
 internal class ClientMessageMiddleware(ILogger<ClientMessageMiddleware> logger,
                                        Func<INudgesClient> nudgesClientFactory,
                                        IForeignProductService foreignProductService,
-                                       IKeycloakUserClient keycloakUserClient,
                                        KafkaMessageProducer<NotificationKey, NotificationEvent> notificationProducer) : IMessageMiddleware<ClientKey, ClientEvent> {
     public async Task<MessageContext<ClientKey, ClientEvent>> InvokeAsync(MessageContext<ClientKey, ClientEvent> context, MessageHandler<ClientKey, ClientEvent> next) {
         var result = await HandleMessageAsync(context.ConsumeResult, context.CancellationToken);

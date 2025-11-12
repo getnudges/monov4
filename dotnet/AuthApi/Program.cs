@@ -9,6 +9,7 @@ using Nudges.Auth.Keycloak;
 using Nudges.Auth.Web;
 using Nudges.Configuration.Extensions;
 using Nudges.Kafka;
+using Nudges.Kafka.Events;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
@@ -86,10 +87,14 @@ builder.Services.AddSingleton<KafkaMessageProducer<NotificationKey, Notification
     new NotificationEventProducer(Topics.Notifications, new ProducerConfig {
         BootstrapServers = sp.GetRequiredService<IConfiguration>().GetKafkaBrokerList()
     }));
+builder.Services.AddSingleton<KafkaMessageProducer<UserAuthenticationEventKey, UserAuthenticationEvent>>(sp =>
+    new UserAuthenticationEventProducer(Topics.UserAuthentication, new ProducerConfig {
+        BootstrapServers = sp.GetRequiredService<IConfiguration>().GetKafkaBrokerList()
+    }));
 
 builder.Services.AddTransient<IOtpVerifier, OtpVerifier>();
 
-builder.Services.AddHttpClient<IKeycloakOidcClient, KeycloakOidcClient>(client => {
+builder.Services.AddHttpClient<IOidcClient, KeycloakOidcClient>(client => {
     client.BaseAddress = new Uri(builder.Configuration.GetOidcServerUrl());
     client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue(MediaTypeNames.Application.Json));
 }).ConfigurePrimaryHttpMessageHandler(s => {

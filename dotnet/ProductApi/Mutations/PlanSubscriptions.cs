@@ -3,6 +3,7 @@ using HotChocolate.Subscriptions;
 using Nudges.Data.Products;
 using Nudges.Data.Products.Models;
 using Nudges.Kafka;
+using Nudges.Kafka.Events;
 
 namespace ProductApi;
 

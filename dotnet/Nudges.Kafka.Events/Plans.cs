@@ -1,4 +1,4 @@
-namespace Nudges.Kafka;
+namespace Nudges.Kafka.Events;
 
 public partial record PlanKey(string EventType, string EventKey);
 

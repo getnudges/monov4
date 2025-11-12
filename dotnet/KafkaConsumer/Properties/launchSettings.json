@@ -59,6 +59,16 @@
         "OTLP_ENDPOINT_URL": "http://localhost:4317",
         "HTTP_PORTS": "7100"
       }
+    },
+    "listen user-authentication": {
+      "commandName": "Project",
+      "commandLineArgs": "user-authentication",
+      "environmentVariables": {
+        "DOTNET_ENVIRONMENT": "Development",
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "OTLP_ENDPOINT_URL": "http://localhost:4317",
+        "HTTP_PORTS": "7100"
+      }
     }
   }
 }

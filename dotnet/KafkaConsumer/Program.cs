@@ -12,6 +12,12 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Nudges.Auth;
+using Nudges.Configuration.Extensions;
+using Nudges.Kafka;
+using Nudges.Kafka.Events;
+using Nudges.Kafka.Middleware;
+using Nudges.Localization.Client;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
@@ -22,11 +28,6 @@ using Precision.WarpCache.MemoryCache;
 using Stripe;
 using Twilio;
 using Twilio.Clients;
-using Nudges.Auth;
-using Nudges.Configuration.Extensions;
-using Nudges.Kafka;
-using Nudges.Kafka.Middleware;
-using Nudges.Localization.Client;
 
 var notificationsCmd = new Command("notifications");
 var plansCmd = new Command("plans");
@@ -34,6 +35,7 @@ var priceTierCmd = new Command("price-tiers");
 var planSubscriptionsCmd = new Command("plan-subscriptions");
 var paymentsCmd = new Command("payments");
 var clientsCmd = new Command("clients");
+var userAuthCmd = new Command("user-authentication");
 
 notificationsCmd.SetHandler(() => CreateBaseHost(args, "notifications").ConfigureNotificationHandler().Build().RunAsync());
 plansCmd.SetHandler(() => CreateBaseHost(args, "plans").ConfigurePlanEventHandler().Build().RunAsync());
@@ -41,6 +43,7 @@ priceTierCmd.SetHandler(() => CreateBaseHost(args, "price-tiers").ConfigurePrice
 paymentsCmd.SetHandler(() => CreateBaseHost(args, "payments").ConfigurePaymentEventHandler().Build().RunAsync());
 planSubscriptionsCmd.SetHandler(() => CreateBaseHost(args, "plan-subscriptions").ConfigurePlanSubscriptionHandler().Build().RunAsync());
 clientsCmd.SetHandler(() => CreateBaseHost(args, "clients").ConfigureClientHandler().Build().RunAsync());
+userAuthCmd.SetHandler(() => CreateBaseHost(args, "user-authentication").ConfigureUserAuthenticationHandler().Build().RunAsync());
 
 var rootCommand = new RootCommand();
 rootCommand.AddCommand(notificationsCmd);
@@ -49,6 +52,7 @@ rootCommand.AddCommand(priceTierCmd);
 rootCommand.AddCommand(paymentsCmd);
 rootCommand.AddCommand(planSubscriptionsCmd);
 rootCommand.AddCommand(clientsCmd);
+rootCommand.AddCommand(userAuthCmd);
 
 await rootCommand.InvokeAsync(args);
 
@@ -64,78 +68,74 @@ static IHostBuilder CreateBaseHost(string[] args, string name) =>
         })
         .ConfigureAppConfiguration(static (hostingContext, config) =>
             config
-                .AddUserSecrets<Program>()
-                .AddEnvironmentVariables()
                 .AddFlatFilesFromMap(
                     hostingContext.Configuration.GetValue("FILEMAP", string.Empty),
                     !hostingContext.HostingEnvironment.IsDevelopment()))
-        .UseConsoleLifetime()
-        .ConfigureServices((hostContext, services) => {
-            services.AddLogging(configure => configure.AddSimpleConsole(o => o.SingleLine = true));
+                .UseConsoleLifetime()
+                .ConfigureServices((hostContext, services) => {
+                    services.AddLogging(configure => configure.AddSimpleConsole(o => o.SingleLine = true));
 
-            if (hostContext.Configuration.GetValue<string>("OTLP_ENDPOINT_URL") is string url) {
-                services.AddOpenTelemetry()
-                    .ConfigureResource(resource =>
-                        resource.AddService($"{name}-{hostContext.HostingEnvironment.ApplicationName}"))
-                    .WithMetrics(metricsConfig =>
-                        metricsConfig
-                            .AddRuntimeInstrumentation()
-                            .AddMeter([
-                                "Microsoft.AspNetCore.Hosting",
-                                "Microsoft.AspNetCore.Server.Kestrel",
-                                "System.Net.Http",
-                                $"{typeof(TracingMiddleware<,>).FullName}",
-                            ])
-                            .AddPrometheusExporter())
-                    .WithTracing(traceConfig =>
-                        traceConfig
-                            .SetSampler<AlwaysOnSampler>()
-                            .AddHttpClientInstrumentation()
-                            .AddSource([
-                                "KafkaConsumer.Handlers.TracingMessageMiddleware",
-                                $"{typeof(TracingMiddleware<,>).Namespace}.TracingMiddleware",
-                                $"{typeof(StripeService).FullName}"
-                            ]))
-                    .WithLogging();
+                    if (hostContext.Configuration.GetValue<string>("OTLP_ENDPOINT_URL") is string url) {
+                        services.AddOpenTelemetry()
+                            .ConfigureResource(resource =>
+                                resource.AddService($"{name}-{hostContext.HostingEnvironment.ApplicationName}"))
+                            .WithMetrics(metricsConfig =>
+                                metricsConfig
+                                    .AddRuntimeInstrumentation()
+                                    .AddMeter([
+                                        "Microsoft.AspNetCore.Hosting",
+                                        "Microsoft.AspNetCore.Server.Kestrel",
+                                        "System.Net.Http",
+                                        $"{typeof(TracingMiddleware<,>).FullName}",
+                                    ])
+                                    .AddPrometheusExporter())
+                            .WithTracing(traceConfig =>
+                                traceConfig
+                                    .SetSampler<AlwaysOnSampler>()
+                                    .AddHttpClientInstrumentation()
+                                    .AddSource([
+                                        $"{typeof(TracingMiddleware<,>).Namespace}.TracingMiddleware",
+                                        $"{typeof(StripeService).FullName}"
+                                    ]))
+                            .WithLogging();
 
-                services.ConfigureOpenTelemetryTracerProvider(o =>
-                    o.AddOtlpExporter(o => o.Endpoint = new Uri(url)));
-                services.ConfigureOpenTelemetryLoggerProvider(o =>
-                    o.AddOtlpExporter(o => o.Endpoint = new Uri(url)));
-            }
+                        services.ConfigureOpenTelemetryTracerProvider(o =>
+                            o.AddOtlpExporter(o => o.Endpoint = new Uri(url)));
+                        services.ConfigureOpenTelemetryLoggerProvider(o =>
+                            o.AddOtlpExporter(o => o.Endpoint = new Uri(url)));
+                    }
 
-            services.AddWarpCacheClient(
-                hostContext.Configuration.GetCacheServerAddress(),
-                StringMessageSerializerContext.Default.String);
+                    services.AddWarpCacheClient(
+                        hostContext.Configuration.GetCacheServerAddress(),
+                        StringMessageSerializerContext.Default.String);
 
-            services.AddSingleton(TimeProvider.System);
-            services.AddSingleton<ICacheStore<string, string>, MemoryCacheStore<string, string>>();
-            services.AddSingleton<IEvictionPolicy<string>>(new LruEvictionPolicy<string>(1000));
-            services.AddSingleton<ChannelCacheMediator<string, string>>();
+                    services.AddSingleton(TimeProvider.System);
+                    services.AddSingleton<ICacheStore<string, string>, MemoryCacheStore<string, string>>();
+                    services.AddSingleton<IEvictionPolicy<string>>(new LruEvictionPolicy<string>(1000));
+                    services.AddSingleton<ChannelCacheMediator<string, string>>();
 
-            services.Configure<OidcConfig>(hostContext.Configuration.GetSection("Oidc"));
+                    services.Configure<OidcConfig>(hostContext.Configuration.GetSection("Oidc"));
 
-            services.AddHttpClient<IServerTokenClient, ServerTokenClient>()
-                .ConfigureHttpClient(client => client.BaseAddress = new Uri(hostContext.Configuration.GetOidcServerUrl()));
-            services.AddNudgesClient()
-                .ConfigureHttpClient((sp, client) => {
-                    var config = sp.GetRequiredService<IConfiguration>();
-                    client.BaseAddress = new Uri(config.GetGraphQLApiUrl());
-                    using var scope = sp.CreateScope();
-
-                    var token = scope.ServiceProvider.GetRequiredService<IServerTokenClient>()
-                        .GetTokenAsync("kafka-consumer").ConfigureAwait(false).GetAwaiter().GetResult();
-                    token.Match(token => {
-                        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token.AccessToken);
-                        // TODO: this throw is probably a bad idea
-                    }, e => throw new Exception(e.ErrorDescription));
+                    services.AddHttpClient<IServerTokenClient, ServerTokenClient>()
+                        .ConfigureHttpClient(client => client.BaseAddress = new Uri(hostContext.Configuration.GetOidcServerUrl()));
+                    services.AddNudgesClient()
+                        .ConfigureHttpClient((sp, client) => {
+                            var config = sp.GetRequiredService<IConfiguration>();
+                            client.BaseAddress = new Uri(config.GetGraphQLApiUrl());
+                            using var scope = sp.CreateScope();
+                            var token = scope.ServiceProvider.GetRequiredService<IServerTokenClient>()
+                                .GetTokenAsync("kafka-consumer").ConfigureAwait(false).GetAwaiter().GetResult();
+                            token.Match(token => {
+                                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token.AccessToken);
+                                // TODO: this throw is intentional.  It should break the startup.
+                            }, e => throw new Exception(e.ErrorDescription));
+                        });
+                    services.AddSingleton<Func<INudgesClient>>(static sp => sp.GetRequiredService<INudgesClient>);
+                    services.AddLocalizationClient((sp, o) => {
+                        o.ServerAddress = sp.GetRequiredService<IConfiguration>().GetLocalizationApiUrl();
+                        return o;
+                    });
                 });
-            services.AddSingleton<Func<INudgesClient>>(static sp => sp.GetRequiredService<INudgesClient>);
-            services.AddLocalizationClient((sp, o) => {
-                o.ServerAddress = sp.GetRequiredService<IConfiguration>().GetLocalizationApiUrl();
-                return o;
-            });
-        });
 
 internal static class HandlerBuilders {
     public static IHostBuilder ConfigureNotificationHandler(this IHostBuilder builder) =>
@@ -228,6 +228,37 @@ internal static class HandlerBuilders {
                         .Build());
 
                 services.AddHostedService<MessageHandlerService<ClientKey, ClientEvent>>();
+            });
+    public static IHostBuilder ConfigureUserAuthenticationHandler(this IHostBuilder builder) =>
+        builder
+            .ConfigureServices(static (hostContext, services) => {
+                services.AddSingleton<KafkaMessageProducer<NotificationKey, NotificationEvent>>(static sp =>
+                    new NotificationEventProducer(Topics.Notifications, new ProducerConfig {
+                        BootstrapServers = sp.GetRequiredService<IConfiguration>().GetKafkaBrokerList(),
+                        AllowAutoCreateTopics = true,
+                    }));
+                services.AddSingleton<KafkaMessageProducer<DeadLetterEventKey, DeadLetterEvent>>(static sp =>
+                    new DeadLetterEventProducer(Topics.DeadLetter, new ProducerConfig {
+                        BootstrapServers = sp.GetRequiredService<IConfiguration>().GetKafkaBrokerList(),
+                        AllowAutoCreateTopics = true,
+                    }));
+
+                services.AddTransient<IMessageMiddleware<UserAuthenticationEventKey, UserAuthenticationEvent>, UserAuthenticationMessageMiddleware>();
+                services.AddTransient(static sp =>
+                    KafkaMessageProcessorBuilder
+                        .For<UserAuthenticationEventKey, UserAuthenticationEvent>(
+                            Topics.UserAuthentication,
+                            sp.GetRequiredService<IConfiguration>().GetKafkaBrokerList(),
+                            cancellationToken: sp.GetRequiredService<IHostApplicationLifetime>().ApplicationStopping)
+                        .Use(new TracingMiddleware<UserAuthenticationEventKey, UserAuthenticationEvent>())
+                        .Use(new SmartErrorHandlingMiddleware<UserAuthenticationEventKey, UserAuthenticationEvent>(
+                            sp.GetRequiredService<ILogger<SmartErrorHandlingMiddleware<UserAuthenticationEventKey, UserAuthenticationEvent>>>(),
+                            sp.GetRequiredService<KafkaMessageProducer<DeadLetterEventKey, DeadLetterEvent>>()
+                        ))
+                        .Use(sp.GetRequiredService<IMessageMiddleware<UserAuthenticationEventKey, UserAuthenticationEvent>>())
+                        .Build());
+
+                services.AddHostedService<MessageHandlerService<UserAuthenticationEventKey, UserAuthenticationEvent>>();
             });
     public static IHostBuilder ConfigurePaymentEventHandler(this IHostBuilder builder) =>
         builder

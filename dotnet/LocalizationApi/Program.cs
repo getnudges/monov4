@@ -28,7 +28,7 @@ if (builder.Configuration.GetValue<string>("OTLP_ENDPOINT_URL") is string url) {
                 .SetSampler<AlwaysOnSampler>()
                 .AddAspNetCoreInstrumentation())
         .WithLogging();
-        
+
     builder.Services.ConfigureOpenTelemetryTracerProvider(o =>
         o.AddOtlpExporter(o => o.Endpoint = new Uri(url)));
 

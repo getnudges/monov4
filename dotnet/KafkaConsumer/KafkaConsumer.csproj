@@ -6,9 +6,9 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <InvariantGlobalization>false</InvariantGlobalization>
-    <UserSecretsId>cb119e69-2e23-4def-84bb-8ea69e0f9305</UserSecretsId>
     <AssemblyName>listener</AssemblyName>
     <PublishTrimmed>False</PublishTrimmed>
+    <UserSecretsId>2f1d290c-fab9-42f4-8625-976bd2a31ab0</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>
@@ -55,6 +55,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Monads\Monads.csproj" />
     <ProjectReference Include="..\Nudges.Configuration\Nudges.Configuration.csproj" />
+    <ProjectReference Include="..\Nudges.Kafka.Events\Nudges.Kafka.Events.csproj" />
     <ProjectReference Include="..\Precision.WarpCache\Precision.WarpCache.Grpc.Client\Precision.WarpCache.Grpc.Client.csproj" />
     <ProjectReference Include="..\Precision.WarpCache\Precision.WarpCache.MemoryCache\Precision.WarpCache.MemoryCache.csproj" />
     <ProjectReference Include="..\Precision.WarpCache\Precision.WarpCache\Precision.WarpCache.csproj" />
@@ -73,6 +74,5 @@
   <ItemGroup>
     <InternalsVisibleTo Include="Nudges.Kafka.Tests.Unit" />
     <InternalsVisibleTo Include="Nudges.Kafka.Tests.Integration" />
-    <InternalsVisibleTo Include="DynamicProxyGenAssembly2" />
   </ItemGroup>
 </Project>

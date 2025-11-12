@@ -1,6 +1,6 @@
 using Confluent.Kafka;
 
-namespace Nudges.Kafka;
+namespace Nudges.Kafka.Events;
 
 public static class ProductEventProducerExtensions {
     public static Task<DeliveryResult<PlanKey, PlanEvent>> ProducePlanCreated(

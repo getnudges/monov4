@@ -12,6 +12,7 @@
     <ProjectReference Include="..\Nudges.Auth\Nudges.Auth.csproj" />
     <ProjectReference Include="..\Nudges.Data\Nudges.Data.csproj" />
     <ProjectReference Include="..\Nudges.HotChocolate.Utils\Nudges.HotChocolate.Utils.csproj" />
+    <ProjectReference Include="..\Nudges.Kafka.Events\Nudges.Kafka.Events.csproj" />
     <ProjectReference Include="..\Nudges.Kafka\Nudges.Kafka.csproj" />
     <ProjectReference Include="..\Nudges.Telemetry\Nudges.Telemetry.csproj" />
   </ItemGroup>

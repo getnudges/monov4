@@ -37,6 +37,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Precision.WarpCache", "Prec
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Nudges.Configuration.Analyzers", "Nudges.Configuration.Analyzers\Nudges.Configuration.Analyzers.csproj", "{B537FDC1-C083-8AF1-0BAB-C24A6F804C9D}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Nudges.Kafka.Events", "Nudges.Kafka.Events\Nudges.Kafka.Events.csproj", "{CF98B33A-84CB-0F8B-E6D2-C43702DD72B5}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -103,6 +105,10 @@ Global
 		{B537FDC1-C083-8AF1-0BAB-C24A6F804C9D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B537FDC1-C083-8AF1-0BAB-C24A6F804C9D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B537FDC1-C083-8AF1-0BAB-C24A6F804C9D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CF98B33A-84CB-0F8B-E6D2-C43702DD72B5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CF98B33A-84CB-0F8B-E6D2-C43702DD72B5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CF98B33A-84CB-0F8B-E6D2-C43702DD72B5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CF98B33A-84CB-0F8B-E6D2-C43702DD72B5}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

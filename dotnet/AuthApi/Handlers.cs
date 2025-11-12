@@ -3,34 +3,36 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using Keycloak.AuthServices.Sdk.Admin.Models;
 using Microsoft.Extensions.Options;
+using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
 using Monads;
-using Nudges.Auth.Keycloak;
-using Precision.WarpCache.Grpc.Client;
 using Nudges.Auth;
 using Nudges.Auth.Web;
 using Nudges.Configuration.Extensions;
 using Nudges.Kafka;
+using Nudges.Kafka.Events;
+using Precision.WarpCache.Grpc.Client;
 
 namespace AuthApi;
 
 internal static class Handlers {
 
-    public static async Task<IResult> GenerateOtp(string p, IOtpVerifier otpVerifier, ICacheClient<string> cache, KafkaMessageProducer<NotificationKey, NotificationEvent> notificationProducer, HttpContext context) {
+    public static async Task<IResult> GenerateOtp(string phoneNumber, IOtpVerifier otpVerifier, ICacheClient<string> cache, KafkaMessageProducer<NotificationKey, NotificationEvent> notificationProducer, HttpContext context) {
         var (code, base32Key) = otpVerifier.GetOtp();
 
-        await cache.SetOtpSecret(p, base32Key);
+        await cache.SetOtpSecret(phoneNumber, base32Key);
         var locale = context.Request.GetRequestCulture();
-        await notificationProducer.ProduceSendOtp(p, locale, code, context.RequestAborted);
+        await notificationProducer.ProduceOtpRequested(phoneNumber, locale, code, context.RequestAborted);
+
+        // When developing locally, return the OTP code in the response for easier testing
         if (context.RequestServices.GetRequiredService<IWebHostEnvironment>().IsDevelopment()) {
             return Results.Json(new OtpResponse(code, DateTimeOffset.UtcNow.Add(WarpCacheExtensions.OtpExpirationTime)), OtpResponseSerializerContext.Default.OtpResponse);
         }
         return Results.Ok();
     }
 
-    public static async Task<IResult> ValidateOtp(OtpCredentials credentials, IOtpVerifier otpVerifier, IKeycloakOidcClient tokenClient, ICacheClient<string> cache, HttpContext httpContext) {
+    public static async Task<IResult> ValidateOtp(OtpCredentials credentials, IOtpVerifier otpVerifier, IOidcClient tokenClient, ICacheClient<string> cache, HttpContext httpContext) {
         if (!httpContext.Request.Headers.TryGetValue("X-Role-Claim", out var role)) {
             return Results.BadRequest(new ErrorResponse("Missing required role claim."));
         }
@@ -45,8 +47,7 @@ internal static class Handlers {
             return Results.BadRequest(new ErrorResponse("OTP expired or not generated"));
         }
 
-        var isValid = otpVerifier.ValidateOtp(key, credentials.Code);
-        if (!isValid) {
+        if (!otpVerifier.ValidateOtp(key, credentials.Code)) {
             return Results.BadRequest(new ErrorResponse("Invalid OTP"));
         }
         await cache.RemoveOtpSecret(credentials.PhoneNumber);
@@ -70,11 +71,11 @@ internal static class Handlers {
                 { "phone", [credentials.PhoneNumber] },
                 { "locale", [httpContext.Request.GetRequestCulture()] }
             }
-        });
+        }, httpContext.RequestAborted);
 
         // TODO: Clean up
         var op = await result.Match(err => Results.Problem(err.Message), async () =>
-            await tokenClient.GetUserTokenAsync(credentials.PhoneNumber, tempPassword).Map(async token => {
+            await tokenClient.GetUserTokenAsync(credentials.PhoneNumber, tempPassword, httpContext.RequestAborted).Map(async token => {
                 var tokenId = Guid.NewGuid().ToString("N");
                 await cache.SetToken(tokenId, token.AccessToken, token.ExpiresIn);
                 httpContext.AttachTokenIdCookie(token, tokenId);
@@ -84,7 +85,7 @@ internal static class Handlers {
         return op.Match<IResult>(x => x, x => Results.Problem(x.Message));
     }
 
-    public static async Task<IResult> OAuthRedirect(string? code, string state, string? error, string? error_description, HttpContext httpContext, ICacheClient<string> cache, IKeycloakOidcClient userTokenClient) {
+    public static async Task<IResult> OAuthRedirect(string? code, string state, string? error, string? error_description, HttpContext httpContext, ICacheClient<string> cache, IOidcClient userTokenClient, KafkaMessageProducer<UserAuthenticationEventKey, UserAuthenticationEvent> eventProducer) {
         if (!string.IsNullOrEmpty(error)) {
             return Results.BadRequest(new ErrorResponse(error_description ?? "Unknown OAuth error."));
         }
@@ -99,13 +100,23 @@ internal static class Handlers {
         if (string.IsNullOrEmpty(codeVerifier)) {
             return Results.Unauthorized();
         }
-        var tokenResponse = await userTokenClient.GrantTokenAsync(code!, codeVerifier, oauthState.InternalRedirect);
+        var tokenResponse = await userTokenClient.GrantTokenAsync(code!, codeVerifier, oauthState.InternalRedirect, httpContext.RequestAborted);
 
         return await tokenResponse.Match<IResult>(async token => {
             await cache.RemoveOidcState(state);
             var tokenId = Guid.NewGuid().ToString("N");
             await cache.SetToken(tokenId, token.AccessToken, token.ExpiresIn);
             httpContext.AttachTokenIdCookie(token, tokenId);
+            // Extract phone number from token claims
+            var handler = new JsonWebTokenHandler();
+            var jwt = handler.ReadJsonWebToken(token.AccessToken);
+            var phoneNumber = jwt.Claims.FirstOrDefault(c => c.Type == WellKnownClaims.PhoneNumber)?.Value;
+            var locale = jwt.Claims.FirstOrDefault(c => c.Type == WellKnownClaims.Locale)?.Value
+                ?? httpContext.Request.GetRequestCulture();
+
+            if (!string.IsNullOrEmpty(phoneNumber)) {
+                await eventProducer.ProduceUserLoggedIn(phoneNumber, locale, httpContext.RequestAborted);
+            }
             return Results.Redirect(oauthState.RedirectUri);
         }, e => Results.Problem(e.Message));
     }

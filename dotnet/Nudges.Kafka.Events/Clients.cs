@@ -1,4 +1,4 @@
-namespace Nudges.Kafka;
+namespace Nudges.Kafka.Events;
 
 public partial record ClientKey(string EventType, string EventKey) {
     public static ClientKey ClientUpdated(string nodeId) =>

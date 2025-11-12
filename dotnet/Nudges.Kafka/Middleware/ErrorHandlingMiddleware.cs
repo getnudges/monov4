@@ -14,3 +14,4 @@ public abstract class ErrorHandlingMiddleware<TKey, TValue> : IMessageMiddleware
 
     protected abstract MessageContext<TKey, TValue> OnError(MessageContext<TKey, TValue> context, Exception ex);
 }
+
