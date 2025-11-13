@@ -16,7 +16,9 @@ public class AppConfigurationGenerator : IIncrementalGenerator {
                 namespace Nudges.Configuration {
                     [global::System.CodeDom.Compiler.GeneratedCode("Nudges.Configuration.Analyzers", "0.0.1")]
                     [global::System.AttributeUsage(AttributeTargets.Field)]
-                    public sealed class ConfigurationKeyAttribute : global::System.Attribute { }
+                    public sealed class ConfigurationKeyAttribute(bool optional = false) : global::System.Attribute {
+                        public bool Optional { get; } = optional;
+                    }
                 
                     [global::System.CodeDom.Compiler.GeneratedCode("Nudges.Configuration.Analyzers", "0.0.1")]
                     public class MissingConfigException(string key) : global::System.Exception($"Config key {key} has no value") { }
@@ -48,8 +50,8 @@ public class AppConfigurationGenerator : IIncrementalGenerator {
         /// <summary>
         /// Gets the value of the configuration key {{model.Value}}
         /// </summary>
-        public static string Get{{model.KeyName}}(this global::Microsoft.Extensions.Configuration.IConfiguration configuration) =>
-            configuration["{{model.Value}}"] ?? throw new MissingConfigException("{{model.Value}}");
+        public static string{{(model.Optional ? "?" : "")}} Get{{model.KeyName}}(this global::Microsoft.Extensions.Configuration.IConfiguration configuration) =>
+            configuration["{{model.Value}}"]{{(model.Optional ? ";" : $" ?? throw new global::Nudges.Configuration.MissingConfigException(\"{model.Value}\");")}}
         """;
 
     private static bool IsSyntaxTargetForGeneration(SyntaxNode node) {
@@ -58,7 +60,6 @@ public class AppConfigurationGenerator : IIncrementalGenerator {
             if (field.Initializer?.Value is LiteralExpressionSyntax literal && !string.IsNullOrEmpty(literal?.Token.Text)) {
                 return true;
             }
-            ;
         }
         return false;
     }
@@ -70,29 +71,64 @@ public class AppConfigurationGenerator : IIncrementalGenerator {
                 // Verify if the field is a constant field
                 if (fieldSymbol.IsConst) {
                     // Extract the constant value
-                    if (fieldSymbol.ConstantValue is string constantValue) {
-                        // Create and return your model using the field name and the constant value
-                        return new Model(fieldSymbol.Name, constantValue);
+                    string? constantValue = null;
+                    if (fieldSymbol.ConstantValue is string cv) {
+                        constantValue = cv;
                     } else {
                         var syntaxReference = fieldSymbol.DeclaringSyntaxReferences.FirstOrDefault();
                         if (syntaxReference != null) {
                             // Obtain the field syntax node
                             var fieldSyntax = syntaxReference.GetSyntax(cancellationToken) as VariableDeclaratorSyntax;
                             if (fieldSyntax?.Initializer?.Value is LiteralExpressionSyntax literal && literal.Token.Value is string literalValue) {
-                                return new Model(fieldSymbol.Name, literalValue);
+                                constantValue = literalValue;
                             }
                         }
+                    }
+
+                    if (constantValue is not null) {
+                        var optional = false;
+
+                        // Get the actual attribute syntax from the target node
+                        if (context.TargetNode is VariableDeclaratorSyntax variableDeclarator) {
+                            var fieldDeclaration = variableDeclarator.Parent?.Parent as FieldDeclarationSyntax;
+
+                            var attributeSyntax = fieldDeclaration?.AttributeLists
+                                .SelectMany(al => al.Attributes)
+                                .FirstOrDefault(a => a.Name.ToString().Contains("ConfigurationKey"));
+
+                            if (attributeSyntax?.ArgumentList?.Arguments.Count > 0) {
+                                var firstArg = attributeSyntax.ArgumentList.Arguments[0];
+
+                                // Check if it's a positional argument (true/false literal)
+                                if (firstArg.NameEquals?.Name.Identifier.Text == "Optional") {
+                                    var cv1 = context.SemanticModel.GetConstantValue(firstArg.Expression, cancellationToken);
+                                    if (cv1.HasValue && cv1.Value is bool boolValue) {
+                                        optional = boolValue;
+                                    }
+                                }
+                                // Check for named argument (optional: true)
+                                else if (firstArg.Expression is LiteralExpressionSyntax) {
+                                    var cv2 = context.SemanticModel.GetConstantValue(firstArg.Expression, cancellationToken);
+                                    if (cv2.HasValue && cv2.Value is bool boolValue) {
+                                        optional = boolValue;
+                                    }
+                                }
+                            }
+                        }
+                        return new Model(fieldSymbol.Name, constantValue, optional);
                     }
                 }
             }
         }
+
         // Return a default model if no match found
         return default!;
     }
 
 
-    private class Model(string keyName, string value) {
+    private class Model(string keyName, string value, bool optional) {
         public string KeyName { get; } = keyName;
         public string Value { get; } = value;
+        public bool Optional { get; } = optional;
     }
 }

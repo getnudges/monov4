@@ -121,9 +121,11 @@ internal static class Handlers {
                  * NOTE:
                  * This call can hang if it can't connect to Kafka.  We need to address that.
                  */
+                var logger = httpContext.RequestServices.GetRequiredService<ILogger<Program>>();
+                logger.LogInformation("Producing UserLoggedIn event for phone number {PhoneNumber}...", phoneNumber);
                 await eventProducer.ProduceUserLoggedIn(phoneNumber, locale, cts.Token).ContinueWith(t => {
+                    logger.LogInformation("Produced UserLoggedIn event for phone number {PhoneNumber}", phoneNumber);
                     if (t.IsFaulted) {
-                        var logger = httpContext.RequestServices.GetRequiredService<ILogger<Program>>();
                         logger.LogError(t.Exception, "Failed to produce UserLoggedIn event for phone number {PhoneNumber}", phoneNumber);
                     }
                 }, TaskScheduler.Default);
@@ -189,9 +191,9 @@ internal static class HttpRequestExtensions {
     public static void AttachTokenIdCookie(this HttpContext httpContext, TokenResponse token, string tokenId) =>
         httpContext.Response.Cookies.Append("TokenId", tokenId, new CookieOptions {
             HttpOnly = true,
-            Secure = true,
+            Secure = httpContext.Request.IsHttps,
             SameSite = SameSiteMode.Lax,
-            Expires = DateTimeOffset.UtcNow.AddSeconds(token.ExpiresIn)
+            Expires = DateTimeOffset.UtcNow.AddSeconds(token.ExpiresIn),
         });
 }
 

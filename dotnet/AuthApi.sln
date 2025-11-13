@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 18
-VisualStudioVersion = 18.0.11205.157 d18.0
+VisualStudioVersion = 18.0.11205.157
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AuthApi", "AuthApi\AuthApi.csproj", "{D272D4FA-D385-46FB-96F7-847B9DFF6338}"
 EndProject
@@ -14,8 +14,6 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Nudges.Kafka", "Nudges.Kafka\Nudges.Kafka.csproj", "{1138AE3E-4E72-491E-3202-8EDF3E42B410}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Nudges.Auth.Web", "Nudges.Auth.Web\Nudges.Auth.Web.csproj", "{195B8CCC-032D-5F2B-0BD4-450B2D4B2085}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AuthApi.Tests", "AuthApi\tests\AuthApi.Tests\AuthApi.Tests.csproj", "{B07F8DAA-2889-1A8E-3AD7-F17EC4F27166}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AuthApi.Tests.Extensions", "AuthApi\tests\AuthApi.Tests.Extensions\AuthApi.Tests.Extensions.csproj", "{B9A13CD3-7F90-B5CD-4F6D-318B6318632B}"
 EndProject
@@ -30,6 +28,14 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Nudges.Kafka.Events", "Nudges.Kafka.Events\Nudges.Kafka.Events.csproj", "{FC94AB1A-E57B-48E0-8F93-C1566C8716FC}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Nudges.Kafka.Analyzers", "Nudges.Kafka.Analyzers\Nudges.Kafka.Analyzers.csproj", "{09777520-2D20-421C-F4A9-C523537E4EEC}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{089100B1-113F-4E66-888A-E83F3999EAFD}"
+	ProjectSection(SolutionItems) = preProject
+		.editorconfig = .editorconfig
+		.filenesting.json = .filenesting.json
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Nudges.Configuration.Analyzers.Tests", "Nudges.Configuration.Analyzers.Tests\Nudges.Configuration.Analyzers.Tests.csproj", "{A6D96F0F-74F1-C55E-F3DF-7AC8F1800CC1}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -61,10 +67,6 @@ Global
 		{195B8CCC-032D-5F2B-0BD4-450B2D4B2085}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{195B8CCC-032D-5F2B-0BD4-450B2D4B2085}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{195B8CCC-032D-5F2B-0BD4-450B2D4B2085}.Release|Any CPU.Build.0 = Release|Any CPU
-		{B07F8DAA-2889-1A8E-3AD7-F17EC4F27166}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{B07F8DAA-2889-1A8E-3AD7-F17EC4F27166}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{B07F8DAA-2889-1A8E-3AD7-F17EC4F27166}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{B07F8DAA-2889-1A8E-3AD7-F17EC4F27166}.Release|Any CPU.Build.0 = Release|Any CPU
 		{B9A13CD3-7F90-B5CD-4F6D-318B6318632B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{B9A13CD3-7F90-B5CD-4F6D-318B6318632B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B9A13CD3-7F90-B5CD-4F6D-318B6318632B}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -93,6 +95,10 @@ Global
 		{09777520-2D20-421C-F4A9-C523537E4EEC}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{09777520-2D20-421C-F4A9-C523537E4EEC}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{09777520-2D20-421C-F4A9-C523537E4EEC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A6D96F0F-74F1-C55E-F3DF-7AC8F1800CC1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A6D96F0F-74F1-C55E-F3DF-7AC8F1800CC1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A6D96F0F-74F1-C55E-F3DF-7AC8F1800CC1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A6D96F0F-74F1-C55E-F3DF-7AC8F1800CC1}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

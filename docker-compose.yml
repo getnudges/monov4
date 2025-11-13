@@ -239,6 +239,19 @@ services:
     depends_on:
       - postgres
 
+  auth-init:
+    build:
+      context: ./dotnet
+      dockerfile: AuthInit.Dockerfile
+    networks:
+      - Nudges
+    env_file:
+      - ./dotnet/.env.docker
+    # depends_on:
+    #   keycloak:
+    #       condition: service_healthy
+
+
   graph-monitor:
     hostname: graph-monitor
     container_name: graph-monitor
@@ -812,7 +825,7 @@ secrets:
   user-api-secret:
     file: ./keycloak/user-api.secret.txt
   webhooks-secret:
-    file: ./keycloak/webhooks-api.secret.txt
+    file: ./keycloak/webhooks.secret.txt
 
 volumes:
   tempo:

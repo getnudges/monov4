@@ -64,6 +64,8 @@ docker-compose run --rm kafka-init-topics
 docker-compose up -d ngrok
 docker-compose up -d webhooks
 
+docker-compose run --rm auth-init
+
 # setup the UIs
 docker-compose up -d new-admin
 # docker-compose up -d new-signup

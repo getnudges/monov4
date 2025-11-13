@@ -23,6 +23,6 @@ internal static class AppConfig {
     public const string OltpEndpointUrl = "OTLP_ENDPOINT_URL";
     [ConfigurationKey]
     public const string OidcServerAuthUrl = "OIDC_SERVER_AUTH_URL";
-    [ConfigurationKey]
+    [ConfigurationKey(true)]
     public const string IgnoreSslCertValidation = "IGNORE_SSL_CERT_VALIDATION";
 }

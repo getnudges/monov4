@@ -96,12 +96,12 @@ internal sealed class AuthInitService(ILogger<AuthInitService> logger,
     }
 }
 
-internal static partial class DbSeedServiceLogs {
+internal static partial class AuthInitServiceLogs {
 
-    [LoggerMessage(Level = LogLevel.Information, Message = "DbSeedService is stopping.")]
+    [LoggerMessage(Level = LogLevel.Information, Message = "AuthInitService is stopping.")]
     public static partial void LogServiceStopping(this ILogger<AuthInitService> logger);
 
-    [LoggerMessage(Level = LogLevel.Information, Message = "DbSeedService is starting.")]
+    [LoggerMessage(Level = LogLevel.Information, Message = "AuthInitService is starting.")]
     public static partial void LogServiceStarting(this ILogger<AuthInitService> logger);
 
     [LoggerMessage(Level = LogLevel.Error)]

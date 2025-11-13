@@ -10,6 +10,10 @@ public class UnitTest1 {
             public static class AppConfig {
                 [ConfigurationKey]
                 public const string RedisUrl = "REDIS_URL";
+                [ConfigurationKey(true)]
+                public const string OtherUrl = "OTHER_URL";
+                [ConfigurationKey(Optional = true)]
+                public const string OtherOtherUrl = "OTHER_OTHER_URL_FU";
             }
         """;
         // Pass the source code to our helper and snapshot test the output
