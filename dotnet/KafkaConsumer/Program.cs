@@ -109,14 +109,23 @@ static IHostBuilder CreateBaseHost(string[] args, string name) =>
                     services.Configure<OidcConfig>(hostContext.Configuration.GetSection("Oidc"));
 
                     services.AddHttpClient<IServerTokenClient, ServerTokenClient>()
-                        .ConfigureHttpClient(client => client.BaseAddress = new Uri(hostContext.Configuration.GetOidcServerUrl()));
+                        .ConfigurePrimaryHttpMessageHandler(sp => {
+                            var env = sp.GetRequiredService<IHostEnvironment>();
+                            return env.IsDevelopment()
+                                ? new HttpClientHandler {
+                                    ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
+                                } : new HttpClientHandler();
+                        })
+                        .ConfigureHttpClient(client => {
+                            client.BaseAddress = new Uri(hostContext.Configuration.GetOidcServerUrl());
+                        });
                     services.AddNudgesClient()
                         .ConfigureHttpClient((sp, client) => {
                             var config = sp.GetRequiredService<IConfiguration>();
                             client.BaseAddress = new Uri(config.GetGraphQLApiUrl());
                             using var scope = sp.CreateScope();
                             var token = scope.ServiceProvider.GetRequiredService<IServerTokenClient>()
-                                .GetTokenAsync("kafka-consumer").ConfigureAwait(false).GetAwaiter().GetResult();
+                                .GetTokenAsync().ConfigureAwait(false).GetAwaiter().GetResult();
                             token.Match(token => {
                                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token.AccessToken);
                                 // TODO: this throw is intentional.  It should break the startup.

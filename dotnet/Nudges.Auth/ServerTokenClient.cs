@@ -8,7 +8,7 @@ using Precision.WarpCache;
 namespace Nudges.Auth;
 
 public interface IServerTokenClient {
-    public Task<Result<TokenResponse, AuthApiError>> GetTokenAsync(string resource);
+    public Task<Result<TokenResponse, AuthApiError>> GetTokenAsync();
 }
 
 public sealed class ServerTokenClient(HttpClient client, IOptions<OidcConfig> config, ICacheStore<string, string> cacheStore) : IServerTokenClient {
@@ -16,8 +16,8 @@ public sealed class ServerTokenClient(HttpClient client, IOptions<OidcConfig> co
     private readonly OidcConfig _config = config.Value;
     private readonly ICacheStore<string, string> _cacheStore = cacheStore;
 
-    public async Task<Result<TokenResponse, AuthApiError>> GetTokenAsync(string resource) {
-        var cached = await _cacheStore.GetAsync($"{_config.Realm}:token:{resource}");
+    public async Task<Result<TokenResponse, AuthApiError>> GetTokenAsync() {
+        var cached = await _cacheStore.GetAsync($"{_config.Realm}:token:{_config.ClientId}");
         if (cached.Found) {
             // TODO: Should ExpiryTime be an int?
             return new TokenResponse(
@@ -28,11 +28,10 @@ public sealed class ServerTokenClient(HttpClient client, IOptions<OidcConfig> co
             var request = new HttpRequestMessage(HttpMethod.Post, $"/realms/{_config.Realm}/protocol/openid-connect/token");
             request.Headers.Add("Accept", "application/json");
             request.Content = new FormUrlEncodedContent(new Dictionary<string, string> {
-            { "client_id", _config.ClientId },
-            { "client_secret", _config.ClientSecret },
-            { "grant_type", "client_credentials" },
-            { "resource", resource }
-        });
+                { "client_id", _config.ClientId },
+                { "client_secret", _config.ClientSecret },
+                { "grant_type", "client_credentials" }
+            });
             var response = await _client.SendAsync(request);
             if (!response.IsSuccessStatusCode) {
                 var body = await response.Content.ReadFromJsonAsync(AuthApiErrorContext.Default.AuthApiError);
@@ -55,12 +54,12 @@ public sealed class ServerTokenClient(HttpClient client, IOptions<OidcConfig> co
 }
 
 public record TokenResponse(string AccessToken, int ExpiresIn);
-
 [JsonSourceGenerationOptions(
     GenerationMode = JsonSourceGenerationMode.Default,
     PropertyNamingPolicy = JsonKnownNamingPolicy.SnakeCaseLower)]
 [JsonSerializable(typeof(TokenResponse))]
 public partial class TokenResponseContext : JsonSerializerContext;
+
 public record AuthApiError(string Error, string ErrorDescription);
 [JsonSourceGenerationOptions(
     GenerationMode = JsonSourceGenerationMode.Default,

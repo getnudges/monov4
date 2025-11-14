@@ -8,17 +8,17 @@ internal static class AppConfiguration {
     [ConfigurationKey]
     public const string UnleashServerApiTokens = "UNLEASH_CLIENT_API_TOKENS";
     [ConfigurationKey]
-    public const string OidcServerUrl = "Keycloak:auth-server-url";
+    public const string OidcServerUrl = "Oidc:ServerUrl";
     [ConfigurationKey]
-    public const string OidcRealm = "Keycloak:realm";
+    public const string OidcRealm = "Oidc:Realm";
     [ConfigurationKey]
-    public const string OidcResource = "Keycloak:resource";
+    public const string OidcClientId = "Oidc:ClientId";
     [ConfigurationKey]
-    public const string OidcClientSecret = "Keycloak:credentials:secret";
+    public const string OidcClientSecret = "Oidc:ClientSecret";
     [ConfigurationKey]
-    public const string OidcAdminUsername = "Keycloak:credentials:username";
+    public const string OidcAdminUsername = "Oidc:AdminCredentials:Username";
     [ConfigurationKey]
-    public const string OidcAdminPassword = "Keycloak:credentials:password";
+    public const string OidcAdminPassword = "Oidc:AdminCredentials:Password";
     [ConfigurationKey]
     public const string AuthApikey = "AUTH_API_KEY";
     [ConfigurationKey]
