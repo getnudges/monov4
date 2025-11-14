@@ -169,7 +169,7 @@ if ($masterValues.Count -eq 0) {
         'LOCALIZATION_API_URL'                                                         = 'http://localizer-api:8888'
         
         # Kafka configuration
-        'KAFKA_BROKER_LIST'                                                            = 'kafka:9092'
+        'KAFKA_BROKER_LIST'                                                            = 'kafka:29092'
         
         # OIDC credentials
         'OIDC_ADMIN_USERNAME'                                                          = 'admin'

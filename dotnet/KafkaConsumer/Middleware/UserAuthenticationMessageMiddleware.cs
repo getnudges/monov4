@@ -28,10 +28,6 @@ internal class UserAuthenticationMessageMiddleware(ILogger<UserAuthenticationMes
     }
 
     private async Task<Result<bool, Exception>> HandleUserLoggedIn(UserAuthenticationEvent userData, CancellationToken cancellationToken) {
-
-        // throw to test the error handling
-        throw new ArgumentException("test");
-
         try {
             var result = await notificationProducer.ProduceSendSms(userData.PhoneNumber, "UserLoggedIn", userData.Locale, [], cancellationToken);
             return true;
