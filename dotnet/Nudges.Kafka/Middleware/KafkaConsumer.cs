@@ -81,7 +81,7 @@ public sealed class KafkaConsumer<TKey, TValue> : IAsyncConsumer<TKey, TValue>, 
 #pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.
 
         public ValueTask DisposeAsync() {
-            consumer?.Close(); // TODO: look into whether this is ok.  Previsously it's been disposed before I got here.
+            //consumer?.Close(); // TODO: look into whether this is ok.  Previsously it's been disposed before I got here.
             consumer?.Dispose();
             return ValueTask.CompletedTask;
         }

@@ -38,10 +38,10 @@ if ($masterValues.Count -eq 0) {
 
 # List of projects to configure
 $projects = @(
-    "dotnet/AuthApi/AuthApi.csproj"
-    "dotnet/UserApi/UserApi.csproj"
-    "dotnet/PaymentApi/PaymentApi.csproj"
-    "dotnet/ProductApi/ProductApi.csproj"
+    # "dotnet/AuthApi/AuthApi.csproj"
+    # "dotnet/UserApi/UserApi.csproj"
+    # "dotnet/PaymentApi/PaymentApi.csproj"
+    # "dotnet/ProductApi/ProductApi.csproj"
     "dotnet/KafkaConsumer/KafkaConsumer.csproj"
 )
 

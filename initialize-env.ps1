@@ -51,6 +51,9 @@ ADMIN_PASSWORD=$($values['ADMIN_PASSWORD'])
 API_KEY=$($values['API_KEY'])
 AUTH_API_KEY=$($values['AUTH_API_KEY'])
 
+# API URLs
+AUTH_API_URL=$($values['AUTH_API_URL'])
+
 # Stripe Configuration
 STRIPE_API_KEY=$($values['STRIPE_API_KEY'])
 STRIPE_WEBHOOKS_SECRET=$($values['STRIPE_WEBHOOKS_SECRET'])
@@ -63,6 +66,15 @@ TWILIO_MESSAGE_SERVICE_SID=$($values['TWILIO_MESSAGE_SERVICE_SID'])
 # Unleash Tokens
 UNLEASH_FRONTEND_TOKEN=$($values['UNLEASH_FRONTEND_TOKEN'])
 UNLEASH_CLIENT_TOKEN=$($values['UNLEASH_CLIENT_TOKEN'])
+
+# Cache Configuration
+CACHE_SERVER_ADDRESS=$($values['CACHE_SERVER_ADDRESS'])
+
+# Localization Configuration
+LOCALIZATION_API_URL=$($values['LOCALIZATION_API_URL'])
+
+# Kafka Configuration
+KAFKA_BROKER_LIST=$($values['KAFKA_BROKER_LIST'])
 
 # OIDC Credentials
 OIDC_ADMIN_USERNAME=$($values['OIDC_ADMIN_USERNAME'])
@@ -134,6 +146,9 @@ if ($masterValues.Count -eq 0) {
         'API_KEY'                                                                      = (New-RandomString -length 32)
         'AUTH_API_KEY'                                                                 = (New-RandomString -length 32)
         
+        # API URLs
+        'AUTH_API_URL'                                                                 = 'http://auth-api:5555'
+        
         # Stripe configuration
         'STRIPE_API_KEY'                                                               = 'sk_test_' + (New-RandomString -length 32)
         'STRIPE_WEBHOOKS_SECRET'                                                       = 'whsec_' + (New-RandomString -length 32)
@@ -146,6 +161,15 @@ if ($masterValues.Count -eq 0) {
         # Unleash tokens
         'UNLEASH_FRONTEND_TOKEN'                                                       = 'development.' + (New-RandomString -length 16)
         'UNLEASH_CLIENT_TOKEN'                                                         = 'development.' + (New-RandomString -length 16)
+        
+        # Cache configuration
+        'CACHE_SERVER_ADDRESS'                                                         = 'http://warp-cache:7777'
+        
+        # Localization configuration
+        'LOCALIZATION_API_URL'                                                         = 'http://localizer-api:8888'
+        
+        # Kafka configuration
+        'KAFKA_BROKER_LIST'                                                            = 'kafka:9092'
         
         # OIDC credentials
         'OIDC_ADMIN_USERNAME'                                                          = 'admin'
@@ -195,6 +219,9 @@ $placeholders = @{
     'API_KEY'                                                                      = $masterValues['API_KEY']
     'AUTH_API_KEY'                                                                 = $masterValues['AUTH_API_KEY']
 
+    # API URLs
+    'AUTH_API_URL'                                                                 = $masterValues['AUTH_API_URL']
+
     # Stripe configuration
     'STRIPE_API_KEY'                                                               = $masterValues['STRIPE_API_KEY']
     'STRIPE_WEBHOOKS_SECRET'                                                       = $masterValues['STRIPE_WEBHOOKS_SECRET']
@@ -207,6 +234,15 @@ $placeholders = @{
     # Unleash tokens
     'UNLEASH_FRONTEND_TOKEN'                                                       = $masterValues['UNLEASH_FRONTEND_TOKEN']
     'UNLEASH_CLIENT_TOKEN'                                                         = $masterValues['UNLEASH_CLIENT_TOKEN']
+
+    # Cache configuration
+    'CACHE_SERVER_ADDRESS'                                                         = $masterValues['CACHE_SERVER_ADDRESS']
+
+    # Localization configuration
+    'LOCALIZATION_API_URL'                                                         = $masterValues['LOCALIZATION_API_URL']
+
+    # Kafka configuration
+    'KAFKA_BROKER_LIST'                                                            = $masterValues['KAFKA_BROKER_LIST']
 
     # OIDC credentials
     'OIDC_ADMIN_USERNAME'                                                          = $masterValues['OIDC_ADMIN_USERNAME']
