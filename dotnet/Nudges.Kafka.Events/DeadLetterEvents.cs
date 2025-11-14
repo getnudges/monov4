@@ -3,8 +3,10 @@ using Confluent.Kafka;
 namespace Nudges.Kafka.Events;
 
 public sealed record DeadLetterEventKey {
-    public EventKey EventKey { get; }
-    public EventKey FailedKey { get; }
+    public EventKey EventKey { get; set; } = EventKey.Empty;
+    public EventKey FailedKey { get; set; } = EventKey.Empty;
+
+    public DeadLetterEventKey() { }
 
     private DeadLetterEventKey(EventKey eventKey, EventKey failedKey) {
         EventKey = eventKey;

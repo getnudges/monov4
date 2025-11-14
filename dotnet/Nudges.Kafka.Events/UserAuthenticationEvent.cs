@@ -3,8 +3,9 @@ using Confluent.Kafka;
 namespace Nudges.Kafka.Events;
 
 public sealed record UserAuthenticationEventKey {
-    public EventKey EventKey { get; }
+    public EventKey EventKey { get; set; } = EventKey.Empty;
 
+    public UserAuthenticationEventKey() { }
     private UserAuthenticationEventKey(EventKey eventKey) => EventKey = eventKey;
 
     public static UserAuthenticationEventKey UserLoggedIn() =>
@@ -15,7 +16,7 @@ public sealed record UserAuthenticationEventKey {
 }
 
 [EventModel(typeof(UserAuthenticationEventKey))]
-public sealed class UserAuthenticationEvent {
+public sealed class UserAuthenticationEvent() {
     public required string PhoneNumber { get; init; }
     public required string Locale { get; init; }
     public DateTimeOffset Timestamp { get; init; } = DateTimeOffset.UtcNow;

@@ -34,4 +34,6 @@ public record EventKey {
             return false;
         }
     }
+
+    public static EventKey Empty => new("Empty", Guid.Empty);
 }
