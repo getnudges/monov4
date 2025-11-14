@@ -49,7 +49,6 @@ ADMIN_PASSWORD=$($values['ADMIN_PASSWORD'])
 
 # API Keys
 API_KEY=$($values['API_KEY'])
-API_TOKEN=$($values['API_TOKEN'])
 AUTH_API_KEY=$($values['AUTH_API_KEY'])
 
 # Stripe Configuration
@@ -70,11 +69,12 @@ OIDC_ADMIN_USERNAME=$($values['OIDC_ADMIN_USERNAME'])
 OIDC_ADMIN_PASSWORD=$($values['OIDC_ADMIN_PASSWORD'])
 
 # OIDC Configuration
-OIDC_REALM=$($values['OIDC_REALM'])
-OIDC_SERVER_URL=$($values['OIDC_SERVER_URL'])
-OIDC_CLIENT_SECRET=$($values['OIDC_CLIENT_SECRET'])
+Oidc__Realm=$($values['Oidc__Realm'])
+Oidc__ServerUrl=$($values['Oidc__ServerUrl'])
 OIDC_SERVER_AUTH_URL=$($values['OIDC_SERVER_AUTH_URL'])
-OIDC_ADMIN_CLIENT_ID=$($values['OIDC_ADMIN_CLIENT_ID'])
+Oidc__AdminCredentials__AdminClientId=$($values['Oidc__AdminCredentials__AdminClientId'])
+Oidc__AdminCredentials__Username=$($values['Oidc__AdminCredentials__Username'])
+Oidc__AdminCredentials__Password=$($values['Oidc__AdminCredentials__Password'])
 
 # Security Settings
 IGNORE_SSL_CERT_VALIDATION=$($values['IGNORE_SSL_CERT_VALIDATION'])
@@ -118,51 +118,55 @@ $masterValues = Read-EnvMaster -path $masterEnvPath
 if ($masterValues.Count -eq 0) {
     Write-Host "No .env.master found, generating new one..."
     
+    $dbPassword = New-RandomString -length 16
+    $keycloakDbPassword = New-RandomString -length 16
+    $keycloakAdminPassword = New-RandomString -length 16
+
     $masterValues = @{
         # Database credentials
-        'DB_PASSWORD'                = (New-RandomString -length 16)
+        'DB_PASSWORD'                                                                  = $dbPassword
         
         # Admin credentials
-        'ADMIN_USERNAME'             = 'admin'
-        'ADMIN_PASSWORD'             = (New-RandomString -length 16)
+        'ADMIN_USERNAME'                                                               = 'admin'
+        'ADMIN_PASSWORD'                                                               = $keycloakAdminPassword
         
         # API keys and secrets
-        'API_KEY'                    = (New-RandomString -length 32)
-        'API_TOKEN'                  = (New-RandomString -length 32)
-        'AUTH_API_KEY'               = (New-RandomString -length 32)
+        'API_KEY'                                                                      = (New-RandomString -length 32)
+        'AUTH_API_KEY'                                                                 = (New-RandomString -length 32)
         
         # Stripe configuration
-        'STRIPE_API_KEY'             = 'sk_test_' + (New-RandomString -length 32)
-        'STRIPE_WEBHOOKS_SECRET'     = 'whsec_' + (New-RandomString -length 32)
+        'STRIPE_API_KEY'                                                               = 'sk_test_' + (New-RandomString -length 32)
+        'STRIPE_WEBHOOKS_SECRET'                                                       = 'whsec_' + (New-RandomString -length 32)
         
         # Twilio configuration
-        'TWILIO_ACCOUNT_SID'         = 'AC' + (New-RandomString -length 32)
-        'TWILIO_AUTH_TOKEN'          = (New-RandomString -length 32)
-        'TWILIO_MESSAGE_SERVICE_SID' = 'MG' + (New-RandomString -length 32)
+        'TWILIO_ACCOUNT_SID'                                                           = 'AC' + (New-RandomString -length 32)
+        'TWILIO_AUTH_TOKEN'                                                            = (New-RandomString -length 32)
+        'TWILIO_MESSAGE_SERVICE_SID'                                                   = 'MG' + (New-RandomString -length 32)
         
         # Unleash tokens
-        'UNLEASH_FRONTEND_TOKEN'     = 'development.' + (New-RandomString -length 16)
-        'UNLEASH_CLIENT_TOKEN'       = 'development.' + (New-RandomString -length 16)
+        'UNLEASH_FRONTEND_TOKEN'                                                       = 'development.' + (New-RandomString -length 16)
+        'UNLEASH_CLIENT_TOKEN'                                                         = 'development.' + (New-RandomString -length 16)
         
         # OIDC credentials
-        'OIDC_ADMIN_USERNAME'        = 'admin'
-        'OIDC_ADMIN_PASSWORD'        = (New-RandomString -length 16)
+        'OIDC_ADMIN_USERNAME'                                                          = 'admin'
+        'OIDC_ADMIN_PASSWORD'                                                          = $keycloakAdminPassword
         
         # OIDC configuration
-        'OIDC_REALM'                 = 'nudges'
-        'OIDC_SERVER_URL'            = 'https://keycloak:8443'
-        'OIDC_CLIENT_SECRET'         = (New-RandomString -length 32)
-        'OIDC_SERVER_AUTH_URL'       = 'https://localhost:8443'
-        'OIDC_ADMIN_CLIENT_ID'       = 'admin-cli'
+        'Oidc__Realm'                                                                  = 'nudges'
+        'Oidc__ServerUrl'                                                              = 'https://keycloak:8443'
+        'OIDC_SERVER_AUTH_URL'                                                         = 'https://keycloak.local:8443'   
+        'Oidc__AdminCredentials__AdminClientId'                                        = 'admin-cli'
+        'Oidc__AdminCredentials__Username'                                             = 'admin'
+        'Oidc__AdminCredentials__Password'                                             = $keycloakAdminPassword
         
         # Security settings
-        'IGNORE_SSL_CERT_VALIDATION' = 'true'
+        'IGNORE_SSL_CERT_VALIDATION'                                                   = 'true'
         
         # Authentication settings
-        'Authentication__Schemes__Bearer__RequireHttpsMetadata' = 'false'
-        'Authentication__Schemes__Bearer__TokenValidationParameters__ValidIssuer'          = 'https://localhost:8443/realms/nudges'
-        'Authentication__Schemes__Bearer__TokenValidationParameters__ValidateAudience'     = 'false'
-        'IdentityModel__Logging'     = 'true'
+        'Authentication__Schemes__Bearer__RequireHttpsMetadata'                        = 'false'
+        'Authentication__Schemes__Bearer__TokenValidationParameters__ValidIssuer'      = 'https://keyloak.local:8443/realms/nudges'
+        'Authentication__Schemes__Bearer__TokenValidationParameters__ValidateAudience' = 'false'
+        'IdentityModel__Logging'                                                       = 'true'
     }
     
     Write-EnvMaster -values $masterValues -path $masterEnvPath
@@ -174,55 +178,56 @@ else {
 # Build complete placeholders map with derived values
 $placeholders = @{
     # Keycloak admin credentials
-    'ADMIN_USERNAME'              = $masterValues['ADMIN_USERNAME']
-    'ADMIN_PASSWORD'              = $masterValues['ADMIN_PASSWORD']
-    'KC_DB_USERNAME'              = 'keycloak'
-    'KC_DB_PASSWORD'              = $masterValues['DB_PASSWORD']
-    'KC_BOOTSTRAP_ADMIN_USERNAME' = $masterValues['ADMIN_USERNAME']
-    'KC_BOOTSTRAP_ADMIN_PASSWORD' = $masterValues['ADMIN_PASSWORD']
+    'ADMIN_USERNAME'                                                               = $masterValues['ADMIN_USERNAME']
+    'ADMIN_PASSWORD'                                                               = $masterValues['ADMIN_PASSWORD']
+    'KC_DB_USERNAME'                                                               = 'keycloak'
+    'KC_DB_PASSWORD'                                                               = $masterValues['DB_PASSWORD']
+    'KC_BOOTSTRAP_ADMIN_USERNAME'                                                  = $masterValues['ADMIN_USERNAME']
+    'KC_BOOTSTRAP_ADMIN_PASSWORD'                                                  = $masterValues['ADMIN_PASSWORD']
 
     # Database credentials (all use the same password)
-    'DB_PASSWORD'                 = $masterValues['DB_PASSWORD']
-    'USERDB_PASSWORD'             = $masterValues['DB_PASSWORD']
-    'PRODUCTDB_PASSWORD'          = $masterValues['DB_PASSWORD']
-    'PAYMENTDB_PASSWORD'          = $masterValues['DB_PASSWORD']
+    'DB_PASSWORD'                                                                  = $masterValues['DB_PASSWORD']
+    'USERDB_PASSWORD'                                                              = $masterValues['DB_PASSWORD']
+    'PRODUCTDB_PASSWORD'                                                           = $masterValues['DB_PASSWORD']
+    'PAYMENTDB_PASSWORD'                                                           = $masterValues['DB_PASSWORD']
 
     # API keys and secrets
-    'API_KEY'                     = $masterValues['API_KEY']
-    'API_TOKEN'                   = $masterValues['API_TOKEN']
-    'AUTH_API_KEY'                = $masterValues['AUTH_API_KEY']
+    'API_KEY'                                                                      = $masterValues['API_KEY']
+    'AUTH_API_KEY'                                                                 = $masterValues['AUTH_API_KEY']
 
     # Stripe configuration
-    'STRIPE_API_KEY'              = $masterValues['STRIPE_API_KEY']
-    'STRIPE_WEBHOOKS_SECRET'      = $masterValues['STRIPE_WEBHOOKS_SECRET']
+    'STRIPE_API_KEY'                                                               = $masterValues['STRIPE_API_KEY']
+    'STRIPE_WEBHOOKS_SECRET'                                                       = $masterValues['STRIPE_WEBHOOKS_SECRET']
 
     # Twilio configuration
-    'TWILIO_ACCOUNT_SID'          = $masterValues['TWILIO_ACCOUNT_SID']
-    'TWILIO_AUTH_TOKEN'           = $masterValues['TWILIO_AUTH_TOKEN']
-    'TWILIO_MESSAGE_SERVICE_SID'  = $masterValues['TWILIO_MESSAGE_SERVICE_SID']
+    'TWILIO_ACCOUNT_SID'                                                           = $masterValues['TWILIO_ACCOUNT_SID']
+    'TWILIO_AUTH_TOKEN'                                                            = $masterValues['TWILIO_AUTH_TOKEN']
+    'TWILIO_MESSAGE_SERVICE_SID'                                                   = $masterValues['TWILIO_MESSAGE_SERVICE_SID']
 
     # Unleash tokens
-    'UNLEASH_FRONTEND_TOKEN'      = $masterValues['UNLEASH_FRONTEND_TOKEN']
-    'UNLEASH_CLIENT_TOKEN'        = $masterValues['UNLEASH_CLIENT_TOKEN']
+    'UNLEASH_FRONTEND_TOKEN'                                                       = $masterValues['UNLEASH_FRONTEND_TOKEN']
+    'UNLEASH_CLIENT_TOKEN'                                                         = $masterValues['UNLEASH_CLIENT_TOKEN']
 
     # OIDC credentials
-    'OIDC_ADMIN_USERNAME'         = $masterValues['OIDC_ADMIN_USERNAME']
-    'OIDC_ADMIN_PASSWORD'         = $masterValues['OIDC_ADMIN_PASSWORD']
+    'OIDC_ADMIN_USERNAME'                                                          = $masterValues['OIDC_ADMIN_USERNAME']
+    'OIDC_ADMIN_PASSWORD'                                                          = $masterValues['OIDC_ADMIN_PASSWORD']
     
     # OIDC configuration
-    'OIDC_REALM'                  = $masterValues['OIDC_REALM']
-    'OIDC_SERVER_URL'             = $masterValues['OIDC_SERVER_URL']
-    'OIDC_SERVER_AUTH_URL'        = $masterValues['OIDC_SERVER_AUTH_URL']
-    'OIDC_ADMIN_CLIENT_ID'        = $masterValues['OIDC_ADMIN_CLIENT_ID']
+    'Oidc__Realm'                                                                  = $masterValues['Oidc__Realm']
+    'Oidc__ServerUrl'                                                              = $masterValues['Oidc__ServerUrl']
+    'OIDC_SERVER_AUTH_URL'                                                          = $masterValues['OIDC_SERVER_AUTH_URL']
+    'Oidc__AdminCredentials__AdminClientId'                                        = $masterValues['Oidc__AdminCredentials__AdminClientId']
+    'Oidc__AdminCredentials__Username'                                             = $masterValues['Oidc__AdminCredentials__Username']
+    'Oidc__AdminCredentials__Password'                                             = $masterValues['Oidc__AdminCredentials__Password']
     
     # Security settings
-    'IGNORE_SSL_CERT_VALIDATION'  = $masterValues['IGNORE_SSL_CERT_VALIDATION']
+    'IGNORE_SSL_CERT_VALIDATION'                                                   = $masterValues['IGNORE_SSL_CERT_VALIDATION']
     
     # Authentication settings
-    'Authentication__Schemes__Bearer__RequireHttpsMetadata' = $masterValues['Authentication__Schemes__Bearer__RequireHttpsMetadata']
-    'Authentication__Schemes__Bearer__TokenValidationParameters__ValidIssuer'          = $masterValues['Authentication__Schemes__Bearer__TokenValidationParameters__ValidIssuer']
-    'Authentication__Schemes__Bearer__TokenValidationParameters__ValidateAudience'     = $masterValues['Authentication__Schemes__Bearer__TokenValidationParameters__ValidateAudience']
-    'IdentityModel__Logging'     = $masterValues['IdentityModel__Logging']
+    'Authentication__Schemes__Bearer__RequireHttpsMetadata'                        = $masterValues['Authentication__Schemes__Bearer__RequireHttpsMetadata']
+    'Authentication__Schemes__Bearer__TokenValidationParameters__ValidIssuer'      = $masterValues['Authentication__Schemes__Bearer__TokenValidationParameters__ValidIssuer']
+    'Authentication__Schemes__Bearer__TokenValidationParameters__ValidateAudience' = $masterValues['Authentication__Schemes__Bearer__TokenValidationParameters__ValidateAudience']
+    'IdentityModel__Logging'                                                       = $masterValues['IdentityModel__Logging']
 }
 
 Write-Host "`nRegenerating all configuration files from .env.master...`n"

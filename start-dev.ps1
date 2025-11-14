@@ -57,8 +57,8 @@ docker-compose run --rm kafka-init-topics
 # docker-compose up -d user-authentication-listener
 
 # setup the webhook handler
-docker-compose up -d ngrok
-docker-compose up -d webhooks
+# docker-compose up -d ngrok
+# docker-compose up -d webhooks
 
 docker-compose run --rm auth-init
 

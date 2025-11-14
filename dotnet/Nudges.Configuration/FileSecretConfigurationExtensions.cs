@@ -2,6 +2,12 @@ using Nudges.Configuration;
 
 namespace Microsoft.Extensions.Configuration;
 
+/// <summary>
+/// Provides extension methods for adding file-based secret providers to an IConfigurationBuilder instance.
+/// </summary>
+/// <remarks>These extension methods enable the configuration system to load secrets from files using either a
+/// hard-coded mapping or a .env-style mapping file. They are intended to simplify the integration of file-based secrets
+/// into application configuration pipelines.</remarks>
 public static class FileSecretConfigurationExtensions {
     /// <summary>
     /// Adds the file secrets provider using a hard-coded mapping.
@@ -20,20 +26,16 @@ public static class FileSecretConfigurationExtensions {
         if (optional || string.IsNullOrEmpty(fileMap)) {
             return builder;
         }
-        Console.WriteLine("FileMap: {0}", fileMap);
 
         var mappings = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         foreach (var line in fileMap.Split(Environment.NewLine)) {
-            // Trim whitespace and ignore comments or empty lines.
             var trimmedLine = line.Trim();
             if (string.IsNullOrWhiteSpace(trimmedLine) || trimmedLine.StartsWith('#')) {
                 continue;
             }
 
-            // Split only on the first '=' character.
             var parts = trimmedLine.Split(['='], 2);
             if (parts.Length != 2) {
-                // Optionally log a warning here about the malformed line.
                 continue;
             }
 
@@ -41,7 +43,6 @@ public static class FileSecretConfigurationExtensions {
             var value = parts[1].Trim();
             if (!string.IsNullOrEmpty(key) && !string.IsNullOrEmpty(value)) {
                 mappings[key] = value;
-                Console.WriteLine("Mapping: {0} -> {1}", key, value);
             }
         }
 
