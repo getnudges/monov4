@@ -25,6 +25,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Nudges.Telemetry\Nudges.Telemetry.csproj" />
     <ProjectReference Include="..\Nudges.Auth.Keycloak\Nudges.Auth.Keycloak.csproj" />
     <ProjectReference Include="..\Nudges.Configuration\Nudges.Configuration.csproj" />
     <ProjectReference Include="..\Nudges.Kafka.Events\Nudges.Kafka.Events.csproj" />

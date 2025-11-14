@@ -29,13 +29,9 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Nudges.Kafka.Events", "Nudg
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Nudges.Kafka.Analyzers", "Nudges.Kafka.Analyzers\Nudges.Kafka.Analyzers.csproj", "{09777520-2D20-421C-F4A9-C523537E4EEC}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{089100B1-113F-4E66-888A-E83F3999EAFD}"
-	ProjectSection(SolutionItems) = preProject
-		.editorconfig = .editorconfig
-		.filenesting.json = .filenesting.json
-	EndProjectSection
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Nudges.Configuration.Analyzers.Tests", "Nudges.Configuration.Analyzers.Tests\Nudges.Configuration.Analyzers.Tests.csproj", "{A6D96F0F-74F1-C55E-F3DF-7AC8F1800CC1}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Nudges.Telemetry", "Nudges.Telemetry\Nudges.Telemetry.csproj", "{B9E5F0E5-128A-84DF-8A24-9243A9AA0493}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -99,6 +95,10 @@ Global
 		{A6D96F0F-74F1-C55E-F3DF-7AC8F1800CC1}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A6D96F0F-74F1-C55E-F3DF-7AC8F1800CC1}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A6D96F0F-74F1-C55E-F3DF-7AC8F1800CC1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B9E5F0E5-128A-84DF-8A24-9243A9AA0493}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B9E5F0E5-128A-84DF-8A24-9243A9AA0493}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B9E5F0E5-128A-84DF-8A24-9243A9AA0493}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B9E5F0E5-128A-84DF-8A24-9243A9AA0493}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

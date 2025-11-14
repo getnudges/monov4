@@ -723,7 +723,8 @@ services:
     depends_on:
       - kafka
     command: "bash -c 'echo Waiting for Kafka to be ready... && \
-      cub kafka-ready -b kafka:29092 1 30 && \
+      until kafka-broker-api-versions --bootstrap-server kafka:29092 > /dev/null 2>&1; do echo \"Waiting for Kafka...\"; sleep 2; done && \
+      echo \"Kafka is ready. Creating topics...\" && \
 
       kafka-topics --create --topic subscriptions         --partitions 2 --replication-factor 1 --if-not-exists --bootstrap-server kafka:29092 && \
       kafka-topics --create --topic notifications         --partitions 2 --replication-factor 1 --if-not-exists --bootstrap-server kafka:29092 && \

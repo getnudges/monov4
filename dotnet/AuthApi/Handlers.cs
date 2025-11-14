@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Globalization;
 using System.Security.Cryptography;
 using System.Text;
@@ -12,42 +13,57 @@ using Nudges.Auth.Web;
 using Nudges.Configuration.Extensions;
 using Nudges.Kafka;
 using Nudges.Kafka.Events;
+using Nudges.Telemetry;
 using Precision.WarpCache.Grpc.Client;
 
 namespace AuthApi;
 
 internal static class Handlers {
+    public static readonly ActivitySource ActivitySource = new($"{typeof(Handlers).FullName}");
 
-    public static async Task<IResult> GenerateOtp(string phoneNumber, IOtpVerifier otpVerifier, ICacheClient<string> cache, KafkaMessageProducer<NotificationKey, NotificationEvent> notificationProducer, HttpContext context) {
+    public static async Task<IResult> GenerateOtp(string phoneNumber, IOtpVerifier otpVerifier, ICacheClient<string> cache, KafkaMessageProducer<NotificationKey, NotificationEvent> notificationProducer, HttpContext httpContext) {
+
+        using var activity = ActivitySource.StartActivity(nameof(ValidateOtp), ActivityKind.Server, httpContext.Request.GetActivityContext());
+        activity?.Start();
+
         var (code, base32Key) = otpVerifier.GetOtp();
 
         await cache.SetOtpSecret(phoneNumber, base32Key);
-        var locale = context.Request.GetRequestCulture();
-        await notificationProducer.ProduceOtpRequested(phoneNumber, locale, code, context.RequestAborted);
+        var locale = httpContext.Request.GetRequestCulture();
+        await notificationProducer.ProduceOtpRequested(phoneNumber, locale, code, httpContext.RequestAborted);
 
         // When developing locally, return the OTP code in the response for easier testing
-        if (context.RequestServices.GetRequiredService<IWebHostEnvironment>().IsDevelopment()) {
+        if (httpContext.RequestServices.GetRequiredService<IWebHostEnvironment>().IsDevelopment()) {
             return Results.Json(new OtpResponse(code, DateTimeOffset.UtcNow.Add(WarpCacheExtensions.OtpExpirationTime)), OtpResponseSerializerContext.Default.OtpResponse);
         }
+        activity?.SetStatus(ActivityStatusCode.Ok);
         return Results.Ok();
     }
 
     public static async Task<IResult> ValidateOtp(OtpCredentials credentials, IOtpVerifier otpVerifier, IOidcClient tokenClient, ICacheClient<string> cache, HttpContext httpContext) {
+
+        using var activity = ActivitySource.StartActivity(nameof(ValidateOtp), ActivityKind.Server, httpContext.Request.GetActivityContext());
+        activity?.Start();
+
         if (!httpContext.Request.Headers.TryGetValue("X-Role-Claim", out var role)) {
+            activity?.SetStatus(ActivityStatusCode.Error, "Missing required role claim.");
             return Results.BadRequest(new ErrorResponse("Missing required role claim."));
         }
 
         var roleClaim = role.ToString();
         if (roleClaim is not ClaimValues.Roles.Client and not ClaimValues.Roles.Subscriber) {
+            activity?.SetStatus(ActivityStatusCode.Error, $"Invalid role claim: {roleClaim}");
             return Results.BadRequest(new ErrorResponse($"Invalid role: {roleClaim}"));
         }
 
         var key = await cache.GetOtpSecret(credentials.PhoneNumber);
         if (key is null) {
+            activity?.SetStatus(ActivityStatusCode.Error, "OTP expired or not generated.");
             return Results.BadRequest(new ErrorResponse("OTP expired or not generated"));
         }
 
         if (!otpVerifier.ValidateOtp(key, credentials.Code)) {
+            activity?.SetStatus(ActivityStatusCode.Error, "Invalid OTP.");
             return Results.BadRequest(new ErrorResponse("Invalid OTP"));
         }
 
@@ -65,7 +81,13 @@ internal static class Handlers {
                 return Results.Ok();
             }));
 
-        return result.Match<IResult>(x => x, x => Results.Problem(x.Message));
+        return result.Match<IResult>(x => {
+            activity?.SetStatus(ActivityStatusCode.Ok);
+            return x;
+        }, x => {
+            activity?.SetStatus(ActivityStatusCode.Error, $"Error during user creation or token retrieval: {x.Message}");
+            return Results.Problem(x.Message);
+        });
     }
 
     private static async Task<Maybe<OidcException>> CreateNewUser(OtpCredentials credentials, IOidcClient tokenClient, HttpContext httpContext, string roleClaim, string tempPassword) {
@@ -92,11 +114,17 @@ internal static class Handlers {
     }
 
     public static async Task<IResult> OAuthRedirect(string? code, string state, string? error, string? error_description, HttpContext httpContext, ICacheClient<string> cache, IOidcClient userTokenClient, KafkaMessageProducer<UserAuthenticationEventKey, UserAuthenticationEvent> eventProducer) {
+
+        using var activity = ActivitySource.StartActivity(nameof(OAuthRedirect), ActivityKind.Server, httpContext.Request.GetActivityContext());
+        activity?.Start();
+
         if (!string.IsNullOrEmpty(error)) {
+            activity?.SetStatus(ActivityStatusCode.Error, $"OAuth error: {error} - {error_description}");
             return Results.BadRequest(new ErrorResponse(error_description ?? "Unknown OAuth error."));
         }
 
         if (string.IsNullOrWhiteSpace(code) || string.IsNullOrWhiteSpace(state)) {
+            activity?.SetStatus(ActivityStatusCode.Error, "Missing code or state in OAuth redirect.");
             return Results.BadRequest(new ErrorResponse("Invalid OAuth request: missing code or state."));
         }
 
@@ -104,6 +132,7 @@ internal static class Handlers {
         var oauthState = JsonSerializer.Deserialize(stateData, OAuthStateSerializerContext.Default.OAuthState);
         var codeVerifier = await cache.GetOidcState(state);
         if (string.IsNullOrEmpty(codeVerifier)) {
+            activity?.SetStatus(ActivityStatusCode.Error, "Invalid or expired OAuth state.");
             return Results.Unauthorized();
         }
 
@@ -111,8 +140,12 @@ internal static class Handlers {
 
         var result = await tokenResponse.Match<IResult>(
             CreateRedirectResponse(state, httpContext, cache, eventProducer, oauthState),
-            e => Results.Problem(e.Message));
+            e => {
+                activity?.SetStatus(ActivityStatusCode.Error, $"Failed to grant token: {e.Message}");
+                return Results.Problem(e.Message);
+            });
 
+        activity?.SetStatus(ActivityStatusCode.Ok);
         return result;
     }
 
@@ -155,6 +188,10 @@ internal static class Handlers {
         };
 
     public static async Task<IResult> OAuthLogin(string redirectUri, IConfiguration config, IOptions<OidcConfig> oidcConfig, HttpContext httpContext, ICacheClient<string> cache) {
+
+        using var activity = ActivitySource.StartActivity(nameof(OAuthLogin), ActivityKind.Server, httpContext.Request.GetActivityContext());
+        activity?.Start();
+
         var baseUrl = new Uri($"{config.GetOidcServerAuthUrl()}/realms/{oidcConfig.Value.Realm}/protocol/openid-connect/auth");
         var host = httpContext.Request.Headers["X-Forwarded-Host"].FirstOrDefault() ?? httpContext.Request.Host.Host;
         var port = httpContext.Request.Headers["X-Forwarded-Port"].FirstOrDefault() ?? httpContext.Request.Host.Port?.ToString(CultureInfo.InvariantCulture)
@@ -181,6 +218,7 @@ internal static class Handlers {
 
         await cache.SetOidcState(stateKey, codeVerifier);
 
+        activity?.SetStatus(ActivityStatusCode.Ok);
         return Results.Redirect(redirect);
     }
 
