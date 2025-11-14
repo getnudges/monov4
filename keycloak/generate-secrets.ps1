@@ -1,4 +1,5 @@
-# get-secrets.ps1
+# Exit on any error
+$ErrorActionPreference = "Stop"
 
 # Ignore SSL certificate validation
 if ($PSVersionTable.PSVersion.Major -ge 6) {

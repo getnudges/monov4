@@ -4,18 +4,15 @@ $env:COMPOSE_BAKE = "true"
 # Generate environment files if they don't exist
 ./initialize-env.ps1
 
+# basic stuff
+docker-compose up -d postgres
+docker-compose up -d redis
+
 # keycloak
-docker-compose up -d keycloak
+docker-compose up -d --wait keycloak # we need to wait so the generate-scripts 
 
 # Generate Keycloak secrets
-# .\keycloak\generate-secrets.ps1
-
-# TODO: wait for keycloak to be up and running
-
-# OTEL stuff
-# docker-compose run --rm init-tempo
-# docker-compose up -d tempo
-# docker-compose up -d grafana
+.\keycloak\generate-secrets.ps1
 
 docker-compose up -d warp-cache
 
@@ -68,3 +65,8 @@ docker-compose run --rm auth-init
 # setup the UIs
 docker-compose up -d new-admin
 # docker-compose up -d new-signup
+
+# OTEL stuff
+# docker-compose run --rm init-tempo
+# docker-compose up -d tempo
+# docker-compose up -d grafana

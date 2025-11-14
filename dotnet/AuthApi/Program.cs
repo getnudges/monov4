@@ -19,8 +19,7 @@ using Precision.WarpCache.Grpc.Client;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Configuration.AddFlatFilesFromMap(
-    builder.Configuration.GetValue("FILEMAP", string.Empty),
-    !builder.Environment.IsDevelopment());
+    builder.Configuration.GetValue("FILEMAP", string.Empty), false);
 
 builder.Services.Configure<OidcConfig>(builder.Configuration.GetSection("Oidc"));
 

@@ -67,6 +67,7 @@ public sealed class KeycloakOidcClient(HttpClient client, IOptions<OidcConfig> c
         });
 
     public async Task<Result<TokenResponse, OidcException>> GrantTokenAsync(string code, string codeVerifier, string redirectUri, CancellationToken cancellationToken) {
+        logger.LogError($"Using ClientSecret: {_config.ClientSecret}");
         var request = new HttpRequestMessage(HttpMethod.Post, $"/realms/{_config.Realm}/protocol/openid-connect/token") {
             Content = new FormUrlEncodedContent(new Dictionary<string, string> {
                 { "client_id", _config.ClientId },

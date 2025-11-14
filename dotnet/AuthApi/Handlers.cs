@@ -50,18 +50,34 @@ internal static class Handlers {
         if (!otpVerifier.ValidateOtp(key, credentials.Code)) {
             return Results.BadRequest(new ErrorResponse("Invalid OTP"));
         }
+
         await cache.RemoveOtpSecret(credentials.PhoneNumber);
 
         var tempPassword = Guid.NewGuid().ToString("N");
+        var userCreate = await CreateNewUser(credentials, tokenClient, httpContext, roleClaim, tempPassword);
+
+        // TODO: Clean up
+        var result = await userCreate.Match(err => Results.Problem(err.Message), async () =>
+            await tokenClient.GetUserTokenAsync(credentials.PhoneNumber, tempPassword, httpContext.RequestAborted).Map(async token => {
+                var tokenId = Guid.NewGuid().ToString("N");
+                await cache.SetToken(tokenId, token.AccessToken, token.ExpiresIn);
+                httpContext.AttachTokenIdCookie(token, tokenId);
+                return Results.Ok();
+            }));
+
+        return result.Match<IResult>(x => x, x => Results.Problem(x.Message));
+    }
+
+    private static async Task<Maybe<OidcException>> CreateNewUser(OtpCredentials credentials, IOidcClient tokenClient, HttpContext httpContext, string roleClaim, string tempPassword) {
         var result = await tokenClient.CreateUser(new UserRepresentation {
             Username = credentials.PhoneNumber,
             Credentials = [
-                new() {
+                        new() {
                     Type = "password",
                     Value = tempPassword,
                     Temporary = false
                 }
-            ],
+                    ],
             Enabled = true,
             // TODO: this is gross
             Groups = [$"{roleClaim}s"],
@@ -72,17 +88,7 @@ internal static class Handlers {
                 { "locale", [httpContext.Request.GetRequestCulture()] }
             }
         }, httpContext.RequestAborted);
-
-        // TODO: Clean up
-        var op = await result.Match(err => Results.Problem(err.Message), async () =>
-            await tokenClient.GetUserTokenAsync(credentials.PhoneNumber, tempPassword, httpContext.RequestAborted).Map(async token => {
-                var tokenId = Guid.NewGuid().ToString("N");
-                await cache.SetToken(tokenId, token.AccessToken, token.ExpiresIn);
-                httpContext.AttachTokenIdCookie(token, tokenId);
-                return Results.Ok();
-            }));
-
-        return op.Match<IResult>(x => x, x => Results.Problem(x.Message));
+        return result;
     }
 
     public static async Task<IResult> OAuthRedirect(string? code, string state, string? error, string? error_description, HttpContext httpContext, ICacheClient<string> cache, IOidcClient userTokenClient, KafkaMessageProducer<UserAuthenticationEventKey, UserAuthenticationEvent> eventProducer) {
@@ -100,13 +106,25 @@ internal static class Handlers {
         if (string.IsNullOrEmpty(codeVerifier)) {
             return Results.Unauthorized();
         }
+
         var tokenResponse = await userTokenClient.GrantTokenAsync(code!, codeVerifier, oauthState.InternalRedirect, httpContext.RequestAborted);
 
-        return await tokenResponse.Match<IResult>(async token => {
+        var result = await tokenResponse.Match<IResult>(
+            CreateRedirectResponse(state, httpContext, cache, eventProducer, oauthState),
+            e => Results.Problem(e.Message));
+
+        return result;
+    }
+
+    private static Func<TokenResponse, Task<IResult>> CreateRedirectResponse(
+        string state, HttpContext httpContext, ICacheClient<string> cache, KafkaMessageProducer<UserAuthenticationEventKey, UserAuthenticationEvent> eventProducer, OAuthState oauthState) => async token => {
+
             await cache.RemoveOidcState(state);
             var tokenId = Guid.NewGuid().ToString("N");
             await cache.SetToken(tokenId, token.AccessToken, token.ExpiresIn);
+
             httpContext.AttachTokenIdCookie(token, tokenId);
+
             // Extract phone number from token claims
             var handler = new JsonWebTokenHandler();
             var jwt = handler.ReadJsonWebToken(token.AccessToken);
@@ -114,25 +132,27 @@ internal static class Handlers {
             var locale = jwt.Claims.FirstOrDefault(c => c.Type == WellKnownClaims.Locale)?.Value
                 ?? httpContext.Request.GetRequestCulture();
 
-            if (!string.IsNullOrEmpty(phoneNumber)) {
-                var cts = CancellationTokenSource.CreateLinkedTokenSource(httpContext.RequestAborted);
-                cts.CancelAfter(TimeSpan.FromSeconds(2));
-                /*
-                 * NOTE:
-                 * This call can hang if it can't connect to Kafka.  We need to address that.
-                 */
-                var logger = httpContext.RequestServices.GetRequiredService<ILogger<Program>>();
-                logger.LogInformation("Producing UserLoggedIn event for phone number {PhoneNumber}...", phoneNumber);
-                await eventProducer.ProduceUserLoggedIn(phoneNumber, locale, cts.Token).ContinueWith(t => {
-                    logger.LogInformation("Produced UserLoggedIn event for phone number {PhoneNumber}", phoneNumber);
-                    if (t.IsFaulted) {
-                        logger.LogError(t.Exception, "Failed to produce UserLoggedIn event for phone number {PhoneNumber}", phoneNumber);
-                    }
-                }, TaskScheduler.Default);
+            if (string.IsNullOrEmpty(phoneNumber)) {
+                return Results.Problem("Phone number claim is missing in the token.");
             }
+
+            var cts = CancellationTokenSource.CreateLinkedTokenSource(httpContext.RequestAborted);
+            cts.CancelAfter(TimeSpan.FromSeconds(2));
+            /*
+             * TODO: This call can hang if it can't connect to Kafka.  We need to address that.
+             */
+            var logger = httpContext.RequestServices.GetRequiredService<ILogger<Program>>();
+            logger.LogInformation("Producing UserLoggedIn event for phone number {PhoneNumber}...", phoneNumber);
+
+            await eventProducer.ProduceUserLoggedIn(phoneNumber, locale, cts.Token).ContinueWith(t => {
+                logger.LogInformation("Produced UserLoggedIn event for phone number {PhoneNumber}", phoneNumber);
+                if (t.IsFaulted) {
+                    logger.LogError(t.Exception, "Failed to produce UserLoggedIn event for phone number {PhoneNumber}", phoneNumber);
+                }
+            }, TaskScheduler.Default);
+
             return Results.Redirect(oauthState.RedirectUri);
-        }, e => Results.Problem(e.Message));
-    }
+        };
 
     public static async Task<IResult> OAuthLogin(string redirectUri, IConfiguration config, IOptions<OidcConfig> oidcConfig, HttpContext httpContext, ICacheClient<string> cache) {
         var baseUrl = new Uri($"{config.GetOidcServerAuthUrl()}/realms/{oidcConfig.Value.Realm}/protocol/openid-connect/auth");

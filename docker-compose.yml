@@ -34,18 +34,20 @@ services:
       --https-certificate-key-file=/opt/keycloak/certs/tls.key
     env_file:
       - ./keycloak/.env.docker
-    depends_on:
-      - postgres
-      - maildev
+    environment:
+      KC_HEALTH_ENABLED: "true"
+    # depends_on:
+    #   - postgres
+    #   - maildev
     ports:
       - "9000:9000"
       - "8443:8443"
-    # healthcheck:
-    #   test: ["CMD-SHELL", "exec 3<>/dev/tcp/localhost/9000 && echo -e 'GET /health/ready HTTP/1.1\\r\\nHost: localhost\\r\\nConnection: close\\r\\n\\r\\n' >&3 && cat <&3 | grep -q '200 OK'"]
-    #   interval: 10s
-    #   timeout: 5s
-    #   retries: 30
-    #   start_period: 60s
+    healthcheck:
+      test: ["CMD-SHELL", "timeout 1 bash -c '</dev/tcp/localhost/9000' || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 60s
 
   unleash:
     hostname: unleash
@@ -57,8 +59,8 @@ services:
       - "4444:4242"
     env_file:
       - ./unleash/.env.docker
-    depends_on:
-      - postgres
+    # depends_on:
+    #   - postgres
 
   otel-collector:
     image: otel/opentelemetry-collector:latest
@@ -72,11 +74,11 @@ services:
     ports:
       - "4317:4317"
       - "4318:4318"
-    depends_on:
-      - prometheus
-      - tempo
-      - loki
-      - promtail
+    # depends_on:
+    #   - prometheus
+    #   - tempo
+    #   - loki
+    #   - promtail
 
   init-tempo:
     image: &tempoImage grafana/tempo:latest
@@ -267,8 +269,8 @@ services:
       - HTTP_PORTS=5145
     env_file:
       - ./dotnet/.env.docker
-    depends_on:
-      - warp-cache
+    # depends_on:
+    #   - warp-cache
 
   new-signup:
     hostname: new-signup
@@ -281,10 +283,10 @@ services:
       - "6060:3000"
     environment:
       - PORT=3000
-    depends_on:
-      - graphql-gateway
-      - auth-api
-      - notifications-listener
+    # depends_on:
+    #   - graphql-gateway
+    #   - auth-api
+    #   - notifications-listener
 
   new-admin:
     hostname: new-admin
@@ -329,10 +331,10 @@ services:
       - ./dotnet/.env.docker
     secrets:
       - user-api-secret
-    depends_on:
-      - postgres
-      - redis
-      - unleash
+    # depends_on:
+    #   - postgres
+    #   - redis
+    #   - unleash
 
   localizer-api:
     hostname: localizer-api
@@ -370,10 +372,10 @@ services:
     secrets:
       - kafka-consumer-secret
     command: notifications
-    depends_on:
-      - kafka
-      - warp-cache
-      - graphql-gateway
+    # depends_on:
+    #   - kafka
+    #   - warp-cache
+    #   - graphql-gateway
 
   payments-listener:
     container_name: payments-listener
@@ -395,11 +397,11 @@ services:
     secrets:
       - kafka-consumer-secret
     command: payments
-    depends_on:
-      - kafka
-      - warp-cache
-      - graphql-gateway
-      - payment-processor-proxy
+    # depends_on:
+    #   - kafka
+    #   - warp-cache
+    #   - graphql-gateway
+    #   - payment-processor-proxy
 
   plan-subscription-listener:
     container_name: plan-subscription-listener
@@ -421,10 +423,10 @@ services:
     secrets:
       - kafka-consumer-secret
     command: plan-subscriptions
-    depends_on:
-      - kafka
-      - warp-cache
-      - graphql-gateway
+    # depends_on:
+    #   - kafka
+    #   - warp-cache
+    #   - graphql-gateway
 
   plans-listener:
     container_name: plans-listener
@@ -446,11 +448,11 @@ services:
     secrets:
       - kafka-consumer-secret
     command: plans
-    depends_on:
-      - kafka
-      - warp-cache
-      - graphql-gateway
-      - payment-processor-proxy
+    # depends_on:
+    #   - kafka
+    #   - warp-cache
+    #   - graphql-gateway
+    #   - payment-processor-proxy
 
   price-tiers-listener:
     container_name: price-tiers-listener
@@ -472,11 +474,11 @@ services:
     secrets:
       - kafka-consumer-secret
     command: price-tiers
-    depends_on:
-      - kafka
-      - warp-cache
-      - graphql-gateway
-      - payment-processor-proxy
+    # depends_on:
+    #   - kafka
+    #   - warp-cache
+    #   - graphql-gateway
+    #   - payment-processor-proxy
 
   clients-listener:
     container_name: clients-listener
@@ -498,10 +500,10 @@ services:
     secrets:
       - kafka-consumer-secret
     command: clients
-    depends_on:
-      - kafka
-      - warp-cache
-      - graphql-gateway
+    # depends_on:
+    #   - kafka
+    #   - warp-cache
+    #   - graphql-gateway
 
   user-authentication-listener:
     container_name: user-authentication-listener
@@ -523,10 +525,10 @@ services:
     secrets:
       - kafka-consumer-secret
     command: user-authentication
-    depends_on:
-      - kafka
-      - warp-cache
-      - graphql-gateway
+    # depends_on:
+    #   - kafka
+    #   - warp-cache
+    #   - graphql-gateway
 
   product-api:
     hostname: product-api
@@ -549,9 +551,9 @@ services:
       - ./dotnet/.env.docker
     secrets:
       - product-api-secret
-    depends_on:
-      - postgres
-      - warp-cache
+    # depends_on:
+    #   - postgres
+    #   - warp-cache
 
   payment-api:
     hostname: payment-api
@@ -574,10 +576,10 @@ services:
       - ./dotnet/.env.docker
     secrets:
       - payment-api-secret
-    depends_on:
-      - postgres
-      - redis
-      - payment-processor-proxy
+    # depends_on:
+    #   - postgres
+    #   - redis
+    #   - payment-processor-proxy
 
   graphql-gateway:
     hostname: graphql-gateway
@@ -604,8 +606,8 @@ services:
       - ./certs/aspnetapp.pfx:/https/aspnetapp.pfx:ro
     env_file:
       - ./dotnet/.env.docker
-    depends_on:
-      - warp-cache
+    # depends_on:
+    #   - warp-cache
 
   auth-api:
     hostname: auth-api
@@ -633,9 +635,10 @@ services:
     secrets:
       - auth-api-secret
     depends_on:
-      - kafka
-      - warp-cache
-      - keycloak
+      # - kafka
+      # - warp-cache
+      keycloak:
+        condition: service_healthy
 
   ngrok:
     image: ngrok/ngrok:latest
@@ -675,12 +678,12 @@ services:
       - ./dotnet/.env.docker
     secrets:
       - webhooks-secret
-    depends_on:
-      - warp-cache
-      - graphql-gateway
-      - ngrok
-      - stripe-cli
-      - payment-processor-proxy
+    # depends_on:
+    #   - warp-cache
+    #   - graphql-gateway
+    #   - ngrok
+    #   - stripe-cli
+    #   - payment-processor-proxy
 
   zookeeper:
     networks:

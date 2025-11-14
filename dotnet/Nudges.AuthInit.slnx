@@ -3,8 +3,9 @@
     <File Path="../.filenesting.json" />
     <File Path=".editorconfig" />
   </Folder>
-  <Project Path="./Nudges.Auth.Keycloak/Nudges.Auth.Keycloak.csproj" />
-  <Project Path="./Nudges.Auth/Nudges.Auth.csproj" />
-  <Project Path="./Nudges.Data/Nudges.Data.csproj" />
-  <Project Path="./Nudges.AuthInit/Nudges.AuthInit.csproj" />
+  <Project Path="Monads/Monads.csproj" />
+  <Project Path="Nudges.Auth.Keycloak/Nudges.Auth.Keycloak.csproj" />
+  <Project Path="Nudges.Auth/Nudges.Auth.csproj" />
+  <Project Path="Nudges.AuthInit/Nudges.AuthInit.csproj" />
+  <Project Path="Nudges.Data/Nudges.Data.csproj" />
 </Solution>
