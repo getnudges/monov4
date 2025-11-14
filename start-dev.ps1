@@ -47,7 +47,6 @@ curl -sSf @headers http://localhost:5145/payment-api -d "http://host.docker.inte
 docker-compose up -d graphql-gateway
 
 # setup kafka
-docker-compose up -d zookeeper
 docker-compose up -d kafka
 docker-compose run --rm kafka-init-topics
 

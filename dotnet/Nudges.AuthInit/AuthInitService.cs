@@ -35,36 +35,36 @@ internal sealed class AuthInitService(ILogger<AuthInitService> logger,
             return;
         }
 
-        var existing = await oidcClient.GetUserByUsername(DefaultClientPhone, cancellationToken);
+        var userList = await oidcClient.GetUserByUsername(DefaultClientPhone, cancellationToken);
 
-        var found = existing.Match(users => {
+        var existingAdmin = userList.Match(users => {
             return users.Find(u => u.Username == DefaultClientPhone);
         }, e => e);
 
-        var created = found.Match(async user => {
+        var created = await existingAdmin.Match<bool>(async user => {
             if (user is null) {
-                await CreateDefaultAdminInOidc(cancellationToken);
-                return true;
+                var x = await CreateDefaultAdminInOidc(cancellationToken);
+                return !x.HasValue;
             }
             defaultClient.Subject = user.Id;
             context.Clients.Update(defaultClient);
             await context.SaveChangesAsync(cancellationToken);
             return false;
-        }, e => e);
+        }, _ => false);
 
-        created.Match(async _ => {
+        if (created) {
             var existing = await oidcClient.GetUserByUsername(DefaultClientPhone, cancellationToken);
-            var found = existing.Match(users => {
+            var found = existing.Map(users => {
                 return users.Find(u => u.Username == DefaultClientPhone);
-            }, e => e);
-            found.Map(async user => {
+            });
+            found.Map(user => {
                 defaultClient.Subject = user.Id;
                 context.Clients.Update(defaultClient);
-                await context.SaveChangesAsync(cancellationToken);
-                return false;
+                context.SaveChanges();
+                return true;
             });
-            logger.LogStoredDefaultAdmin(defaultClient.Id);
-        }, e => logger.LogException(e));
+        }
+        
     }
 
     private async Task<Maybe<OidcException>> CreateDefaultAdminInOidc(CancellationToken cancellationToken) {

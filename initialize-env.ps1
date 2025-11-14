@@ -68,6 +68,22 @@ UNLEASH_CLIENT_TOKEN=$($values['UNLEASH_CLIENT_TOKEN'])
 # OIDC Credentials
 OIDC_ADMIN_USERNAME=$($values['OIDC_ADMIN_USERNAME'])
 OIDC_ADMIN_PASSWORD=$($values['OIDC_ADMIN_PASSWORD'])
+
+# OIDC Configuration
+OIDC_REALM=$($values['OIDC_REALM'])
+OIDC_SERVER_URL=$($values['OIDC_SERVER_URL'])
+OIDC_CLIENT_SECRET=$($values['OIDC_CLIENT_SECRET'])
+OIDC_SERVER_AUTH_URL=$($values['OIDC_SERVER_AUTH_URL'])
+OIDC_ADMIN_CLIENT_ID=$($values['OIDC_ADMIN_CLIENT_ID'])
+
+# Security Settings
+IGNORE_SSL_CERT_VALIDATION=$($values['IGNORE_SSL_CERT_VALIDATION'])
+
+# Authentication Settings
+Authentication__Schemes__Bearer__RequireHttpsMetadata=$($values['Authentication__Schemes__Bearer__RequireHttpsMetadata'])
+Authentication__Schemes__Bearer__TokenValidationParameters__ValidIssuer=$($values['Authentication__Schemes__Bearer__TokenValidationParameters__ValidIssuer'])
+Authentication__Schemes__Bearer__TokenValidationParameters__ValidateAudience=$($values['Authentication__Schemes__Bearer__TokenValidationParameters__ValidateAudience'])
+IdentityModel__Logging=$($values['IdentityModel__Logging'])
 "@
     
     Set-Content -Path $path -Value $content
@@ -131,6 +147,22 @@ if ($masterValues.Count -eq 0) {
         # OIDC credentials
         'OIDC_ADMIN_USERNAME'        = 'admin'
         'OIDC_ADMIN_PASSWORD'        = (New-RandomString -length 16)
+        
+        # OIDC configuration
+        'OIDC_REALM'                 = 'nudges'
+        'OIDC_SERVER_URL'            = 'https://keycloak:8443'
+        'OIDC_CLIENT_SECRET'         = (New-RandomString -length 32)
+        'OIDC_SERVER_AUTH_URL'       = 'https://localhost:8443'
+        'OIDC_ADMIN_CLIENT_ID'       = 'admin-cli'
+        
+        # Security settings
+        'IGNORE_SSL_CERT_VALIDATION' = 'true'
+        
+        # Authentication settings
+        'Authentication__Schemes__Bearer__RequireHttpsMetadata' = 'false'
+        'Authentication__Schemes__Bearer__TokenValidationParameters__ValidIssuer'          = 'https://localhost:8443/realms/nudges'
+        'Authentication__Schemes__Bearer__TokenValidationParameters__ValidateAudience'     = 'false'
+        'IdentityModel__Logging'     = 'true'
     }
     
     Write-EnvMaster -values $masterValues -path $masterEnvPath
@@ -176,6 +208,21 @@ $placeholders = @{
     # OIDC credentials
     'OIDC_ADMIN_USERNAME'         = $masterValues['OIDC_ADMIN_USERNAME']
     'OIDC_ADMIN_PASSWORD'         = $masterValues['OIDC_ADMIN_PASSWORD']
+    
+    # OIDC configuration
+    'OIDC_REALM'                  = $masterValues['OIDC_REALM']
+    'OIDC_SERVER_URL'             = $masterValues['OIDC_SERVER_URL']
+    'OIDC_SERVER_AUTH_URL'        = $masterValues['OIDC_SERVER_AUTH_URL']
+    'OIDC_ADMIN_CLIENT_ID'        = $masterValues['OIDC_ADMIN_CLIENT_ID']
+    
+    # Security settings
+    'IGNORE_SSL_CERT_VALIDATION'  = $masterValues['IGNORE_SSL_CERT_VALIDATION']
+    
+    # Authentication settings
+    'Authentication__Schemes__Bearer__RequireHttpsMetadata' = $masterValues['Authentication__Schemes__Bearer__RequireHttpsMetadata']
+    'Authentication__Schemes__Bearer__TokenValidationParameters__ValidIssuer'          = $masterValues['Authentication__Schemes__Bearer__TokenValidationParameters__ValidIssuer']
+    'Authentication__Schemes__Bearer__TokenValidationParameters__ValidateAudience'     = $masterValues['Authentication__Schemes__Bearer__TokenValidationParameters__ValidateAudience']
+    'IdentityModel__Logging'     = $masterValues['IdentityModel__Logging']
 }
 
 Write-Host "`nRegenerating all configuration files from .env.master...`n"

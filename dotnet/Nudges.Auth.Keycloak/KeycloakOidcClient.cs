@@ -87,7 +87,6 @@ public sealed class KeycloakOidcClient(HttpClient client, IOptions<OidcConfig> c
                 { "client_id", _config.AdminCredentials.AdminClientId },
                 { "username", _config.AdminCredentials.Username },
                 { "password", _config.AdminCredentials.Password },
-                //{ "client_secret", _config.ClientSecret },
                 { "grant_type", "password" },
             })
         };
