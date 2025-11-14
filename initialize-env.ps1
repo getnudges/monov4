@@ -53,10 +53,12 @@ AUTH_API_KEY=$($values['AUTH_API_KEY'])
 
 # API URLs
 AUTH_API_URL=$($values['AUTH_API_URL'])
+GRAPHQL_API_URL=$($values['GRAPHQL_API_URL'])
 
 # Stripe Configuration
 STRIPE_API_KEY=$($values['STRIPE_API_KEY'])
 STRIPE_WEBHOOKS_SECRET=$($values['STRIPE_WEBHOOKS_SECRET'])
+STRIPE_API_URL=$($values['STRIPE_API_URL'])
 
 # Twilio Configuration
 TWILIO_ACCOUNT_SID=$($values['TWILIO_ACCOUNT_SID'])
@@ -148,10 +150,12 @@ if ($masterValues.Count -eq 0) {
         
         # API URLs
         'AUTH_API_URL'                                                                 = 'http://auth-api:5555'
+        'GRAPHQL_API_URL'                                                              = 'http://host.docker.internal:5900/graphql'
         
         # Stripe configuration
         'STRIPE_API_KEY'                                                               = 'sk_test_' + (New-RandomString -length 32)
         'STRIPE_WEBHOOKS_SECRET'                                                       = 'whsec_' + (New-RandomString -length 32)
+        'STRIPE_API_URL'                                                               = 'http://payment-processor-proxy:4243'
         
         # Twilio configuration
         'TWILIO_ACCOUNT_SID'                                                           = 'AC' + (New-RandomString -length 32)
@@ -221,10 +225,12 @@ $placeholders = @{
 
     # API URLs
     'AUTH_API_URL'                                                                 = $masterValues['AUTH_API_URL']
+    'GRAPHQL_API_URL'                                                              = $masterValues['GRAPHQL_API_URL']
 
     # Stripe configuration
     'STRIPE_API_KEY'                                                               = $masterValues['STRIPE_API_KEY']
     'STRIPE_WEBHOOKS_SECRET'                                                       = $masterValues['STRIPE_WEBHOOKS_SECRET']
+    'STRIPE_API_URL'                                                               = $masterValues['STRIPE_API_URL']
 
     # Twilio configuration
     'TWILIO_ACCOUNT_SID'                                                           = $masterValues['TWILIO_ACCOUNT_SID']
