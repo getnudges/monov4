@@ -41,8 +41,8 @@ $projects = @(
     # "dotnet/AuthApi/AuthApi.csproj"
     # "dotnet/UserApi/UserApi.csproj"
     # "dotnet/PaymentApi/PaymentApi.csproj"
-    # "dotnet/ProductApi/ProductApi.csproj"
-    "dotnet/KafkaConsumer/KafkaConsumer.csproj"
+    "dotnet/ProductApi/ProductApi.csproj"
+    # "dotnet/KafkaConsumer/KafkaConsumer.csproj"
 )
 
 foreach ($projectPath in $projects) {

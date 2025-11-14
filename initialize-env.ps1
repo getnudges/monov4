@@ -187,7 +187,7 @@ if ($masterValues.Count -eq 0) {
         'IGNORE_SSL_CERT_VALIDATION'                                                   = 'true'
         
         # Authentication settings
-        'Authentication__Schemes__Bearer__RequireHttpsMetadata'                        = 'false'
+        'Authentication__Schemes__Bearer__RequireHttpsMetadata'                        = 'true'
         'Authentication__Schemes__Bearer__TokenValidationParameters__ValidIssuer'      = 'https://keyloak.local:8443/realms/nudges'
         'Authentication__Schemes__Bearer__TokenValidationParameters__ValidateAudience' = 'false'
         'IdentityModel__Logging'                                                       = 'true'

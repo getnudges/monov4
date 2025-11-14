@@ -99,6 +99,7 @@ builder.Services.AddAuthorizationBuilder()
 builder.Services.AddHttpContextAccessor();
 
 
+
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme);
 builder.Services.AddKeycloakWebApiAuthentication(builder.Configuration, options => {
     var config = builder.Configuration.GetSection("Authentication:Schemes:Bearer").Get<JwtBearerOptions>();
@@ -108,11 +109,31 @@ builder.Services.AddKeycloakWebApiAuthentication(builder.Configuration, options 
         options.IncludeErrorDetails = builder.Environment.IsDevelopment();
         options.TokenValidationParameters = config.TokenValidationParameters ?? options.TokenValidationParameters;
     }
+    if (builder.Environment.IsDevelopment()) {
+        options.BackchannelHttpHandler = new HttpClientHandler {
+            ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
+        };
+    }
+    options.Events = new JwtBearerEvents {
+        OnMessageReceived = context => {
+            if (context.Request.Method == "POST") {
+                return Task.CompletedTask;
+            }
+            return Task.CompletedTask;
+        },
+        OnTokenValidated = context => {
+            Console.WriteLine("Token validated: {0}", string.Join(',', context.Principal?.Claims.Select(c => c.Value) ?? []));
+            return Task.CompletedTask;
+        },
+        OnAuthenticationFailed = context => {
+            Console.WriteLine("Authentication failed: {0}", context.Exception.Message);
+            Console.WriteLine("Authority: {0}", context.Options.Authority);
+            return Task.CompletedTask;
+        }
+    };
 });
 
-
 builder.Services.AddAuthorizationBuilder()
-    //.AddDefaultPolicy("default", builder => builder.AddAuthenticationSchemes(JwtBearerDefaults.AuthenticationScheme).RequireAuthenticatedUser())
     .AddPolicy(PolicyNames.Admin, p => p
         .RequireAuthenticatedUser()
         .AddRequirements(new RolesAuthorizationRequirement([ClaimValues.Roles.Admin, ClaimValues.Roles.Service])))

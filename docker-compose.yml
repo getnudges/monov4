@@ -36,9 +36,9 @@ services:
       - ./keycloak/.env.docker
     environment:
       KC_HEALTH_ENABLED: "true"
-    # depends_on:
-    #   - postgres
-    #   - maildev
+    depends_on:
+      - postgres
+      - maildev
     ports:
       - "9000:9000"
       - "8443:8443"
@@ -59,8 +59,8 @@ services:
       - "4444:4242"
     env_file:
       - ./unleash/.env.docker
-    # depends_on:
-    #   - postgres
+    depends_on:
+      - postgres
 
   otel-collector:
     image: otel/opentelemetry-collector:latest
@@ -74,26 +74,26 @@ services:
     ports:
       - "4317:4317"
       - "4318:4318"
-    # depends_on:
-    #   - prometheus
-    #   - tempo
-    #   - loki
-    #   - promtail
+    depends_on:
+      - prometheus
+      - tempo
+      - loki
+      - promtail
 
-  init-tempo:
-    image: &tempoImage grafana/tempo:latest
-    user: root
-    entrypoint:
-      - "chown"
-      - "10001:10001"
-      - "/var/tempo"
-    volumes:
-      - ./telemetry/tempo:/var/tempo
+  # init-tempo:
+  #   image: &tempoImage grafana/tempo:latest
+  #   user: root
+  #   entrypoint:
+  #     - "chown"
+  #     - "10001:10001"
+  #     - "/var/tempo"
+  #   volumes:
+  #     - ./telemetry/tempo:/var/tempo
 
   tempo:
     hostname: tempo
     container_name: tempo
-    image: *tempoImage
+    image: grafana/tempo:latest
     command: ["-config.file=/etc/tempo.yaml"]
     volumes:
       - ./telemetry/tempo.yaml:/etc/tempo.yaml
@@ -678,12 +678,12 @@ services:
       - ./dotnet/.env.docker
     secrets:
       - webhooks-secret
-    # depends_on:
-    #   - warp-cache
-    #   - graphql-gateway
-    #   - ngrok
-    #   - stripe-cli
-    #   - payment-processor-proxy
+    depends_on:
+      - warp-cache
+      - graphql-gateway
+      - ngrok
+      - stripe-cli
+      - payment-processor-proxy
 
   kafka:
     image: confluentinc/confluent-local:latest

@@ -1,6 +1,6 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 17
-VisualStudioVersion = 17.9.34616.47
+# Visual Studio Version 18
+VisualStudioVersion = 18.0.11205.157 d18.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ProductApi", "ProductApi\ProductApi.csproj", "{F5C7D9F2-7E7B-4B1D-9B3D-7A7E6C5B3F8F}"
 EndProject
@@ -30,6 +30,8 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ProductApi.Tests.Unit", "ProductApi\tests\ProductApi.Tests.Unit\ProductApi.Tests.Unit.csproj", "{BFF7037E-159B-48C4-B0BC-2627896BC303}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Nudges.Kafka.Events", "Nudges.Kafka.Events\Nudges.Kafka.Events.csproj", "{CF98B33A-84CB-0F8B-E6D2-C43702DD72B5}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Nudges.Auth.Keycloak", "Nudges.Auth.Keycloak\Nudges.Auth.Keycloak.csproj", "{47F9B2A2-7616-BD50-EB4D-BF1453B8C5C4}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -85,6 +87,10 @@ Global
 		{CF98B33A-84CB-0F8B-E6D2-C43702DD72B5}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{CF98B33A-84CB-0F8B-E6D2-C43702DD72B5}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{CF98B33A-84CB-0F8B-E6D2-C43702DD72B5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{47F9B2A2-7616-BD50-EB4D-BF1453B8C5C4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{47F9B2A2-7616-BD50-EB4D-BF1453B8C5C4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{47F9B2A2-7616-BD50-EB4D-BF1453B8C5C4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{47F9B2A2-7616-BD50-EB4D-BF1453B8C5C4}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
