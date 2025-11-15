@@ -119,6 +119,9 @@ builder.Services.AddKeycloakWebApiAuthentication(builder.Configuration, options 
             return Task.CompletedTask;
         },
         OnTokenValidated = context => {
+            if (context.Principal?.HasRole(ClaimValues.Roles.Service) == true) {
+                Console.WriteLine("This is a service account");
+            }
             Console.WriteLine("Token validated: {0}", string.Join(',', context.Principal?.Claims.Select(c => c.Value) ?? []));
             return Task.CompletedTask;
         },
@@ -177,5 +180,3 @@ app.UseWebSockets();
 app.MapGraphQL();
 
 app.RunWithGraphQLCommands(args);
-
-public partial class Program { }

@@ -125,7 +125,7 @@ app.MapHealthChecks("/health");
 
 app.UseHeaderPropagation();
 
-app.UseWebSockets();//.UseMiddleware<WebSocketAuthMiddleware>();
+app.UseWebSockets();
 
 app.Use(async (context, next) => {
     if (!context.Request.Path.StartsWithSegments(PathString.FromUriComponent("/graphql"))) {

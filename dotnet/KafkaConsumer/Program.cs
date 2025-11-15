@@ -116,9 +116,8 @@ static IHostBuilder CreateBaseHost(string[] args, string name) =>
                                     ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
                                 } : new HttpClientHandler();
                         })
-                        .ConfigureHttpClient(client => {
-                            client.BaseAddress = new Uri(hostContext.Configuration.GetOidcServerUrl());
-                        });
+                        .ConfigureHttpClient(client =>
+                            client.BaseAddress = new Uri(hostContext.Configuration.GetOidcServerUrl()));
                     services.AddNudgesClient()
                         .ConfigureHttpClient((sp, client) => {
                             var config = sp.GetRequiredService<IConfiguration>();
@@ -126,10 +125,10 @@ static IHostBuilder CreateBaseHost(string[] args, string name) =>
                             using var scope = sp.CreateScope();
                             var token = scope.ServiceProvider.GetRequiredService<IServerTokenClient>()
                                 .GetTokenAsync().ConfigureAwait(false).GetAwaiter().GetResult();
-                            token.Match(token => {
+                            token.Map(token => {
                                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token.AccessToken);
-                                // TODO: this throw is intentional.  It should break the startup.
-                            }, e => throw new Exception(e.ErrorDescription));
+                                return true;
+                            });
                         });
                     services.AddSingleton<Func<INudgesClient>>(static sp => sp.GetRequiredService<INudgesClient>);
                     services.AddLocalizationClient((sp, o) => {

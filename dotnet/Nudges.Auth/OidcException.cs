@@ -5,6 +5,8 @@ public class OidcException : Exception {
 
     public OidcException(string message) : base(message) { }
 
+    public OidcException(string message, Exception inner) : base(message, inner) { }
+
     private OidcException(string message, AuthApiError? apiError = null, Exception? inner = null)
         : base(message, inner) => ApiError = apiError;
 

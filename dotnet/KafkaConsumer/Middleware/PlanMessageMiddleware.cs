@@ -15,13 +15,13 @@ internal class PlanMessageMiddleware(ILogger<PlanMessageMiddleware> logger,
     public async Task<MessageContext<PlanKey, PlanEvent>> InvokeAsync(MessageContext<PlanKey, PlanEvent> context, MessageHandler<PlanKey, PlanEvent> next) {
         var result = await HandleMessageAsync(context.ConsumeResult, context.CancellationToken);
         result.Match(
-            _ => logger.LogAction($"Message {context.ConsumeResult.Message.Key} handled successfully."),
-            err => logger.LogMessageUhandled(context.ConsumeResult.Message.Key.ToString(), err)); // TODO: handle errors better (maybe retry?)
+            _ => logger.LogMessageHandled(context.ConsumeResult.Message.Key),
+            err => logger.LogMessageUhandled(context.ConsumeResult.Message.Key, err));
         return context;
     }
 
     public async Task<Result<bool, Exception>> HandleMessageAsync(ConsumeResult<PlanKey, PlanEvent> cr, CancellationToken cancellationToken) {
-        logger.LogAction($"Received message {cr.Message.Key}");
+        logger.LogMessageReceived(cr.Message.Key);
         return await (cr switch {
             { Message.Key.EventType: nameof(PlanKey.PlanCreated), Message.Key.EventKey: var planNodeId } =>
                 HandlePlanCreated(planNodeId, cancellationToken),
@@ -80,7 +80,6 @@ internal class PlanMessageMiddleware(ILogger<PlanMessageMiddleware> logger,
             return true;
         }, err => err.Exception?.GetBaseException() ?? new GraphQLException(err.Message));
     }
-
 
     private async Task<Result<bool, Exception>> UpdateForeignProduct(IGetPlan_Plan plan, CancellationToken cancellationToken) {
         var foreignUpdateResult = await foreignProductService.UpdateForeignProduct(plan, cancellationToken);
