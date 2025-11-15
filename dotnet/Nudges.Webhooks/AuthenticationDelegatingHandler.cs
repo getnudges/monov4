@@ -35,7 +35,7 @@ internal sealed class AuthenticationDelegatingHandler(IServerTokenClient authSer
         if (cached.Value is not null) {
             return cached.Value;
         }
-        var tokens = await authService.GetTokenAsync("webhooks");
+        var tokens = await authService.GetTokenAsync();
 
         // TODO: this is kinda ugly, tbh
         var tokenId = tokens.Match<string>(

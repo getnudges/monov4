@@ -95,6 +95,7 @@ IGNORE_SSL_CERT_VALIDATION=$($values['IGNORE_SSL_CERT_VALIDATION'])
 
 # Authentication Settings
 Authentication__Schemes__Bearer__RequireHttpsMetadata=$($values['Authentication__Schemes__Bearer__RequireHttpsMetadata'])
+Authentication__Schemes__Bearer__Authority=$($values['Authentication__Schemes__Bearer__Authority'])
 Authentication__Schemes__Bearer__TokenValidationParameters__ValidIssuer=$($values['Authentication__Schemes__Bearer__TokenValidationParameters__ValidIssuer'])
 Authentication__Schemes__Bearer__TokenValidationParameters__ValidateAudience=$($values['Authentication__Schemes__Bearer__TokenValidationParameters__ValidateAudience'])
 IdentityModel__Logging=$($values['IdentityModel__Logging'])
@@ -192,6 +193,7 @@ if ($masterValues.Count -eq 0) {
         
         # Authentication settings
         'Authentication__Schemes__Bearer__RequireHttpsMetadata'                        = 'true'
+        'Authentication__Schemes__Bearer__Authority'                                   = 'https://keycloak.local:8443/realms/nudges'
         'Authentication__Schemes__Bearer__TokenValidationParameters__ValidIssuer'      = 'https://keyloak.local:8443/realms/nudges'
         'Authentication__Schemes__Bearer__TokenValidationParameters__ValidateAudience' = 'false'
         'IdentityModel__Logging'                                                       = 'true'
@@ -267,6 +269,7 @@ $placeholders = @{
     
     # Authentication settings
     'Authentication__Schemes__Bearer__RequireHttpsMetadata'                        = $masterValues['Authentication__Schemes__Bearer__RequireHttpsMetadata']
+    'Authentication__Schemes__Bearer__Authority'                                   = $masterValues['Authentication__Schemes__Bearer__Authority']
     'Authentication__Schemes__Bearer__TokenValidationParameters__ValidIssuer'      = $masterValues['Authentication__Schemes__Bearer__TokenValidationParameters__ValidIssuer']
     'Authentication__Schemes__Bearer__TokenValidationParameters__ValidateAudience' = $masterValues['Authentication__Schemes__Bearer__TokenValidationParameters__ValidateAudience']
     'IdentityModel__Logging'                                                       = $masterValues['IdentityModel__Logging']

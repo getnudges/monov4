@@ -135,19 +135,29 @@ builder.Services.AddSingleton<ICacheStore<string, string>, MemoryCacheStore<stri
 builder.Services.AddSingleton<IEvictionPolicy<string>>(new LruEvictionPolicy<string>(1000));
 builder.Services.AddSingleton<ChannelCacheMediator<string, string>>();
 
+builder.Services.Configure<OidcConfig>(builder.Configuration.GetSection("Oidc"));
+
 builder.Services.AddHttpClient<IServerTokenClient, ServerTokenClient>()
-    .ConfigureHttpClient(client => client.BaseAddress = new Uri(builder.Configuration.GetOidcServerUrl()));
+    .ConfigurePrimaryHttpMessageHandler(sp => {
+        var env = sp.GetRequiredService<IHostEnvironment>();
+        return env.IsDevelopment()
+            ? new HttpClientHandler {
+                ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
+            } : new HttpClientHandler();
+    })
+    .ConfigureHttpClient(client => {
+        client.BaseAddress = new Uri(builder.Configuration.GetOidcServerUrl());
+    });
 builder.Services.AddNudgesClient()
     .ConfigureHttpClient((sp, client) => {
         var config = sp.GetRequiredService<IConfiguration>();
         client.BaseAddress = new Uri(config.GetGraphQLApiUrl());
         using var scope = sp.CreateScope();
-
         var token = scope.ServiceProvider.GetRequiredService<IServerTokenClient>()
-            .GetTokenAsync("webhooks").ConfigureAwait(false).GetAwaiter().GetResult();
+            .GetTokenAsync().ConfigureAwait(false).GetAwaiter().GetResult();
         token.Match(token => {
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token.AccessToken);
-            // TODO: this throw is probably a bad idea
+            // TODO: this throw is intentional.  It should break the startup.
         }, e => throw new Exception(e.ErrorDescription));
     });
 

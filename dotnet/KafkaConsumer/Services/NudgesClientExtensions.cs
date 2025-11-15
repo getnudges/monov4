@@ -5,14 +5,20 @@ namespace KafkaConsumer.Services;
 
 public static class NudgesClientExtensions {
     public static async Task<Result<IGetPlan_Plan, Exception>> GetPlan(this INudgesClient client, string planNodeId, CancellationToken cancellationToken) {
-        var result = await client.GetPlan.ExecuteAsync(planNodeId, cancellationToken);
-        if (result.Errors.Any()) {
-            return new AggregateException(result.Errors.Select(e => e.Exception ?? new GraphQLException(e.Message)));
+        try {
+            var result = await client.GetPlan.ExecuteAsync(planNodeId, cancellationToken);
+            if (result.Errors.Any()) {
+                return new AggregateException(result.Errors.Select(e => e.Exception ?? new GraphQLException(e.Message)));
+            }
+            if (result.Data?.Plan is not IGetPlan_Plan plan) {
+                return new GraphQLException("Couldn't find plan");
+            }
+            return Result.Success<IGetPlan_Plan, Exception>(plan);
+        } catch (OperationCanceledException) {
+            throw; // preserve cancellation semantics
+        } catch (Exception ex) {
+            return Result.Exception<IGetPlan_Plan>(ex);
         }
-        if (result.Data?.Plan is not IGetPlan_Plan plan) {
-            return new GraphQLException("Couldn't find plan");
-        }
-        return Result.Success<IGetPlan_Plan, Exception>(plan);
     }
 
     public static async Task<Result<IGetPriceTier_PriceTier, Exception>> GetPriceTier(this INudgesClient client, string priceTierNodeId, CancellationToken cancellationToken) {

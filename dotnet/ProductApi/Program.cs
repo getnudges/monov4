@@ -1,23 +1,20 @@
 using Confluent.Kafka;
+using Keycloak.AuthServices.Authentication;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization.Infrastructure;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Logging;
+using Nudges.Auth;
+using Nudges.Configuration.Extensions;
+using Nudges.Data;
+using Nudges.Data.Products;
+using Nudges.Kafka;
+using Nudges.Kafka.Events;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 using ProductApi;
 using StackExchange.Redis;
-using Nudges.Auth;
-using Nudges.Auth.Web;
-using Nudges.Data;
-using Nudges.Data.Products;
-using Nudges.Kafka;
-using Nudges.Configuration.Extensions;
-using Keycloak.AuthServices.Authentication;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.IdentityModel.Tokens;
-using Nudges.Kafka.Events;
 
 var builder = WebApplication.CreateBuilder(args);
 
