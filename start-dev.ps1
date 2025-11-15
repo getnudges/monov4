@@ -8,8 +8,8 @@ $env:COMPOSE_BAKE = "true"
 docker-compose up -d postgres
 docker-compose up -d redis
 
-# keycloak
-docker-compose up -d --wait keycloak # we need to wait so the generate-scripts 
+# keycloak (we need to wait so the generate-scripts can connect)
+docker-compose up -d --wait keycloak
 
 # Generate Keycloak secrets
 .\keycloak\generate-secrets.ps1

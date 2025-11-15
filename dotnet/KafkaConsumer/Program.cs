@@ -84,7 +84,14 @@ static IHostBuilder CreateBaseHost(string[] args, string name) =>
                             .WithTracing(traceConfig =>
                                 traceConfig
                                     .SetSampler<AlwaysOnSampler>()
-                                    .AddHttpClientInstrumentation()
+                                    .AddAspNetCoreInstrumentation(o => {
+                                        o.RecordException = true;
+                                        o.Filter = context =>
+                                            context.Request.Method != "GET";
+                                    })
+                                    .AddHttpClientInstrumentation(o => {
+                                        o.RecordException = true;
+                                    })
                                     .AddSource([
                                         $"{typeof(TracingMiddleware<,>).Namespace}.TracingMiddleware",
                                         $"{typeof(StripeService).FullName}"
@@ -94,6 +101,8 @@ static IHostBuilder CreateBaseHost(string[] args, string name) =>
                         services.ConfigureOpenTelemetryTracerProvider(o =>
                             o.AddOtlpExporter(o => o.Endpoint = new Uri(url)));
                         services.ConfigureOpenTelemetryLoggerProvider(o =>
+                            o.AddOtlpExporter(o => o.Endpoint = new Uri(url)));
+                        services.ConfigureOpenTelemetryMeterProvider(o =>
                             o.AddOtlpExporter(o => o.Endpoint = new Uri(url)));
                     }
 
@@ -125,6 +134,7 @@ static IHostBuilder CreateBaseHost(string[] args, string name) =>
                             using var scope = sp.CreateScope();
                             var token = scope.ServiceProvider.GetRequiredService<IServerTokenClient>()
                                 .GetTokenAsync().ConfigureAwait(false).GetAwaiter().GetResult();
+                            // TODO: I need to do something significant if I can't get the token.
                             token.Map(token => {
                                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token.AccessToken);
                                 return true;

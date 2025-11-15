@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Globalization;
 using System.Net.Http.Json;
 using System.Text.Json.Serialization;
@@ -23,24 +24,17 @@ public sealed class ServerTokenClient(HttpClient client, IOptions<OidcConfig> co
         try {
             var response = await _client.SendAsync(request, cancellationToken);
             if (!response.IsSuccessStatusCode) {
-                var body = await response.Content.ReadFromJsonAsync(AuthApiErrorContext.Default.AuthApiError, cancellationToken);
-                if (body is null) {
-                    return new OidcException("Could not parse error response");
-                }
-                var exception = OidcException.FromApiError(body);
-                logger.LogRequestError(exception);
-                return exception;
+                var body = await response.Content.ReadFromJsonAsync(AuthApiErrorContext.Default.AuthApiError, cancellationToken)
+                    ?? throw new OidcException("Could not parse error response");
+                throw OidcException.FromApiError(body);
             }
 
-            var result = await response.Content.ReadFromJsonAsync(jsonTypeInfo, cancellationToken);
-            if (result is null) {
-                var exception = new OidcException($"Could not parse {typeof(T)} response.");
-                logger.LogRequestError(exception);
-                return exception;
-            }
-            return result;
+            return await response.Content.ReadFromJsonAsync(jsonTypeInfo, cancellationToken)
+                ?? throw new OidcException($"Could not parse {typeof(T)} response.");
         } catch (Exception ex) {
             logger.LogRequestError(ex);
+            Activity.Current?.AddException(ex);
+            Activity.Current?.SetStatus(ActivityStatusCode.Error, ex.Message);
             return OidcException.FromException($"Request failed: {ex.Message}", ex);
         }
     }
@@ -64,6 +58,7 @@ public sealed class ServerTokenClient(HttpClient client, IOptions<OidcConfig> co
                 cached.Value,
                 Convert.ToInt32(cached.ExpiryTime > int.MaxValue ? int.MaxValue : Convert.ToInt32(cached.ExpiryTime, CultureInfo.InvariantCulture)));
         }
+
         try {
             return await GetAdminToken(cancellationToken).Map(async adminToken => {
                 await _cacheStore.SetAsync(
@@ -71,7 +66,9 @@ public sealed class ServerTokenClient(HttpClient client, IOptions<OidcConfig> co
                 return adminToken;
             });
         } catch (Exception ex) {
-            return new OidcException("Could not retrive Token", ex);
+            Activity.Current?.AddException(ex);
+            Activity.Current?.SetStatus(ActivityStatusCode.Error, ex.Message);
+            return new OidcException("Could not retrieve token", ex);
         }
 
     }

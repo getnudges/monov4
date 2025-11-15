@@ -680,12 +680,12 @@ services:
       - ./dotnet/.env.docker
     secrets:
       - webhooks-secret
-    depends_on:
-      - warp-cache
-      - graphql-gateway
-      - ngrok
-      - stripe-cli
-      - payment-processor-proxy
+    # depends_on:
+    #   - warp-cache
+    #   - graphql-gateway
+    #   - ngrok
+    #   - stripe-cli
+    #   - payment-processor-proxy
 
   kafka:
     image: confluentinc/confluent-local:latest

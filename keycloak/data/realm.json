@@ -449,7 +449,7 @@
       "path": "/admins",
       "subGroups": [],
       "attributes": {},
-      "realmRoles": [],
+      "realmRoles": ["admin"],
       "clientRoles": {}
     },
     {
@@ -458,7 +458,7 @@
       "path": "/clients",
       "subGroups": [],
       "attributes": {},
-      "realmRoles": [],
+      "realmRoles": ["client"],
       "clientRoles": {
         "auth-api": ["client"]
       }
