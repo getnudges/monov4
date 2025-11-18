@@ -1,9 +1,10 @@
-import path from "path";
+import path from "node:path";
 import react from "@vitejs/plugin-react";
 import { defineConfig } from "vite";
 import relay from "vite-plugin-relay";
 import commonjs from "vite-plugin-commonjs";
-import fs from "fs";
+import fs from "node:fs";
+import { i18nextVitePlugin } from "@i18next-selector/vite-plugin";
 
 export default defineConfig(({ command }) => ({
   plugins: [
@@ -14,6 +15,9 @@ export default defineConfig(({ command }) => ({
     }),
     relay,
     commonjs(),
+    i18nextVitePlugin({
+      sourceDir: path.join(path.resolve(), "src", "locales"),
+    }),
   ],
   build: {
     commonjsOptions: {

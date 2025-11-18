@@ -6,22 +6,21 @@ import common from "./locales/en/common.json";
 
 export const resources = {
   en: {
-    common: common,
+    common,
   },
 } as const;
 
 export const defaultNS = "common";
 
-i18n
-  .use(LanguageDetector)
-  .use(initReactI18next)
-  .init({
-    defaultNS,
-    ns: ["common"],
-    lng: "en",
-    resources,
-    debug: import.meta.env.DEV,
-    fallbackLng: "en",
-  });
+export const i18nextConfig = {
+  defaultNS,
+  ns: ["common"],
+  lng: "en",
+  resources,
+  debug: import.meta.env.DEV,
+  fallbackLng: "en",
+};
+
+i18n.use(LanguageDetector).use(initReactI18next).init(i18nextConfig);
 
 export default i18n;
