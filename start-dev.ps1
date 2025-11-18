@@ -63,8 +63,8 @@ docker-compose up -d webhooks
 docker-compose run --rm auth-init
 
 # setup the UIs
-docker-compose up -d new-admin
-docker-compose up -d new-signup
+# docker-compose up -d new-admin
+# docker-compose up -d new-signup
 
 # OTEL stuff
-docker-compose up -d grafana
+# docker-compose up -d grafana

@@ -1,0 +1,14 @@
+{
+  "common": {
+    "welcome": "Welcome to our application!",
+    "logout": "Log Out",
+    "login": "Log In",
+    "signup": "Sign Up",
+    "dashboard": "Dashboard",
+    "plans": "Plans",
+    "paidFeatures": "Paid Features",
+    "footer": {
+      "copyright": "All rights reserved."
+    }
+  }
+}

@@ -6,7 +6,7 @@ interface ResponsiveLayoutProps {
 }
 
 const ResponsiveLayout: FC<ResponsiveLayoutProps> = ({ children }) => {
-  const { t } = useTranslation();
+  const { t } = useTranslation("common");
   return (
     <div className="flex flex-col min-h-screen">
       <main className="flex-grow container mx-auto px-4 py-6 sm:py-8">
@@ -15,7 +15,7 @@ const ResponsiveLayout: FC<ResponsiveLayoutProps> = ({ children }) => {
 
       <footer className="bg-secondary text-secondary-foreground">
         <div className="container mx-auto px-4 py-4 sm:py-6 text-center text-sm sm:text-base">
-          <p>&copy; 2025 Nudges. {t("translation")}</p>
+          <p>&copy; 2025 Nudges. {t("common.footer.copyright")}</p>
         </div>
       </footer>
     </div>

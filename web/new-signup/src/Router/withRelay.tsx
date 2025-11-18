@@ -1,22 +1,30 @@
-import React, { useCallback, useContext, useMemo } from 'react';
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable react-refresh/only-export-components */
+import { GraphQLError } from "graphql";
+import React, {
+  useCallback,
+  useContext,
+  useMemo,
+  type ReactElement,
+} from "react";
 import {
   type PreloadedQuery,
   usePreloadedQuery,
   useQueryLoader,
-} from 'react-relay';
+} from "react-relay";
 import type {
+  ConcreteRequest,
   GraphQLTaggedNode,
   OperationType,
-  PreloadableConcreteRequest,
-} from 'relay-runtime';
+} from "relay-runtime";
 
 export type RelayNavigatorContextType = Readonly<{
-  suspenseFallback: React.ReactNode | JSX.Element | (() => JSX.Element);
+  suspenseFallback: React.ReactNode | ReactElement | (() => ReactElement);
 }>;
 export type RelayScreenContextType<T extends OperationType> = Readonly<{
-  readonly queryReference: any;
+  readonly queryReference: T;
   readonly refresh: (params?: T["variables"]) => void;
-  readonly variables: any;
+  readonly variables: T["variables"];
 }>;
 
 const RelayNavigatorContext = React.createContext<RelayNavigatorContextType>(
@@ -61,19 +69,22 @@ function RelayComponentWrapper<T extends OperationType>({
   ...props
 }: RelayComponentWrapperProps<T>) {
   const data = usePreloadedQuery(gqlQuery, queryReference);
+  // TODO: how do I pass the `errors` field in the response to the component?
   return <Component Component={Component} data={data} {...props} />;
 }
 
 export type RelayRoute<T extends OperationType> = Readonly<{
   data: T["response"];
   params?: T["variables"];
+  errors?: ReadonlyArray<GraphQLError>;
 }>;
 
-type RelayRouteDefinition<T extends OperationType> = {
-  query: PreloadableConcreteRequest<T>;
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+type RelayRouteDefinition = {
+  query: ConcreteRequest; // PreloadableConcreteRequest<T>;
   gqlQuery: GraphQLTaggedNode;
   fetchPolicy?: "store-or-network" | "store-and-network" | "network-only";
-  skeleton?: React.ReactNode | JSX.Element | (() => JSX.Element);
+  skeleton?: React.ReactNode | Element | (() => Element);
 };
 
 type BaseRouteDefinition = {
@@ -83,7 +94,7 @@ type BaseRouteDefinition = {
 
 export type RouteDefinition<T extends OperationType = never> = T extends never
   ? Readonly<BaseRouteDefinition>
-  : Readonly<BaseRouteDefinition & RelayRouteDefinition<T>>;
+  : Readonly<BaseRouteDefinition & RelayRouteDefinition>;
 
 type RelayScreenWrapperProps<T extends OperationType> = RouteDefinition<T> & {
   readonly queryVars: {
@@ -157,7 +168,7 @@ export type RelayNavigatorProps<T extends OperationType = OperationType> =
 export default function withRelay<T extends OperationType = OperationType>(
   WrappedNavigator: React.ComponentType<any>,
   routeDefList: RouteDefinition<T>[],
-  suspenseFallback: React.ReactNode | JSX.Element | (() => JSX.Element)
+  suspenseFallback: React.ReactNode | ReactElement | (() => ReactElement)
 ) {
   const screens = routeDefList.map(({ query, component, ...rest }) => {
     return {
