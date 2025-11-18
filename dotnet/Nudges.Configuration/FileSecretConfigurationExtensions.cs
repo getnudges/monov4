@@ -23,6 +23,7 @@ public static class FileSecretConfigurationExtensions {
     /// Adds the file secrets provider by reading a .env-style map where each line is in the format: KEY=filepath.
     /// </summary>
     public static IConfigurationBuilder AddFlatFilesFromMap(this IConfigurationBuilder builder, string fileMap, bool optional = true) {
+        Console.WriteLine("fileMap: {0}, optional: {1}", fileMap, optional);
         if (optional || string.IsNullOrEmpty(fileMap)) {
             return builder;
         }
@@ -30,6 +31,7 @@ public static class FileSecretConfigurationExtensions {
         var mappings = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         foreach (var line in fileMap.Split(Environment.NewLine)) {
             var trimmedLine = line.Trim();
+            Console.WriteLine($"Processing line: {trimmedLine}");
             if (string.IsNullOrWhiteSpace(trimmedLine) || trimmedLine.StartsWith('#')) {
                 continue;
             }
@@ -39,7 +41,7 @@ public static class FileSecretConfigurationExtensions {
                 continue;
             }
 
-            var key = parts[0].Trim().Replace("__", ":");
+            var key = parts[0].Trim();
             var value = parts[1].Trim();
             if (!string.IsNullOrEmpty(key) && !string.IsNullOrEmpty(value)) {
                 mappings[key] = value;

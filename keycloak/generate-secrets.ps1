@@ -82,11 +82,13 @@ foreach ($service in $services) {
         -Headers @{
         Authorization = "Bearer $token"
     }
-    
-    $secret = $secretResponse.value
-    
+
+    $secretEntry = "Oidc__ClientSecret=$($secretResponse.value)"
+    $clientIdEntry = "Oidc__ClientId=$service`n"
+
     # Append to secrets file
-    $secret | Out-File -FilePath "$PSScriptRoot/${service}.secret.txt" -NoNewline
+    $clientIdEntry | Out-File -FilePath "$PSScriptRoot/.env.${service}" -NoNewline
+    $secretEntry | Out-File -FilePath "$PSScriptRoot/.env.${service}" -NoNewline -Append
 }
 
 Write-Host "Secrets extracted to .secret.txt files."

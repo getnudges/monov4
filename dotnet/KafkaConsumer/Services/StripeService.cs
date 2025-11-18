@@ -2,8 +2,8 @@ using System.Diagnostics;
 using HotChocolate.Utilities;
 using Microsoft.Extensions.Logging;
 using Monads;
-using Stripe;
 using Nudges.Models;
+using Stripe;
 
 namespace KafkaConsumer.Services;
 
@@ -57,10 +57,11 @@ internal class StripeService(IStripeClient stripeClient, ILogger<StripeService> 
     }
 
     public async Task<Result<bool, Exception>> VerifyPayment(string paymentIntentId, CancellationToken cancellationToken) {
+
         try {
             var existing = await _paymentService.GetAsync(paymentIntentId, cancellationToken: cancellationToken);
             return string.IsNullOrEmpty(existing.Id);
-        } catch (StripeException e) {
+        } catch (Exception e) {
             logger.LogException(e);
             return e;
         }
@@ -79,8 +80,9 @@ internal class StripeService(IStripeClient stripeClient, ILogger<StripeService> 
             } else {
                 return new PriceTierCreationError("No product returned");
             }
-        } catch (StripeException ex) {
+        } catch (Exception ex) {
             activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
+            activity?.AddException(ex);
             return new PriceTierCreationError(ex.Message, ex);
         }
     }
@@ -100,8 +102,9 @@ internal class StripeService(IStripeClient stripeClient, ILogger<StripeService> 
                 activity?.SetStatus(ActivityStatusCode.Ok);
                 return product.Id;
             }
-        } catch (StripeException ex) {
+        } catch (Exception ex) {
             activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
+            activity?.AddException(ex);
             return new ProductCreationError(ex.Message, ex);
         }
     }
@@ -118,8 +121,9 @@ internal class StripeService(IStripeClient stripeClient, ILogger<StripeService> 
                 activity?.SetStatus(ActivityStatusCode.Ok);
                 return true;
             }
-        } catch (StripeException ex) {
+        } catch (Exception ex) {
             activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
+            activity?.AddException(ex);
             return new PriceTierUpdateError(ex.Message, ex);
         }
     }

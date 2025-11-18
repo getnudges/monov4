@@ -61,8 +61,7 @@ static IHostBuilder CreateBaseHost(string[] args, string name) =>
         .ConfigureAppConfiguration(static (hostingContext, config) =>
             config
                 .AddFlatFilesFromMap(
-                    hostingContext.Configuration.GetValue("FILEMAP", string.Empty),
-                    !hostingContext.HostingEnvironment.IsDevelopment()))
+                    hostingContext.Configuration.GetValue("FILEMAP", string.Empty), false))
                 .UseConsoleLifetime()
                 .ConfigureServices((hostContext, services) => {
                     services.AddLogging(configure => configure.AddSimpleConsole(o => o.SingleLine = true));
@@ -132,10 +131,10 @@ static IHostBuilder CreateBaseHost(string[] args, string name) =>
                             var config = sp.GetRequiredService<IConfiguration>();
                             client.BaseAddress = new Uri(config.GetGraphQLApiUrl());
                             using var scope = sp.CreateScope();
-                            var token = scope.ServiceProvider.GetRequiredService<IServerTokenClient>()
+                            var tokenResult = scope.ServiceProvider.GetRequiredService<IServerTokenClient>()
                                 .GetTokenAsync().ConfigureAwait(false).GetAwaiter().GetResult();
                             // TODO: I need to do something significant if I can't get the token.
-                            token.Match(token => {
+                            tokenResult.Match(token => {
                                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token.AccessToken);
                                 // TODO: this throw is intentional.  It should break the startup.
                             }, e => throw e);
