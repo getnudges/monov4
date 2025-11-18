@@ -123,8 +123,8 @@ if (builder.Configuration.GetOltpEndpointUrl() is not null) {
     app.MapPrometheusScrapingEndpoint();
 }
 
-app.MapGet("/otp", Handlers.GenerateOtp);
-app.MapPost("/otp", Handlers.ValidateOtp);
+app.MapPost("/otp", Handlers.GenerateOtp);
+app.MapPost("/otp/verify", Handlers.ValidateOtp);
 app.MapGet("/login", Handlers.OAuthLogin);
 app.MapGet("/redirect", Handlers.OAuthRedirect);
 

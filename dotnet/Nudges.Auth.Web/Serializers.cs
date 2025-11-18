@@ -16,6 +16,13 @@ public record OtpCredentials(string PhoneNumber, string Code);
 [JsonSerializable(typeof(OtpCredentials))]
 public sealed partial class OtpCredentialsSerializerContext : JsonSerializerContext { }
 
+public record OtpRequest(string PhoneNumber);
+[JsonSourceGenerationOptions(
+    GenerationMode = JsonSourceGenerationMode.Default,
+    PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase)]
+[JsonSerializable(typeof(OtpRequest))]
+public sealed partial class OtpRequestSerializerContext : JsonSerializerContext { }
+
 public record OtpResponse(string Code, DateTimeOffset Expiry);
 [JsonSourceGenerationOptions(
     GenerationMode = JsonSourceGenerationMode.Default,

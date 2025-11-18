@@ -21,16 +21,16 @@ namespace AuthApi;
 internal static class Handlers {
     public static readonly ActivitySource ActivitySource = new($"{typeof(Handlers).FullName}");
 
-    public static async Task<IResult> GenerateOtp(string phoneNumber, IOtpVerifier otpVerifier, ICacheClient<string> cache, KafkaMessageProducer<NotificationKey, NotificationEvent> notificationProducer, HttpContext httpContext) {
+    public static async Task<IResult> GenerateOtp(OtpRequest request, IOtpVerifier otpVerifier, ICacheClient<string> cache, KafkaMessageProducer<NotificationKey, NotificationEvent> notificationProducer, HttpContext httpContext) {
 
         using var activity = ActivitySource.StartActivity(nameof(ValidateOtp), ActivityKind.Server, httpContext.Request.GetActivityContext());
         activity?.Start();
 
         var (code, base32Key) = otpVerifier.GetOtp();
 
-        await cache.SetOtpSecret(phoneNumber, base32Key);
+        await cache.SetOtpSecret(request.PhoneNumber, base32Key);
         var locale = httpContext.Request.GetRequestCulture();
-        await notificationProducer.ProduceOtpRequested(phoneNumber, locale, code, httpContext.RequestAborted);
+        await notificationProducer.ProduceOtpRequested(request.PhoneNumber, locale, code, httpContext.RequestAborted);
 
         // When developing locally, return the OTP code in the response for easier testing
         if (httpContext.RequestServices.GetRequiredService<IWebHostEnvironment>().IsDevelopment()) {
@@ -72,7 +72,6 @@ internal static class Handlers {
         var tempPassword = Guid.NewGuid().ToString("N");
         var userCreate = await CreateNewUser(credentials, tokenClient, httpContext, roleClaim, tempPassword);
 
-        // TODO: Clean up
         var result = await userCreate.Match(err => Results.Problem(err.Message), async () =>
             await tokenClient.GetUserTokenAsync(credentials.PhoneNumber, tempPassword, httpContext.RequestAborted).Map(async token => {
                 var tokenId = Guid.NewGuid().ToString("N");
@@ -175,12 +174,9 @@ internal static class Handlers {
              * TODO: This call can hang if it can't connect to Kafka.  We need to address that.
              */
             var logger = httpContext.RequestServices.GetRequiredService<ILogger<Program>>();
-            logger.LogInformation("Producing UserLoggedIn event for phone number {PhoneNumber}...", phoneNumber);
 
             await eventProducer.ProduceUserLoggedIn(phoneNumber, locale, cts.Token).ContinueWith(t => {
-                logger.LogInformation("Produced UserLoggedIn event for phone number {PhoneNumber}", phoneNumber);
                 if (t.IsFaulted) {
-                    logger.LogError(t.Exception, "Failed to produce UserLoggedIn event for phone number {PhoneNumber}", phoneNumber);
                 }
             }, TaskScheduler.Default);
 
