@@ -36,7 +36,7 @@ export default function PortalPage({
     async ({ code }: OtpInputFormData) => {
       setVerifyInFlight(true);
       try {
-        const resp = await fetch("/auth/otp", {
+        const resp = await fetch("/auth/otp/verify", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -69,11 +69,16 @@ export default function PortalPage({
   const generateOtp = useCallback(async ({ phoneNumber }: LoginFormData) => {
     setGenerateInFlight(true);
     try {
-      const resp = await fetch(
-        `/auth/otp?p=${encodeURIComponent(
-          `+${phoneNumber.replace(/\D/g, "")}`
-        )}`
-      );
+      const resp = await fetch("/auth/otp", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Role-Claim": "admin",
+        },
+        body: JSON.stringify({
+          phoneNumber: `+${generateResult.phoneNumber.replace(/\D/g, "")}`,
+        }),
+      });
       const data = await resp.json();
       if (!resp.ok) {
         throw setGenerateError(new Error(data.message ?? "Failed to send OTP"));

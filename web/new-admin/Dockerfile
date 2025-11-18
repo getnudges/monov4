@@ -8,7 +8,7 @@ RUN npm ci
 COPY . .
 RUN npm run build
 
-FROM nginx:1.25-alpine AS runner
+FROM nginx:latest-alpine AS runner
 
 RUN rm /etc/nginx/conf.d/default.conf
 COPY admin-ui.nginx.conf /etc/nginx/conf.d/default.conf
