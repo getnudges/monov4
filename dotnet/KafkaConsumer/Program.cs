@@ -135,10 +135,10 @@ static IHostBuilder CreateBaseHost(string[] args, string name) =>
                             var token = scope.ServiceProvider.GetRequiredService<IServerTokenClient>()
                                 .GetTokenAsync().ConfigureAwait(false).GetAwaiter().GetResult();
                             // TODO: I need to do something significant if I can't get the token.
-                            token.Map(token => {
+                            token.Match(token => {
                                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token.AccessToken);
-                                return true;
-                            });
+                                // TODO: this throw is intentional.  It should break the startup.
+                            }, e => throw e);
                         });
                     services.AddSingleton<Func<INudgesClient>>(static sp => sp.GetRequiredService<INudgesClient>);
                     services.AddLocalizationClient((sp, o) => {

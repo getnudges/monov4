@@ -36,9 +36,6 @@ services:
       - ./keycloak/.env.docker
     environment:
       KC_HEALTH_ENABLED: "true"
-    depends_on:
-      - postgres
-      - maildev
     ports:
       - "9000:9000"
       - "8443:8443"
@@ -48,6 +45,9 @@ services:
       timeout: 5s
       retries: 30
       start_period: 60s
+    # depends_on:
+    #   - postgres
+    #   - maildev
 
   unleash:
     hostname: unleash
@@ -59,8 +59,8 @@ services:
       - "4444:4242"
     env_file:
       - ./unleash/.env.docker
-    depends_on:
-      - postgres
+    # depends_on:
+    #   - postgres
 
   otel-collector:
     image: otel/opentelemetry-collector:latest
@@ -207,6 +207,8 @@ services:
       - Kestrel__Endpoints__gRPC__Url=http://*:7777
     env_file:
       - ./dotnet/.env.docker
+    # depends_on:
+    #   - redis
 
   payment-processor-proxy:
     hostname: payment-processor-proxy
@@ -227,8 +229,8 @@ services:
       - Nudges
     env_file:
       - ./dotnet/.env.docker
-    depends_on:
-      - postgres
+    # depends_on:
+    #   - postgres
 
   db-seeder:
     build:
@@ -238,8 +240,8 @@ services:
       - Nudges
     env_file:
       - ./dotnet/.env.docker
-    depends_on:
-      - postgres
+    # depends_on:
+    #   - postgres
 
   auth-init:
     build:
@@ -636,11 +638,11 @@ services:
       - ./certs/aspnetapp.pfx:/https/aspnetapp.pfx:ro
     secrets:
       - auth-api-secret
-    depends_on:
+    # depends_on:
       # - kafka
       # - warp-cache
-      keycloak:
-        condition: service_healthy
+      # keycloak:
+      #   condition: service_healthy
 
   ngrok:
     image: ngrok/ngrok:latest

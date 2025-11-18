@@ -126,6 +126,42 @@ function New-ConfigFromTemplate {
     Write-Host "Generated $outputPath successfully"
 }
 
+function Get-TemplateDefaults {
+    param (
+        [string]$searchPath = "."
+    )
+
+    $defaults = @{}
+
+    foreach ($template in Get-ChildItem -Path $searchPath -Filter ".env.template" -Recurse) {
+        foreach ($line in Get-Content $template.FullName) {
+            $trimmedLine = $line.Trim()
+            if (-not $trimmedLine -or $trimmedLine.StartsWith('#')) {
+                continue
+            }
+
+            if ($trimmedLine -match '^([^=]+)=(.*)$') {
+                $key = $matches[1].Trim()
+                $value = $matches[2].Trim()
+
+                if (-not [string]::IsNullOrEmpty($key) -and -not ($value -match '\{\{.*\}\}')) {
+                    if ($value.Length -ge 2) {
+                        if (($value.StartsWith('"') -and $value.EndsWith('"')) -or ($value.StartsWith("'") -and $value.EndsWith("'"))) {
+                            $value = $value.Substring(1, $value.Length - 2)
+                        }
+                    }
+
+                    if (-not $defaults.ContainsKey($key)) {
+                        $defaults[$key] = $value
+                    }
+                }
+            }
+        }
+    }
+
+    return $defaults
+}
+
 # Check if .env.master exists, if not create it with random values
 $masterEnvPath = ".env.master"
 $masterValues = Read-EnvMaster -path $masterEnvPath
@@ -259,7 +295,7 @@ $placeholders = @{
     # OIDC configuration
     'Oidc__Realm'                                                                  = $masterValues['Oidc__Realm']
     'Oidc__ServerUrl'                                                              = $masterValues['Oidc__ServerUrl']
-    'OIDC_SERVER_AUTH_URL'                                                          = $masterValues['OIDC_SERVER_AUTH_URL']
+    'OIDC_SERVER_AUTH_URL'                                                         = $masterValues['OIDC_SERVER_AUTH_URL']
     'Oidc__AdminCredentials__AdminClientId'                                        = $masterValues['Oidc__AdminCredentials__AdminClientId']
     'Oidc__AdminCredentials__Username'                                             = $masterValues['Oidc__AdminCredentials__Username']
     'Oidc__AdminCredentials__Password'                                             = $masterValues['Oidc__AdminCredentials__Password']
@@ -273,6 +309,13 @@ $placeholders = @{
     'Authentication__Schemes__Bearer__TokenValidationParameters__ValidIssuer'      = $masterValues['Authentication__Schemes__Bearer__TokenValidationParameters__ValidIssuer']
     'Authentication__Schemes__Bearer__TokenValidationParameters__ValidateAudience' = $masterValues['Authentication__Schemes__Bearer__TokenValidationParameters__ValidateAudience']
     'IdentityModel__Logging'                                                       = $masterValues['IdentityModel__Logging']
+}
+
+$templateDefaults = Get-TemplateDefaults -searchPath .
+foreach ($key in $templateDefaults.Keys) {
+    if (-not $placeholders.ContainsKey($key)) {
+        $placeholders[$key] = $templateDefaults[$key]
+    }
 }
 
 Write-Host "`nRegenerating all configuration files from .env.master...`n"

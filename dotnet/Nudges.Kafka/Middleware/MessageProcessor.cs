@@ -22,7 +22,7 @@ public sealed class MessageProcessor<TKey, TValue>(IAsyncConsumer<TKey, TValue> 
         await foreach (var cr in ReadMessagesAsync(cancellationToken)) {
             var result = await ProcessMessageAsync(new MessageContext<TKey, TValue>(cr, cancellationToken));
             if (!result.Failed) { // TODO: revisit this.  We only want to commit after success or after all retries are attempted
-               consumer.Commit(cr);
+                consumer.Commit(cr);
             }
         }
     }

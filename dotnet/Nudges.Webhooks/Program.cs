@@ -158,7 +158,7 @@ builder.Services.AddNudgesClient()
         token.Match(token => {
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token.AccessToken);
             // TODO: this throw is intentional.  It should break the startup.
-        }, e => throw new Exception(e.ErrorDescription));
+        }, e => throw e);
     });
 
 builder.Services.AddHealthChecks();
