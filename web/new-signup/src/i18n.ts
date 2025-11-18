@@ -2,11 +2,15 @@ import i18n from "i18next";
 import { initReactI18next } from "react-i18next";
 import LanguageDetector from "i18next-browser-languageDetector";
 
-import common from "./locales/en/common.json";
+import enCommon from "./locales/en/common.json";
+import esCommon from "./locales/es/common.json";
 
 export const resources = {
   en: {
-    common,
+    common: enCommon,
+  },
+  es: {
+    common: esCommon,
   },
 } as const;
 

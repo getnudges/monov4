@@ -1,0 +1,14 @@
+{
+  "welcome": "Bienvenido a nuestra aplicación!",
+  "logout": "Cerrar sesión",
+  "login": "Iniciar sesión",
+  "signup": "Registrarse",
+  "dashboard": "Panel de control",
+  "plans": "Planes",
+  "loading": "Cargando...",
+  "paidFeatures": "Características pagas",
+  "footer": {
+    "copyright": "Todos los derechos reservados."
+  },
+  "test_key": "Esta es una clave de prueba"
+}
