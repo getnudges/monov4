@@ -1,5 +1,3 @@
-import graphql from 'babel-plugin-relay/macro';
-
 import type { PlansQuery } from "./__generated__/PlansQuery.graphql";
 import type { RelayRoute } from "../../Router/withRelay";
 import PlanTable from "./PlanTable";
@@ -9,6 +7,7 @@ import type { Plans_CreateCheckoutSessionMutation } from "./__generated__/Plans_
 import ErrorDialog from "@/components/ErrorDialog";
 import type { Plans_OnClientUpdatedSubscription } from "./__generated__/Plans_OnClientUpdatedSubscription.graphql";
 import type { Plans_ClientView$key } from "./__generated__/Plans_ClientView.graphql";
+import graphql from "babel-plugin-relay/macro";
 
 function useClientUpdatedSubscription(
   id: string,
@@ -34,21 +33,6 @@ function useClientUpdatedSubscription(
     )
   );
 }
-
-export const PlansQueryDef = graphql`
-  query PlansQuery {
-    plans(first: 3) {
-      ...PlanTable_plans
-    }
-    viewer {
-      ... on Client {
-        id
-        customerId
-        ...Plans_ClientView
-      }
-    }
-  }
-`;
 
 type ClientViewProps = {
   viewer: Plans_ClientView$key;

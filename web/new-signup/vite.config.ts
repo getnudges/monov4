@@ -5,7 +5,7 @@ import relay from "vite-plugin-relay";
 import commonjs from "vite-plugin-commonjs";
 import fs from "fs";
 
-export default defineConfig({
+export default defineConfig(({ command }) => ({
   plugins: [
     react({
       babel: {
@@ -26,7 +26,7 @@ export default defineConfig({
     },
   },
   server: {
-    port: 6060,
+    port: 5050,
     proxy: {
       "^/auth/.*": {
         target: "https://localhost:5555",
@@ -35,6 +35,10 @@ export default defineConfig({
         },
         changeOrigin: true,
         secure: false, // Disable cert verification
+        headers: {
+          "X-Forwarded-Host": "localhost",
+          "X-Forwarded-Port": "5050",
+        },
       },
       "/graphql": {
         target: "https://localhost:5443",
@@ -43,13 +47,16 @@ export default defineConfig({
         secure: false, // Disable cert verification
       },
     },
-    https: {
-      key: fs.readFileSync("./aspnetapp.key"),
-      cert: fs.readFileSync("./aspnetapp.crt"),
-    },
+    https:
+      command === "serve"
+        ? {
+            key: fs.readFileSync("./aspnetapp.key"),
+            cert: fs.readFileSync("./aspnetapp.crt"),
+          }
+        : undefined,
   },
   define: {
     "process.env": {},
     global: "window",
   },
-});
+}));

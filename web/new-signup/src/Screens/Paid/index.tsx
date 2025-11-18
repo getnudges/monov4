@@ -1,5 +1,3 @@
-import graphql from "babel-plugin-relay/macro";
-
 import type { PaidQuery } from "./__generated__/PaidQuery.graphql";
 import type { Paid_ClientView$key } from "./__generated__/Paid_ClientView.graphql";
 import type { RelayRoute } from "@/Router/withRelay";
@@ -8,6 +6,7 @@ import ErrorDialog from "@/components/ErrorDialog";
 import { useFragment, useSubscription } from "react-relay";
 import { Paid_OnClientUpdatedSubscription } from "./__generated__/Paid_OnClientUpdatedSubscription.graphql";
 import { Redirect } from "wouter";
+import graphql from "babel-plugin-relay/macro";
 
 function useClientUpdatedSubscription(
   id: string,
@@ -33,17 +32,6 @@ function useClientUpdatedSubscription(
     )
   );
 }
-
-export const PaidQueryDef = graphql`
-  query PaidQuery {
-    viewer {
-      ... on Client {
-        id
-        ...Paid_ClientView
-      }
-    }
-  }
-`;
 
 type ClientViewProps = {
   viewer: Paid_ClientView$key;

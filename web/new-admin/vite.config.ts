@@ -5,7 +5,7 @@ import relay from "vite-plugin-relay";
 import commonjs from "vite-plugin-commonjs";
 import fs from "fs";
 
-export default defineConfig({
+export default defineConfig(({ command }) => ({
   plugins: [
     react({
       babel: {
@@ -47,13 +47,16 @@ export default defineConfig({
         secure: false, // Disable cert verification
       },
     },
-    https: {
-      key: fs.readFileSync("./aspnetapp.key"),
-      cert: fs.readFileSync("./aspnetapp.crt"),
-    },
+    https:
+      command === "serve"
+        ? {
+            key: fs.readFileSync("./aspnetapp.key"),
+            cert: fs.readFileSync("./aspnetapp.crt"),
+          }
+        : undefined,
   },
   define: {
     "process.env": {},
     global: "window",
   },
-});
+}));
