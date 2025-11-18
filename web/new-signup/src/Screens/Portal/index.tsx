@@ -73,10 +73,10 @@ export default function PortalPage({
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-Role-Claim": "admin",
+          "X-Role-Claim": "client",
         },
         body: JSON.stringify({
-          phoneNumber: `+${generateResult.phoneNumber.replace(/\D/g, "")}`,
+          phoneNumber: `+${phoneNumber.replace(/\D/g, "")}`,
         }),
       });
       const data = await resp.json();

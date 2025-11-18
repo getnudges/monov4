@@ -279,10 +279,11 @@ services:
       - Nudges
     build:
       context: ./web/new-signup
+    volumes:
+      - ./certs/aspnetapp.crt:/etc/nginx/certs/aspnetapp.crt:ro
+      - ./certs/aspnetapp.key:/etc/nginx/certs/aspnetapp.key:ro
     ports:
-      - "6060:3000"
-    environment:
-      - PORT=3000
+      - "6060:6060"
     # depends_on:
     #   - graphql-gateway
     #   - auth-api

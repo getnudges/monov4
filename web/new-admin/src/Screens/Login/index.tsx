@@ -23,6 +23,7 @@ export default function LoginPage({ data }: Readonly<RelayRoute<LoginQuery>>) {
     if (data.viewer?.id) {
       return;
     }
+    debugger;
     window.location.href = `/auth/login?redirectUri=${encodeURIComponent(
       window.location.href
     )}`;

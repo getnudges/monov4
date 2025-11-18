@@ -3,6 +3,7 @@ import react from "@vitejs/plugin-react";
 import { defineConfig } from "vite";
 import relay from "vite-plugin-relay";
 import commonjs from "vite-plugin-commonjs";
+import fs from "fs";
 
 export default defineConfig({
   plugins: [
@@ -33,16 +34,22 @@ export default defineConfig({
           return path.replace(/^\/auth/, "");
         },
         changeOrigin: true,
+        secure: false, // Disable cert verification
         headers: {
           "X-Forwarded-Host": "localhost",
           "X-Forwarded-Port": "5050",
         },
       },
       "/graphql": {
-        target: "https://localhost:5900",
+        target: "https://localhost:5443",
         ws: true,
         rewriteWsOrigin: true,
+        secure: false, // Disable cert verification
       },
+    },
+    https: {
+      key: fs.readFileSync("./aspnetapp.key"),
+      cert: fs.readFileSync("./aspnetapp.crt"),
     },
   },
   define: {

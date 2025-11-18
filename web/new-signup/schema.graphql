@@ -805,7 +805,7 @@ union DeleteSubscriberError = SubscriberNotFoundError
 union PatchPlanError = PlanUpdateError | PlanNotFoundError
 
 union PatchPriceTierError =
-  | PriceTierNotFoundError
+    PriceTierNotFoundError
   | KafkaProduceError
   | PriceTierUpdateError
 

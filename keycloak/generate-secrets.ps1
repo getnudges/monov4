@@ -91,4 +91,4 @@ foreach ($service in $services) {
     $secretEntry | Out-File -FilePath "$PSScriptRoot/.env.${service}" -NoNewline -Append
 }
 
-Write-Host "Secrets extracted to .secret.txt files."
+Write-Host "Secrets extracted to .env files."

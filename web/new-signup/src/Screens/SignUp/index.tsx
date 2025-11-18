@@ -37,13 +37,18 @@ export const SignUpQueryDef = graphql`
 
 export const CountdownSeconds = 30;
 
+type GenerateResult = {
+  name: string;
+  phoneNumber: string;
+  code?: string;
+};
+
 export default function SignupPage({ data }: RelayRoute<SignUpQuery>) {
   const [, navigate] = useLocation();
 
-  const [generateResult, setGenerateResult] = useState({
+  const [generateResult, setGenerateResult] = useState<GenerateResult>({
     name: "",
     phoneNumber: "",
-    code: "",
   });
 
   const [createClientError, setCreateClientError] = useState<Error | null>(
@@ -115,7 +120,7 @@ export default function SignupPage({ data }: RelayRoute<SignUpQuery>) {
     async ({ code }: OtpInputFormData) => {
       setVerifyInFlight(true);
       try {
-        const resp = await fetch("/auth/otp", {
+        const resp = await fetch("/auth/otp/verify", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -164,15 +169,23 @@ export default function SignupPage({ data }: RelayRoute<SignUpQuery>) {
     setGenerateInFlight(true);
     try {
       const phone = `+${phoneNumber.replace(/\D/g, "")}`;
-      const resp = await fetch(`/auth/otp?p=${encodeURIComponent(phone)}`);
-      const data = await resp.json();
+      const resp = await fetch("/auth/otp", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Role-Claim": "client",
+        },
+        body: JSON.stringify({
+          phoneNumber: `+${phoneNumber.replace(/\D/g, "")}`,
+        }),
+      });
       if (!resp.ok) {
+        const data = await resp.json();
         throw new Error(data.message ?? "Failed to send OTP");
       }
       setGenerateResult({
         phoneNumber: phone,
         name,
-        code: data?.code,
       });
     } catch (e) {
       setGenerateError(e as Error);

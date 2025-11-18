@@ -152,11 +152,16 @@ export default function SubscribePage({ data }: RelayRoute<SubscribeQuery>) {
   const generateOtp = useCallback(async ({ phoneNumber }: FormDataType) => {
     setGenerateInFlight(true);
     try {
-      const resp = await fetch(
-        `/auth/otp?p=${encodeURIComponent(
-          `+${phoneNumber.replace(/\D/g, "")}`
-        )}`
-      );
+      const resp = await fetch("/auth/otp", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Role-Claim": "subscriber",
+        },
+        body: JSON.stringify({
+          phoneNumber: `+${generateResult.phoneNumber.replace(/\D/g, "")}`,
+        }),
+      });
       const data = await resp.json();
       if (!resp.ok) {
         throw setGenerateError(new Error(data.message));
