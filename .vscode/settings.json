@@ -1,5 +1,0 @@
-{
-  "relay.autoStartCompiler": true,
-  "relay.pathToConfig": "web/admin-ui/relay.config.js",
-  "relay.rootDirectory": "web/admin-ui"
-}

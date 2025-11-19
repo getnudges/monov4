@@ -1,4 +1,4 @@
-import { RelayRoute } from "@/Router/withRelay";
+import { type RelayRoute } from "@/Router/withRelay";
 import type { PlanQuery } from "./__generated__/PlanQuery.graphql";
 import PlanEditor from "./PlanEditor";
 

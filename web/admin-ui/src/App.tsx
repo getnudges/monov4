@@ -6,14 +6,17 @@ import { Router } from "wouter";
 import Layout from "./components/Layout";
 
 import "./App.css";
+import { AuthProvider } from "./AuthProvider";
 
 function App() {
   return (
     <Router>
       <RelayEnvironmentProvider environment={RelayEnvironment}>
-        <Layout>
-          <Routes />
-        </Layout>
+        <AuthProvider>
+          <Layout>
+            <Routes />
+          </Layout>
+        </AuthProvider>
       </RelayEnvironmentProvider>
     </Router>
   );

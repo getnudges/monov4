@@ -1,46 +1,41 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import * as z from "zod";
-
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useFragment, useMutation } from "react-relay";
-import type {
-  PlanEditor_plan$key,
-  PlanEditor_plan$data,
-} from "./__generated__/PlanEditor_plan.graphql";
-import { useEffect, useState } from "react";
-import type {
-  PlanEditorCreatePlanMutation,
-  PlanEditorCreatePlanMutation$variables,
-} from "./__generated__/PlanEditorCreatePlanMutation.graphql";
-import ErrorDialog from "@/components/ErrorDialog";
-import {
-  PlanEditorUpdatePlanMutation$variables,
-  PlanEditorUpdatePlanMutation,
-} from "./__generated__/PlanEditorUpdatePlanMutation.graphql";
-import { usePlanUpdatedSubscription } from "./hooks/PlanUpdated";
+import { Form, useForm } from "react-hook-form";
 import { useLocation } from "wouter";
-import PlanForm, { PlanFormProps } from "./PlanForm";
-import { Form } from "@/components/ui/form";
-import {
-  PlanEditorDeletePlanMutation,
-  PlanEditorDeletePlanMutation$variables,
-} from "./__generated__/PlanEditorDeletePlanMutation.graphql";
-import { Button } from "@/components/ui/button";
-import { Trash2 } from "lucide-react";
-import { useSnackbar } from "@/components/Snackbar";
+import { useEffect, useState } from "react";
+import * as z from "zod";
+import { useFragment, useMutation } from "react-relay";
 import { useRelayScreenContext } from "@/Router/withRelay";
 import type { PlanQuery } from "./__generated__/PlanQuery.graphql";
 import PlanEditor_plan from "@/fragments/PlanEditor";
 import PlanEditorCreatePlan from "@/mutations/PlanEditorCreatePlan";
+import type {
+  PlanEditor_plan$data,
+  PlanEditor_plan$key,
+} from "@/fragments/__generated__/PlanEditor_plan.graphql";
 import PlanEditorUpdatePlan from "@/mutations/PlanEditorUpdatePlan";
-import PlanEditorDeletePlan from "@/mutations/PlanEditorDeletePlan";
+import type {
+  PlanEditorCreatePlanMutation,
+  PlanEditorCreatePlanMutation$variables,
+} from "@/mutations/__generated__/PlanEditorCreatePlanMutation.graphql";
+import type {
+  PlanEditorUpdatePlanMutation,
+  PlanEditorUpdatePlanMutation$variables,
+} from "@/mutations/__generated__/PlanEditorUpdatePlanMutation.graphql";
+// import PlanEditorDeletePlan from "@/mutations/PlanEditorDeletePlan";
+// import type {
+//   PlanEditorDeletePlanMutation,
+//   PlanEditorDeletePlanMutation$variables,
+// } from "@/mutations/__generated__/PlanEditorDeletePlanMutation.graphql";
+import Alert from "@/components/AlertDialog";
+import { usePlanUpdatedSubscription } from "@/subscriptions/PlanUpdated";
+import PlanForm from "./PlanForm";
+import EditPlanForm, { type EditPlanFormProps } from "./EditPlanForm";
 
 const planSchema = z.object({
   id: z.string().optional(),
   name: z.string().min(1, "Name is required").max(100),
   description: z.string(),
-  iconUrl: z.string().max(1000).url("Invalid URL").optional().or(z.literal("")),
+  iconUrl: z.url("Invalid URL").optional().or(z.literal("")),
   isActive: z.boolean(),
   foreignServiceId: z.string().max(200).optional().readonly(),
   features: z.object({
@@ -134,7 +129,6 @@ function createFormData(
 
 export default function PlanEditor({ plan }: Props) {
   const [, navTo] = useLocation();
-  const { showSnackbar } = useSnackbar();
   const { refresh } = useRelayScreenContext<PlanQuery>();
   const data = useFragment(PlanEditor_plan, plan);
 
@@ -166,7 +160,7 @@ export default function PlanEditor({ plan }: Props) {
       },
       onCompleted({ createPlan }) {
         if (createPlan?.plan?.id) {
-          showSnackbar("success", "Plan created", 3000);
+          // showSnackbar("success", "Plan created", 3000);
           navTo(`/plan/${encodeURIComponent(createPlan.plan.id)}`, {
             replace: true,
           });
@@ -191,31 +185,31 @@ export default function PlanEditor({ plan }: Props) {
         setUpdatePlanErrors([error]);
       },
       onCompleted() {
-        showSnackbar("success", "Plan updated", 3000);
+        // showSnackbar("success", "Plan updated", 3000);
       },
     });
   };
 
-  const [deletePlanErrors, setDeletePlanErrors] = useState<Error[]>([]);
-  const [deletePlanMutation] =
-    useMutation<PlanEditorDeletePlanMutation>(PlanEditorDeletePlan);
+  // const [deletePlanErrors, setDeletePlanErrors] = useState<Error[]>([]);
+  // const [deletePlanMutation] =
+  //   useMutation<PlanEditorDeletePlanMutation>(PlanEditorDeletePlan);
 
-  const deletePlan = (
-    deletePlanInput: PlanEditorDeletePlanMutation$variables["deletePlanInput"]
-  ) => {
-    deletePlanMutation({
-      variables: {
-        deletePlanInput,
-      },
-      onError(error) {
-        setDeletePlanErrors([error]);
-      },
-      onCompleted() {
-        navTo("/plans");
-        showSnackbar("success", "Plan deleted", 3000);
-      },
-    });
-  };
+  // const deletePlan = (
+  //   deletePlanInput: PlanEditorDeletePlanMutation$variables["deletePlanInput"]
+  // ) => {
+  //   deletePlanMutation({
+  //     variables: {
+  //       deletePlanInput,
+  //     },
+  //     onError(error) {
+  //       setDeletePlanErrors([error]);
+  //     },
+  //     onCompleted() {
+  //       navTo("/plans");
+  //       // showSnackbar("success", "Plan deleted", 3000);
+  //     },
+  //   });
+  // };
 
   function onSubmitCreate(formData: PlanFormValues) {
     createPlan({
@@ -234,8 +228,6 @@ export default function PlanEditor({ plan }: Props) {
         duration: tier.duration,
         description: tier.description,
         iconUrl: tier.iconUrl,
-        planId: tier.planId || undefined,
-        // status: tier.status || "ACTIVE",
       })),
     });
   }
@@ -259,7 +251,7 @@ export default function PlanEditor({ plan }: Props) {
         description: tier.description,
         iconUrl: tier.iconUrl,
         planId: tier.planId!,
-        id: tier.id || undefined,
+        id: tier.id,
         status: tier.status || "ACTIVE",
       })),
     });
@@ -267,76 +259,56 @@ export default function PlanEditor({ plan }: Props) {
 
   const id = form.watch("id");
   return (
-    <div className="container mx-auto py-10">
-      <Card className="relative">
-        {id && (
-          <div className="absolute top-4 right-4 w-8 h-8">
-            <Button
-              type="button"
-              size={"sm"}
-              variant="destructive"
-              onClick={() => {
-                deletePlan({ id: id! });
-              }}
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
-          </div>
+    <div>
+      <Form {...form}>
+        {id ? (
+          <EditPlanFormWrapper id={id} onSubmit={onSubmitUpdate} />
+        ) : (
+          <PlanForm form={form} onSubmit={onSubmitCreate} />
         )}
-        <CardHeader>
-          <CardTitle>
-            {id ? "Edit" : "Create Plan"} {form.watch("name")}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Form {...form}>
-            {id ? (
-              <EditPlanForm id={id} form={form} onSubmit={onSubmitUpdate} />
-            ) : (
-              <PlanForm form={form} onSubmit={onSubmitCreate} />
-            )}
-          </Form>
-        </CardContent>
-      </Card>
+      </Form>
       {createPlanErrors.length > 0 && (
-        <ErrorDialog
-          error={createPlanErrors[0]}
-          startOpen={createPlanErrors.length > 0}
+        <Alert
+          message={createPlanErrors[0].stack ?? createPlanErrors[0].message}
+          open={createPlanErrors.length > 0}
           title="Create Error"
           onClose={() => setCreatePlanErrors([])}
         />
       )}
       {updatePlanErrors.length > 0 && (
-        <ErrorDialog
-          error={updatePlanErrors[0]}
-          startOpen={updatePlanErrors.length > 0}
+        <Alert
+          message={updatePlanErrors[0].stack ?? updatePlanErrors[0].message}
+          open={updatePlanErrors.length > 0}
           title="Update Error"
           onClose={() => setUpdatePlanErrors([])}
         />
       )}
-      {deletePlanErrors.length > 0 && (
-        <ErrorDialog
-          error={deletePlanErrors[0]}
-          startOpen={deletePlanErrors.length > 0}
+      {/* {deletePlanErrors.length > 0 && (
+        <Alert
+          message={deletePlanErrors[0].stack ?? deletePlanErrors[0].message}
+          open={deletePlanErrors.length > 0}
           title="Delete Error"
           onClose={() => setDeletePlanErrors([])}
         />
-      )}
+      )} */}
     </div>
   );
 }
 
-const EditPlanForm = ({ id, ...props }: PlanFormProps & { id: string }) => {
+const EditPlanFormWrapper = ({
+  id,
+  ...props
+}: EditPlanFormProps & { id: string }) => {
   const [planUpdatedError, setPlanUpdatedError] = useState<Error | null>(null);
   usePlanUpdatedSubscription(id, (e) => setPlanUpdatedError(e));
 
   return (
     <>
-      <PlanForm {...props} />
+      <EditPlanForm {...props} />
       {!!planUpdatedError && (
-        <ErrorDialog
-          error={planUpdatedError}
-          startOpen={!!planUpdatedError}
+        <Alert
+          message={planUpdatedError.stack ?? planUpdatedError.message}
+          open={!!planUpdatedError}
           title="Subscription Error"
           onClose={() => setPlanUpdatedError(null)}
         />

@@ -1,14 +1,14 @@
-import { type UseFormReturn } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { type PlanFormValues } from "./PlanEditor";
 import TextInput from "@/components/TextInput";
 import { Form } from "radix-ui";
 
-export type PlanFormProps = {
-  form: UseFormReturn<PlanFormValues>;
+export type EditPlanFormProps = {
   onSubmit: (data: PlanFormValues) => void;
 };
 
-const PlanForm = ({ form, onSubmit }: PlanFormProps) => {
+const EditPlanForm = ({ onSubmit }: EditPlanFormProps) => {
+  const form = useForm<PlanFormValues>();
   return (
     <>
       <Form.Root onSubmit={form.handleSubmit(onSubmit)} autoComplete="off">
@@ -25,4 +25,4 @@ const PlanForm = ({ form, onSubmit }: PlanFormProps) => {
   );
 };
 
-export default PlanForm;
+export default EditPlanForm;
