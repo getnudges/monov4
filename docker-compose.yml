@@ -307,6 +307,24 @@ services:
     #   - graphql-gateway
     #   - auth-api
 
+  admin-ui:
+    hostname: admin-ui
+    container_name: admin-ui
+    networks:
+      - Nudges
+    build:
+      context: ./web/admin-ui
+    volumes:
+      - ./certs/aspnetapp.crt:/etc/nginx/certs/aspnetapp.crt:ro
+      - ./certs/aspnetapp.key:/etc/nginx/certs/aspnetapp.key:ro
+    ports:
+      - "5050:5050"
+    environment:
+      PORT: 5050
+    # depends_on:
+    #   - graphql-gateway
+    #   - auth-api
+
   user-api:
     hostname: user-api
     container_name: user-api

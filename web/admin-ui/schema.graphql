@@ -1,0 +1,1715 @@
+schema {
+  query: Query
+  mutation: Mutation
+  subscription: Subscription
+}
+
+interface Error {
+  message: String!
+}
+
+"The node interface is implemented by entities that have a global unique identifier."
+interface Node {
+  id: ID!
+}
+
+type AddSubscriberPayload {
+  errors: [AddSubscriberError!]
+  subscriber: Subscriber
+}
+
+type Admin implements Node {
+  id: ID!
+  idNavigation: Client!
+}
+
+type AlreadySubscribedError implements Error {
+  message: String!
+}
+
+type Announcement {
+  client: Client
+  clientId: UUID
+  messageSid: String!
+  sentOn: DateTime
+}
+
+type CancelCheckoutSessionPayload {
+  checkoutSessionCancel: CheckoutSessionCancel
+}
+
+type CheckoutSession {
+  checkoutUrl: URL!
+  expiration: DateTime!
+  id: String!
+}
+
+type CheckoutSessionCancel {
+  id: String!
+}
+
+type CheckoutSessionError implements Error {
+  message: String!
+}
+
+type Client implements Node {
+  admin: Admin
+  announcements: [Announcement!]!
+  clientId: String!
+    @cost(weight: "10")
+    @deprecated(reason: "Use `id` field instead.")
+  customerId: String
+  id: ID!
+  joinedDate: DateTime
+  locale: String!
+  name: String!
+  phoneNumber: String!
+  slug: String!
+  subscriberCount: Int! @cost(weight: "10")
+  subscribers(
+    "Returns the elements in the list that come after the specified cursor."
+    after: String
+    "Returns the elements in the list that come before the specified cursor."
+    before: String
+    "Returns the first _n_ elements from the list."
+    first: Int
+    "Returns the last _n_ elements from the list."
+    last: Int
+    order: [SubscriberSortInput!] @cost(weight: "10")
+    where: SubscriberFilterInput @cost(weight: "10")
+  ): SubscribersConnection
+    @listSize(
+      assumedSize: 50
+      slicingArguments: ["first", "last"]
+      slicingArgumentDefaultValue: 10
+      sizedFields: ["edges", "nodes"]
+      requireOneSlicingArgument: false
+    )
+    @cost(weight: "10")
+  subscription: PlanSubscription @cost(weight: "10")
+  subscriptionId: ID @cost(weight: "10")
+}
+
+type ClientCreateError implements Error {
+  message: String!
+}
+
+type ClientNotFoundError implements Error {
+  message: String!
+}
+
+"A connection to a list of items."
+type ClientsConnection {
+  "A list of edges."
+  edges: [ClientsEdge!]
+  "A flattened list of the nodes."
+  nodes: [Client!]
+  "Information to aid in pagination."
+  pageInfo: PageInfo!
+}
+
+"An edge in a connection."
+type ClientsEdge {
+  "A cursor for use in pagination."
+  cursor: String!
+  "The item at the end of the edge."
+  node: Client!
+}
+
+type CreateCheckoutSessionPayload {
+  checkoutSession: CheckoutSession
+  errors: [CreateCheckoutSessionError!]
+}
+
+type CreateClientPayload {
+  client: Client
+  errors: [CreateClientError!]
+}
+
+type CreateDiscountCodePayload {
+  discountCode: DiscountCode
+}
+
+type CreatePaymentConfirmationPayload {
+  paymentConfirmation: PaymentConfirmation
+}
+
+type CreatePlanPayload {
+  errors: [CreatePlanError!]
+  plan: Plan
+}
+
+type CreatePlanSubscriptionPayload {
+  errors: [CreatePlanSubscriptionError!]
+  planSubscription: PlanSubscription
+}
+
+type DeleteClientPayload {
+  client: Client
+}
+
+type DeleteDiscountCodePayload {
+  discountCode: DiscountCode
+}
+
+type DeletePlanPayload {
+  errors: [DeletePlanError!]
+  plan: Plan
+}
+
+type DeletePriceTierPayload {
+  errors: [DeletePriceTierError!]
+  plan: Plan
+}
+
+type DeleteSubscriberPayload {
+  errors: [DeleteSubscriberError!]
+  subscriber: Subscriber
+}
+
+type Discount {
+  createdAt: DateTime
+  discountCode: DiscountCode
+  discountCodeId: Int
+  id: Int!
+  planSubscription: PlanSubscription
+  planSubscriptionId: UUID
+}
+
+type DiscountCode implements Node {
+  code: String!
+  createdAt: DateTime
+  description: String
+  discount: Decimal!
+  discounts: [Discount!]!
+  duration: BasicDuration! @cost(weight: "10")
+  expiryDate: DateTime
+  id: ID!
+  name: String!
+  priceTier: PriceTier
+  priceTierId: ID
+}
+
+"A connection to a list of items."
+type DiscountCodesConnection {
+  "A list of edges."
+  edges: [DiscountCodesEdge!]
+  "A flattened list of the nodes."
+  nodes: [DiscountCode!]
+  "Information to aid in pagination."
+  pageInfo: PageInfo!
+}
+
+"An edge in a connection."
+type DiscountCodesEdge {
+  "A cursor for use in pagination."
+  cursor: String!
+  "The item at the end of the edge."
+  node: DiscountCode!
+}
+
+type EndSubscriptionPayload {
+  planSubscription: PlanSubscription
+}
+
+type KafkaProduceError implements Error {
+  errorCode: ErrorCode!
+  message: String!
+}
+
+type MerchantService implements Node {
+  createdAt: DateTime
+  id: ID!
+  name: String!
+  paymentConfirmations: [PaymentConfirmation!]!
+}
+
+"A connection to a list of items."
+type MerchantServicesConnection {
+  "A list of edges."
+  edges: [MerchantServicesEdge!]
+  "A flattened list of the nodes."
+  nodes: [MerchantService!]
+  "Information to aid in pagination."
+  pageInfo: PageInfo!
+}
+
+"An edge in a connection."
+type MerchantServicesEdge {
+  "A cursor for use in pagination."
+  cursor: String!
+  "The item at the end of the edge."
+  node: MerchantService!
+}
+
+type Mutation {
+  addSubscriber(input: AddSubscriberInput!): AddSubscriberPayload!
+    @authorize(policy: "client")
+    @cost(weight: "10")
+  cancelCheckoutSession(
+    input: CancelCheckoutSessionInput!
+  ): CancelCheckoutSessionPayload!
+    @authorize(policy: "client")
+    @cost(weight: "10")
+  createCheckoutSession(
+    input: CreateCheckoutSessionInput!
+  ): CreateCheckoutSessionPayload!
+    @authorize(policy: "client")
+    @cost(weight: "10")
+  createClient(input: CreateClientInput!): CreateClientPayload!
+    @authorize(roles: ["admin", "client"])
+    @cost(weight: "10")
+  createDiscountCode(
+    input: CreateDiscountCodeInput!
+  ): CreateDiscountCodePayload! @authorize(policy: "admin") @cost(weight: "10")
+  createPaymentConfirmation(
+    input: CreatePaymentConfirmationInput!
+  ): CreatePaymentConfirmationPayload!
+    @authorize(policy: "admin")
+    @cost(weight: "10")
+  createPlan(input: CreatePlanInput!): CreatePlanPayload!
+    @authorize(policy: "admin")
+    @cost(weight: "10")
+  createPlanSubscription(
+    input: CreatePlanSubscriptionInput!
+  ): CreatePlanSubscriptionPayload!
+    @authorize(policy: "admin")
+    @cost(weight: "10")
+  deleteClient(input: DeleteClientInput!): DeleteClientPayload!
+    @authorize(policy: "admin")
+    @cost(weight: "10")
+  deleteDiscountCode(
+    input: DeleteDiscountCodeInput!
+  ): DeleteDiscountCodePayload! @authorize(policy: "admin") @cost(weight: "10")
+  deletePlan(input: DeletePlanInput!): DeletePlanPayload!
+    @authorize(policy: "admin")
+    @cost(weight: "10")
+  deletePriceTier(input: DeletePriceTierInput!): DeletePriceTierPayload!
+    @authorize(policy: "admin")
+    @cost(weight: "10")
+  deleteSubscriber(input: DeleteSubscriberInput!): DeleteSubscriberPayload!
+    @authorize(policy: "admin")
+    @cost(weight: "10")
+  endSubscription(input: EndSubscriptionInput!): EndSubscriptionPayload!
+    @authorize(policy: "client")
+    @cost(weight: "10")
+  patchDiscountCode(input: PatchDiscountCodeInput!): PatchDiscountCodePayload!
+    @authorize(policy: "admin")
+    @cost(weight: "10")
+  patchPlan(input: PatchPlanInput!): PatchPlanPayload!
+    @authorize(policy: "admin")
+    @cost(weight: "10")
+  patchPriceTier(input: PatchPriceTierInput!): PatchPriceTierPayload!
+    @authorize(policy: "admin")
+    @cost(weight: "10")
+  sendMessage(input: SendMessageInput!): SendMessagePayload! @cost(weight: "10")
+  subscribeToClient(input: SubscribeToClientInput!): SubscribeToClientPayload!
+    @authorize(policy: "subscriber")
+    @cost(weight: "10")
+  subscribeToPlan(input: SubscribeToPlanInput!): SubscribeToPlanPayload!
+    @authorize(policy: "client")
+    @cost(weight: "10")
+  unsubscribeFromClient(
+    input: UnsubscribeFromClientInput!
+  ): UnsubscribeFromClientPayload!
+    @authorize(policy: "subscriber")
+    @cost(weight: "10")
+  updateClient(input: UpdateClientInput!): UpdateClientPayload!
+    @authorize(roles: ["admin", "client"])
+    @cost(weight: "10")
+  updateDiscountCode(
+    input: UpdateDiscountCodeInput!
+  ): UpdateDiscountCodePayload! @authorize(policy: "admin") @cost(weight: "10")
+  updatePlan(input: UpdatePlanInput!): UpdatePlanPayload!
+    @authorize(policy: "admin")
+    @cost(weight: "10")
+}
+
+type NotSubscribedError implements Error {
+  message: String!
+}
+
+"Information about pagination in a connection."
+type PageInfo {
+  "When paginating forwards, the cursor to continue."
+  endCursor: String
+  "Indicates whether more edges exist following the set defined by the clients arguments."
+  hasNextPage: Boolean!
+  "Indicates whether more edges exist prior the set defined by the clients arguments."
+  hasPreviousPage: Boolean!
+  "When paginating backwards, the cursor to continue."
+  startCursor: String
+}
+
+type PatchDiscountCodePayload {
+  discountCode: DiscountCode
+}
+
+type PatchPlanPayload {
+  errors: [PatchPlanError!]
+  plan: Plan
+}
+
+type PatchPriceTierPayload {
+  errors: [PatchPriceTierError!]
+  plan: Plan
+}
+
+type PaymentConfirmation implements Node {
+  confirmationCode: String!
+  createdAt: DateTime
+  id: ID!
+  merchantService: MerchantService
+  merchantServiceId: Int
+  paymentConfirmationId: String!
+    @cost(weight: "10")
+    @deprecated(reason: "Use `id` field instead.")
+}
+
+type Plan implements Node {
+  createdAt: DateTime
+  description: String
+  features: PlanFeature!
+  foreignServiceId: String
+  foreignServiceUrl: URL @cost(weight: "10")
+  iconUrl: String
+  id: ID!
+  isActive: Boolean
+  name: String!
+  priceTiers: [PriceTier!]!
+}
+
+type PlanCreationError implements Error {
+  message: String!
+}
+
+type PlanDeleteError implements Error {
+  message: String!
+}
+
+type PlanFeature {
+  aiSupport: Boolean
+  maxMessages: Int
+  plan: Plan!
+  planId: ID!
+  supportTier: PlanSupportTier
+}
+
+type PlanNotFoundError implements Error {
+  message: String!
+  planId: Int!
+}
+
+type PlanSubscription implements Node {
+  client: Client! @cost(weight: "10")
+  clientId: ID!
+  createdAt: DateTime
+  discounts: [Discount!]!
+  endDate: DateTime!
+  id: ID!
+  paymentConfirmationId: UUID!
+  priceTier: PriceTier
+  priceTierId: ID
+  startDate: DateTime!
+  status: String
+  trials: [Trial!]!
+}
+
+"A connection to a list of items."
+type PlanSubscriptionsConnection {
+  "A list of edges."
+  edges: [PlanSubscriptionsEdge!]
+  "A flattened list of the nodes."
+  nodes: [PlanSubscription!]
+  "Information to aid in pagination."
+  pageInfo: PageInfo!
+}
+
+"An edge in a connection."
+type PlanSubscriptionsEdge {
+  "A cursor for use in pagination."
+  cursor: String!
+  "The item at the end of the edge."
+  node: PlanSubscription!
+}
+
+type PlanUpdateError implements Error {
+  message: String!
+  planId: Int!
+}
+
+"A connection to a list of items."
+type PlansConnection {
+  "A list of edges."
+  edges: [PlansEdge!]
+  "A flattened list of the nodes."
+  nodes: [Plan!]
+  "Information to aid in pagination."
+  pageInfo: PageInfo!
+}
+
+"An edge in a connection."
+type PlansEdge {
+  "A cursor for use in pagination."
+  cursor: String!
+  "The item at the end of the edge."
+  node: Plan!
+}
+
+type PriceTier implements Node {
+  createdAt: DateTime
+  description: String
+  discountCodes: [DiscountCode!]!
+  duration: BasicDuration! @cost(weight: "10")
+  foreignServiceId: String
+  iconUrl: String
+  id: ID!
+  name: String!
+  plan: Plan
+  planId: ID
+  planSubscriptions: [PlanSubscription!]!
+  price: Decimal!
+  status: PriceTierStatus! @cost(weight: "10")
+  trialOffers: [TrialOffer!]!
+}
+
+type PriceTierDeleteError implements Error {
+  message: String!
+  priceTierId: Int!
+}
+
+type PriceTierNotFoundError implements Error {
+  message: String!
+}
+
+type PriceTierUpdateError implements Error {
+  message: String!
+  priceTierId: Int!
+}
+
+type Query {
+  client(id: ID!): Client @authorize(policy: "admin") @cost(weight: "10")
+  clientByCustomerId(customerId: String!): Client
+    @authorize(policy: "admin")
+    @cost(weight: "10")
+  clientByPhoneNumber(phoneNumber: String!): Client
+    @authorize(policy: "admin")
+    @cost(weight: "10")
+  clientBySlug(slug: String!): Client @cost(weight: "10")
+  clients(
+    "Returns the elements in the list that come after the specified cursor."
+    after: String
+    "Returns the elements in the list that come before the specified cursor."
+    before: String
+    "Returns the first _n_ elements from the list."
+    first: Int
+    "Returns the last _n_ elements from the list."
+    last: Int
+    order: [ClientSortInput!] @cost(weight: "10")
+    where: ClientFilterInput @cost(weight: "10")
+  ): ClientsConnection
+    @authorize(policy: "admin")
+    @listSize(
+      assumedSize: 50
+      slicingArguments: ["first", "last"]
+      slicingArgumentDefaultValue: 10
+      sizedFields: ["edges", "nodes"]
+      requireOneSlicingArgument: false
+    )
+    @cost(weight: "10")
+  discountCode(id: ID): DiscountCode
+    @authorize(policy: "admin")
+    @cost(weight: "10")
+  discountCodeByCode(code: String!): DiscountCode
+    @authorize(policy: "admin")
+    @cost(weight: "10")
+  discountCodes(
+    "Returns the elements in the list that come after the specified cursor."
+    after: String
+    "Returns the elements in the list that come before the specified cursor."
+    before: String
+    "Returns the first _n_ elements from the list."
+    first: Int
+    "Returns the last _n_ elements from the list."
+    last: Int
+    order: [DiscountCodeSortInput!] @cost(weight: "10")
+    where: DiscountCodeFilterInput @cost(weight: "10")
+  ): DiscountCodesConnection
+    @authorize(policy: "admin")
+    @listSize(
+      assumedSize: 50
+      slicingArguments: ["first", "last"]
+      slicingArgumentDefaultValue: 10
+      sizedFields: ["edges", "nodes"]
+      requireOneSlicingArgument: false
+    )
+    @cost(weight: "10")
+  merchantService(id: ID!): MerchantService
+    @authorize(roles: ["admin"])
+    @cost(weight: "10")
+  merchantServices(
+    "Returns the elements in the list that come after the specified cursor."
+    after: String
+    "Returns the elements in the list that come before the specified cursor."
+    before: String
+    "Returns the first _n_ elements from the list."
+    first: Int
+    "Returns the last _n_ elements from the list."
+    last: Int
+    order: [MerchantServiceSortInput!] @cost(weight: "10")
+    where: MerchantServiceFilterInput @cost(weight: "10")
+  ): MerchantServicesConnection
+    @authorize(roles: ["admin"])
+    @listSize(
+      assumedSize: 50
+      slicingArguments: ["first", "last"]
+      slicingArgumentDefaultValue: 10
+      sizedFields: ["edges", "nodes"]
+      requireOneSlicingArgument: false
+    )
+    @cost(weight: "10")
+  paymentConfirmation(id: UUID!): PaymentConfirmation @cost(weight: "10")
+  paymentConfirmationByCode(confirmationCode: String!): PaymentConfirmation
+    @authorize(roles: ["admin"])
+    @cost(weight: "10")
+  plan(id: ID): Plan @authorize(roles: ["admin", "client"]) @cost(weight: "10")
+  planByForeignId(id: String!): Plan
+    @authorize(roles: ["admin", "client"])
+    @cost(weight: "10")
+  plans(
+    "Returns the elements in the list that come after the specified cursor."
+    after: String
+    "Returns the elements in the list that come before the specified cursor."
+    before: String
+    duration: TimeSpan
+    "Returns the first _n_ elements from the list."
+    first: Int
+    "Returns the last _n_ elements from the list."
+    last: Int
+    order: [PlanSortInput!] @cost(weight: "10")
+    where: PlanFilterInput @cost(weight: "10")
+  ): PlansConnection
+    @authorize(roles: ["admin", "client"])
+    @listSize(
+      assumedSize: 50
+      slicingArguments: ["first", "last"]
+      slicingArgumentDefaultValue: 10
+      sizedFields: ["edges", "nodes"]
+      requireOneSlicingArgument: false
+    )
+    @cost(weight: "10")
+  planSubscription(id: ID!): PlanSubscription
+    @authorize(roles: ["admin", "client"])
+    @cost(weight: "10")
+  planSubscriptionById(id: UUID!): PlanSubscription
+    @authorize(roles: ["admin", "client"])
+    @cost(weight: "10")
+  planSubscriptions(
+    "Returns the elements in the list that come after the specified cursor."
+    after: String
+    "Returns the elements in the list that come before the specified cursor."
+    before: String
+    "Returns the first _n_ elements from the list."
+    first: Int
+    "Returns the last _n_ elements from the list."
+    last: Int
+    order: [PlanSubscriptionSortInput!] @cost(weight: "10")
+    where: PlanSubscriptionFilterInput @cost(weight: "10")
+  ): PlanSubscriptionsConnection
+    @authorize(roles: ["admin", "client"])
+    @listSize(
+      assumedSize: 50
+      slicingArguments: ["first", "last"]
+      slicingArgumentDefaultValue: 10
+      sizedFields: ["edges", "nodes"]
+      requireOneSlicingArgument: false
+    )
+    @cost(weight: "10")
+  priceTier(id: ID!): PriceTier
+    @authorize(roles: ["admin", "client"])
+    @cost(weight: "10")
+  priceTierByForeignId(id: String!): PriceTier
+    @authorize(roles: ["admin", "client"])
+    @cost(weight: "10")
+  subscriber(subPhone: String!): Subscriber
+    @authorize(roles: ["admin", "client"])
+    @cost(weight: "10")
+  subscriberByPhoneNumber(phoneNumber: String!): Subscriber
+    @authorize(policy: "admin")
+    @cost(weight: "10")
+  subscribers(
+    "Returns the elements in the list that come after the specified cursor."
+    after: String
+    "Returns the elements in the list that come before the specified cursor."
+    before: String
+    "Returns the first _n_ elements from the list."
+    first: Int
+    "Returns the last _n_ elements from the list."
+    last: Int
+    order: [SubscriberSortInput!] @cost(weight: "10")
+    where: SubscriberFilterInput @cost(weight: "10")
+  ): SubscribersConnection
+    @authorize(roles: ["admin", "client"])
+    @listSize(
+      assumedSize: 50
+      slicingArguments: ["first", "last"]
+      slicingArgumentDefaultValue: 10
+      sizedFields: ["edges", "nodes"]
+      requireOneSlicingArgument: false
+    )
+    @cost(weight: "10")
+  totalClients: Int! @cost(weight: "10")
+  totalPlans: Int! @cost(weight: "10")
+  totalPlanSubscriptions: Int! @authorize(policy: "admin") @cost(weight: "10")
+  totalSubscribers: Int! @cost(weight: "10")
+  viewer: User @cost(weight: "10")
+}
+
+type SendMessagePayload {
+  failed: Int!
+  sent: Int!
+}
+
+type SubscribeToClientPayload {
+  client: Client
+  errors: [SubscribeToClientError!]
+}
+
+type SubscribeToPlanPayload {
+  planSubscription: PlanSubscription
+}
+
+type Subscriber implements Node {
+  clients(
+    "Returns the elements in the list that come after the specified cursor."
+    after: String
+    "Returns the elements in the list that come before the specified cursor."
+    before: String
+    "Returns the first _n_ elements from the list."
+    first: Int
+    "Returns the last _n_ elements from the list."
+    last: Int
+    order: [ClientSortInput!] @cost(weight: "10")
+    where: ClientFilterInput @cost(weight: "10")
+  ): ClientsConnection
+    @listSize(
+      assumedSize: 50
+      slicingArguments: ["first", "last"]
+      slicingArgumentDefaultValue: 10
+      sizedFields: ["edges", "nodes"]
+      requireOneSlicingArgument: false
+    )
+    @cost(weight: "10")
+  fullPhone: String @authorize(policy: "admin") @cost(weight: "10")
+  id: ID!
+  joinedDate: DateTime
+  locale: String!
+  maskedPhone: String @cost(weight: "10")
+  subscriptionCount: Int! @cost(weight: "10")
+}
+
+type SubscriberExistsError implements Error {
+  message: String!
+}
+
+type SubscriberNotFoundError implements Error {
+  message: String!
+}
+
+"A connection to a list of items."
+type SubscribersConnection {
+  "A list of edges."
+  edges: [SubscribersEdge!]
+  "A flattened list of the nodes."
+  nodes: [Subscriber!]
+  "Information to aid in pagination."
+  pageInfo: PageInfo!
+}
+
+"An edge in a connection."
+type SubscribersEdge {
+  "A cursor for use in pagination."
+  cursor: String!
+  "The item at the end of the edge."
+  node: Subscriber!
+}
+
+type Subscription {
+  ClientCreated: Client @cost(weight: "10")
+  onClientUpdated(id: ID!): Client @authorize(policy: "client")
+  onPlanUpdated(id: ID!): Plan @authorize(policy: "admin") @cost(weight: "10")
+  onPriceTierUpdated(id: ID!): Plan @authorize(policy: "admin")
+  SubscriberUnsubscribed: Subscriber @cost(weight: "10")
+}
+
+type Trial {
+  createdAt: DateTime
+  id: Int!
+  planSubscription: PlanSubscription
+  planSubscriptionId: UUID
+  trailOffer: TrialOffer
+  trailOfferId: Int
+}
+
+type TrialOffer {
+  createdAt: DateTime
+  description: String
+  duration: TimeSpan!
+  expiryDate: DateTime
+  id: Int!
+  name: String!
+  priceTier: PriceTier
+  priceTierId: Int
+  trials: [Trial!]!
+}
+
+type UnauthorizedError implements Error {
+  message: String!
+}
+
+type UnsubscribeFromClientPayload {
+  client: Client
+  errors: [UnsubscribeFromClientError!]
+}
+
+type UpdateClientPayload {
+  client: Client
+  errors: [UpdateClientError!]
+}
+
+type UpdateDiscountCodePayload {
+  discountCode: DiscountCode
+}
+
+type UpdatePlanPayload {
+  errors: [UpdatePlanError!]
+  plan: Plan
+}
+
+union AddSubscriberError = SubscriberExistsError
+
+union CreateCheckoutSessionError = CheckoutSessionError | UnauthorizedError
+
+union CreateClientError = ClientCreateError
+
+union CreatePlanError = PlanCreationError
+
+union CreatePlanSubscriptionError = PlanCreationError
+
+union DeletePlanError = PlanNotFoundError | PlanDeleteError
+
+union DeletePriceTierError = PriceTierNotFoundError | PriceTierDeleteError
+
+union DeleteSubscriberError = SubscriberNotFoundError
+
+union PatchPlanError = PlanUpdateError | PlanNotFoundError
+
+union PatchPriceTierError =
+    PriceTierNotFoundError
+  | KafkaProduceError
+  | PriceTierUpdateError
+
+union SubscribeToClientError = AlreadySubscribedError
+
+union UnsubscribeFromClientError = NotSubscribedError | ClientNotFoundError
+
+union UpdateClientError = ClientCreateError
+
+union UpdatePlanError = PlanNotFoundError | PlanUpdateError
+
+union User = Admin | Client | Subscriber
+
+input AddSubscriberInput {
+  locale: String!
+  phoneNumber: String!
+}
+
+input AdminFilterInput {
+  and: [AdminFilterInput!]
+  id: UuidOperationFilterInput
+  idNavigation: ClientFilterInput
+  or: [AdminFilterInput!]
+}
+
+input AdminSortInput {
+  id: SortEnumType @cost(weight: "10")
+  idNavigation: ClientSortInput @cost(weight: "10")
+}
+
+input AnnouncementFilterInput {
+  and: [AnnouncementFilterInput!]
+  client: ClientFilterInput
+  clientId: UuidOperationFilterInput
+  messageSid: StringOperationFilterInput
+  or: [AnnouncementFilterInput!]
+  sentOn: DateTimeOperationFilterInput
+}
+
+input BooleanOperationFilterInput {
+  eq: Boolean @cost(weight: "10")
+  neq: Boolean @cost(weight: "10")
+}
+
+input CancelCheckoutSessionInput {
+  sessionId: String!
+}
+
+input ClientFilterInput {
+  admin: AdminFilterInput
+  and: [ClientFilterInput!]
+  announcements: ListFilterInputTypeOfAnnouncementFilterInput
+  customerId: StringOperationFilterInput
+  id: UuidOperationFilterInput
+  joinedDate: DateTimeOperationFilterInput
+  locale: StringOperationFilterInput
+  name: StringOperationFilterInput
+  or: [ClientFilterInput!]
+  phoneNumber: StringOperationFilterInput
+  slug: StringOperationFilterInput
+  subscriberPhoneNumbers: ListFilterInputTypeOfSubscriberFilterInput
+  subscriptionId: StringOperationFilterInput
+}
+
+input ClientSortInput {
+  admin: AdminSortInput @cost(weight: "10")
+  customerId: SortEnumType @cost(weight: "10")
+  id: SortEnumType @cost(weight: "10")
+  joinedDate: SortEnumType @cost(weight: "10")
+  locale: SortEnumType @cost(weight: "10")
+  name: SortEnumType @cost(weight: "10")
+  phoneNumber: SortEnumType @cost(weight: "10")
+  slug: SortEnumType @cost(weight: "10")
+  subscriptionId: SortEnumType @cost(weight: "10")
+}
+
+input CreateCheckoutSessionInput {
+  cancelUrl: URL!
+  customerId: String!
+  priceForeignServiceId: String!
+  successUrl: URL!
+}
+
+input CreateClientInput {
+  locale: String
+  name: String!
+}
+
+input CreateDiscountCodeInput {
+  code: String!
+  description: String
+  discount: Decimal!
+  duration: BasicDuration!
+  expiryDate: DateTime
+  name: String!
+  priceTierId: ID!
+}
+
+input CreatePaymentConfirmationInput {
+  confirmationId: String!
+  merchantServiceId: Int!
+}
+
+input CreatePlanFeatureInput {
+  aiSupport: Boolean!
+  maxMessages: Int!
+  supportTier: String!
+}
+
+input CreatePlanInput {
+  activateOnCreate: Boolean = false
+  description: String
+  features: CreatePlanFeatureInput
+  iconUrl: String
+  name: String!
+  priceTiers: [CreatePlanPriceTierInput!]
+}
+
+input CreatePlanPriceTierInput {
+  description: String
+  duration: TimeSpan!
+  iconUrl: String
+  name: String!
+  price: Decimal!
+}
+
+input CreatePlanSubscriptionInput {
+  clientId: String!
+  paymentConfirmationId: String!
+  priceTierForeignServiceId: String!
+}
+
+input DateTimeOperationFilterInput {
+  eq: DateTime @cost(weight: "10")
+  gt: DateTime @cost(weight: "10")
+  gte: DateTime @cost(weight: "10")
+  in: [DateTime] @cost(weight: "10")
+  lt: DateTime @cost(weight: "10")
+  lte: DateTime @cost(weight: "10")
+  neq: DateTime @cost(weight: "10")
+  ngt: DateTime @cost(weight: "10")
+  ngte: DateTime @cost(weight: "10")
+  nin: [DateTime] @cost(weight: "10")
+  nlt: DateTime @cost(weight: "10")
+  nlte: DateTime @cost(weight: "10")
+}
+
+input DecimalOperationFilterInput {
+  eq: Decimal @cost(weight: "10")
+  gt: Decimal @cost(weight: "10")
+  gte: Decimal @cost(weight: "10")
+  in: [Decimal] @cost(weight: "10")
+  lt: Decimal @cost(weight: "10")
+  lte: Decimal @cost(weight: "10")
+  neq: Decimal @cost(weight: "10")
+  ngt: Decimal @cost(weight: "10")
+  ngte: Decimal @cost(weight: "10")
+  nin: [Decimal] @cost(weight: "10")
+  nlt: Decimal @cost(weight: "10")
+  nlte: Decimal @cost(weight: "10")
+}
+
+input DeleteClientInput {
+  id: ID!
+}
+
+input DeleteDiscountCodeInput {
+  id: ID!
+}
+
+input DeletePlanInput {
+  id: ID!
+}
+
+input DeletePriceTierInput {
+  id: ID!
+}
+
+input DeleteSubscriberInput {
+  id: ID!
+}
+
+input DiscountCodeFilterInput {
+  and: [DiscountCodeFilterInput!]
+  code: StringOperationFilterInput
+  createdAt: DateTimeOperationFilterInput
+  description: StringOperationFilterInput
+  discount: DecimalOperationFilterInput
+  discounts: ListFilterInputTypeOfDiscountFilterInput
+  duration: TimeSpanOperationFilterInput
+  expiryDate: DateTimeOperationFilterInput
+  id: IntOperationFilterInput
+  name: StringOperationFilterInput
+  or: [DiscountCodeFilterInput!]
+  priceTier: PriceTierFilterInput
+  priceTierId: IntOperationFilterInput
+}
+
+input DiscountCodeSortInput {
+  code: SortEnumType @cost(weight: "10")
+  createdAt: SortEnumType @cost(weight: "10")
+  description: SortEnumType @cost(weight: "10")
+  discount: SortEnumType @cost(weight: "10")
+  duration: SortEnumType @cost(weight: "10")
+  expiryDate: SortEnumType @cost(weight: "10")
+  id: SortEnumType @cost(weight: "10")
+  name: SortEnumType @cost(weight: "10")
+  priceTier: PriceTierSortInput @cost(weight: "10")
+  priceTierId: SortEnumType @cost(weight: "10")
+}
+
+input DiscountFilterInput {
+  and: [DiscountFilterInput!]
+  createdAt: DateTimeOperationFilterInput
+  discountCode: DiscountCodeFilterInput
+  discountCodeId: IntOperationFilterInput
+  id: IntOperationFilterInput
+  or: [DiscountFilterInput!]
+  planSubscription: PlanSubscriptionFilterInput
+  planSubscriptionId: UuidOperationFilterInput
+}
+
+input EndSubscriptionInput {
+  id: ID!
+}
+
+input IntOperationFilterInput {
+  eq: Int @cost(weight: "10")
+  gt: Int @cost(weight: "10")
+  gte: Int @cost(weight: "10")
+  in: [Int] @cost(weight: "10")
+  lt: Int @cost(weight: "10")
+  lte: Int @cost(weight: "10")
+  neq: Int @cost(weight: "10")
+  ngt: Int @cost(weight: "10")
+  ngte: Int @cost(weight: "10")
+  nin: [Int] @cost(weight: "10")
+  nlt: Int @cost(weight: "10")
+  nlte: Int @cost(weight: "10")
+}
+
+input ListFilterInputTypeOfAnnouncementFilterInput {
+  all: AnnouncementFilterInput @cost(weight: "10")
+  any: Boolean @cost(weight: "10")
+  none: AnnouncementFilterInput @cost(weight: "10")
+  some: AnnouncementFilterInput @cost(weight: "10")
+}
+
+input ListFilterInputTypeOfClientFilterInput {
+  all: ClientFilterInput @cost(weight: "10")
+  any: Boolean @cost(weight: "10")
+  none: ClientFilterInput @cost(weight: "10")
+  some: ClientFilterInput @cost(weight: "10")
+}
+
+input ListFilterInputTypeOfDiscountCodeFilterInput {
+  all: DiscountCodeFilterInput @cost(weight: "10")
+  any: Boolean @cost(weight: "10")
+  none: DiscountCodeFilterInput @cost(weight: "10")
+  some: DiscountCodeFilterInput @cost(weight: "10")
+}
+
+input ListFilterInputTypeOfDiscountFilterInput {
+  all: DiscountFilterInput @cost(weight: "10")
+  any: Boolean @cost(weight: "10")
+  none: DiscountFilterInput @cost(weight: "10")
+  some: DiscountFilterInput @cost(weight: "10")
+}
+
+input ListFilterInputTypeOfPaymentConfirmationFilterInput {
+  all: PaymentConfirmationFilterInput @cost(weight: "10")
+  any: Boolean @cost(weight: "10")
+  none: PaymentConfirmationFilterInput @cost(weight: "10")
+  some: PaymentConfirmationFilterInput @cost(weight: "10")
+}
+
+input ListFilterInputTypeOfPlanSubscriptionFilterInput {
+  all: PlanSubscriptionFilterInput @cost(weight: "10")
+  any: Boolean @cost(weight: "10")
+  none: PlanSubscriptionFilterInput @cost(weight: "10")
+  some: PlanSubscriptionFilterInput @cost(weight: "10")
+}
+
+input ListFilterInputTypeOfPriceTierFilterInput {
+  all: PriceTierFilterInput @cost(weight: "10")
+  any: Boolean @cost(weight: "10")
+  none: PriceTierFilterInput @cost(weight: "10")
+  some: PriceTierFilterInput @cost(weight: "10")
+}
+
+input ListFilterInputTypeOfSubscriberFilterInput {
+  all: SubscriberFilterInput @cost(weight: "10")
+  any: Boolean @cost(weight: "10")
+  none: SubscriberFilterInput @cost(weight: "10")
+  some: SubscriberFilterInput @cost(weight: "10")
+}
+
+input ListFilterInputTypeOfTrialFilterInput {
+  all: TrialFilterInput @cost(weight: "10")
+  any: Boolean @cost(weight: "10")
+  none: TrialFilterInput @cost(weight: "10")
+  some: TrialFilterInput @cost(weight: "10")
+}
+
+input ListFilterInputTypeOfTrialOfferFilterInput {
+  all: TrialOfferFilterInput @cost(weight: "10")
+  any: Boolean @cost(weight: "10")
+  none: TrialOfferFilterInput @cost(weight: "10")
+  some: TrialOfferFilterInput @cost(weight: "10")
+}
+
+input MerchantServiceFilterInput {
+  and: [MerchantServiceFilterInput!]
+  createdAt: DateTimeOperationFilterInput
+  id: IntOperationFilterInput
+  name: StringOperationFilterInput
+  or: [MerchantServiceFilterInput!]
+  paymentConfirmations: ListFilterInputTypeOfPaymentConfirmationFilterInput
+}
+
+input MerchantServiceSortInput {
+  createdAt: SortEnumType @cost(weight: "10")
+  id: SortEnumType @cost(weight: "10")
+  name: SortEnumType @cost(weight: "10")
+}
+
+input PatchDiscountCodeInput {
+  code: String
+  description: String
+  discount: Decimal
+  duration: BasicDuration
+  expiryDate: DateTime
+  id: ID!
+  name: String
+  priceTierId: ID
+}
+
+input PatchPlanFeatureInput {
+  aiSupport: Boolean
+  maxMessages: Int
+  planId: ID!
+  supportTier: String
+}
+
+input PatchPlanInput {
+  description: String
+  features: PatchPlanFeatureInput
+  foreignServiceId: String
+  iconUrl: String
+  id: ID!
+  isActive: Boolean
+  name: String
+  priceTiers: [PatchPlanPriceTierInput!]
+}
+
+input PatchPlanPriceTierInput {
+  description: String
+  duration: BasicDuration
+  foreignServiceId: String
+  iconUrl: String
+  id: ID
+  name: String
+  price: Decimal
+  status: PriceTierStatus
+}
+
+input PatchPriceTierInput {
+  description: String
+  duration: TimeSpan
+  foreignServiceId: String
+  iconUrl: String
+  id: ID!
+  name: String
+  price: Decimal
+  status: String
+}
+
+input PaymentConfirmationFilterInput {
+  and: [PaymentConfirmationFilterInput!]
+  confirmationCode: StringOperationFilterInput
+  createdAt: DateTimeOperationFilterInput
+  id: UuidOperationFilterInput
+  merchantService: MerchantServiceFilterInput
+  merchantServiceId: IntOperationFilterInput
+  or: [PaymentConfirmationFilterInput!]
+}
+
+input PlanFeatureFilterInput {
+  aiSupport: BooleanOperationFilterInput
+  and: [PlanFeatureFilterInput!]
+  maxMessages: IntOperationFilterInput
+  or: [PlanFeatureFilterInput!]
+  plan: PlanFilterInput
+  planId: IntOperationFilterInput
+  supportTier: StringOperationFilterInput
+}
+
+input PlanFeatureSortInput {
+  aiSupport: SortEnumType @cost(weight: "10")
+  maxMessages: SortEnumType @cost(weight: "10")
+  plan: PlanSortInput @cost(weight: "10")
+  planId: SortEnumType @cost(weight: "10")
+  supportTier: SortEnumType @cost(weight: "10")
+}
+
+input PlanFilterInput {
+  and: [PlanFilterInput!]
+  createdAt: DateTimeOperationFilterInput
+  description: StringOperationFilterInput
+  foreignServiceId: StringOperationFilterInput
+  iconUrl: StringOperationFilterInput
+  id: IntOperationFilterInput
+  isActive: BooleanOperationFilterInput
+  name: StringOperationFilterInput
+  or: [PlanFilterInput!]
+  planFeature: PlanFeatureFilterInput
+  priceTiers: ListFilterInputTypeOfPriceTierFilterInput
+}
+
+input PlanSortInput {
+  createdAt: SortEnumType @cost(weight: "10")
+  description: SortEnumType @cost(weight: "10")
+  foreignServiceId: SortEnumType @cost(weight: "10")
+  iconUrl: SortEnumType @cost(weight: "10")
+  id: SortEnumType @cost(weight: "10")
+  isActive: SortEnumType @cost(weight: "10")
+  name: SortEnumType @cost(weight: "10")
+  planFeature: PlanFeatureSortInput @cost(weight: "10")
+}
+
+input PlanSubscriptionFilterInput {
+  and: [PlanSubscriptionFilterInput!]
+  clientId: UuidOperationFilterInput
+  createdAt: DateTimeOperationFilterInput
+  discounts: ListFilterInputTypeOfDiscountFilterInput
+  endDate: DateTimeOperationFilterInput
+  id: UuidOperationFilterInput
+  or: [PlanSubscriptionFilterInput!]
+  paymentConfirmationId: UuidOperationFilterInput
+  priceTier: PriceTierFilterInput
+  priceTierId: IntOperationFilterInput
+  startDate: DateTimeOperationFilterInput
+  status: StringOperationFilterInput
+  trials: ListFilterInputTypeOfTrialFilterInput
+}
+
+input PlanSubscriptionSortInput {
+  clientId: SortEnumType @cost(weight: "10")
+  createdAt: SortEnumType @cost(weight: "10")
+  endDate: SortEnumType @cost(weight: "10")
+  id: SortEnumType @cost(weight: "10")
+  paymentConfirmationId: SortEnumType @cost(weight: "10")
+  priceTier: PriceTierSortInput @cost(weight: "10")
+  priceTierId: SortEnumType @cost(weight: "10")
+  startDate: SortEnumType @cost(weight: "10")
+  status: SortEnumType @cost(weight: "10")
+}
+
+input PriceTierFilterInput {
+  and: [PriceTierFilterInput!]
+  createdAt: DateTimeOperationFilterInput
+  description: StringOperationFilterInput
+  discountCodes: ListFilterInputTypeOfDiscountCodeFilterInput
+  duration: TimeSpanOperationFilterInput
+  foreignServiceId: StringOperationFilterInput
+  iconUrl: StringOperationFilterInput
+  id: IntOperationFilterInput
+  name: StringOperationFilterInput
+  or: [PriceTierFilterInput!]
+  plan: PlanFilterInput
+  planId: IntOperationFilterInput
+  planSubscriptions: ListFilterInputTypeOfPlanSubscriptionFilterInput
+  price: DecimalOperationFilterInput
+  status: StringOperationFilterInput
+  trialOffers: ListFilterInputTypeOfTrialOfferFilterInput
+}
+
+input PriceTierSortInput {
+  createdAt: SortEnumType @cost(weight: "10")
+  description: SortEnumType @cost(weight: "10")
+  duration: SortEnumType @cost(weight: "10")
+  foreignServiceId: SortEnumType @cost(weight: "10")
+  iconUrl: SortEnumType @cost(weight: "10")
+  id: SortEnumType @cost(weight: "10")
+  name: SortEnumType @cost(weight: "10")
+  plan: PlanSortInput @cost(weight: "10")
+  planId: SortEnumType @cost(weight: "10")
+  price: SortEnumType @cost(weight: "10")
+  status: SortEnumType @cost(weight: "10")
+}
+
+input SendMessageInput {
+  audience: Audience!
+  message: String!
+}
+
+input StringOperationFilterInput {
+  and: [StringOperationFilterInput!]
+  contains: String @cost(weight: "20")
+  endsWith: String @cost(weight: "20")
+  eq: String @cost(weight: "10")
+  in: [String] @cost(weight: "10")
+  ncontains: String @cost(weight: "20")
+  nendsWith: String @cost(weight: "20")
+  neq: String @cost(weight: "10")
+  nin: [String] @cost(weight: "10")
+  nstartsWith: String @cost(weight: "20")
+  or: [StringOperationFilterInput!]
+  startsWith: String @cost(weight: "20")
+}
+
+input SubscribeToClientInput {
+  clientId: ID!
+}
+
+input SubscribeToPlanInput {
+  clientId: ID!
+  paymentConfirmationId: UUID!
+  priceTierId: ID!
+}
+
+input SubscriberFilterInput {
+  and: [SubscriberFilterInput!]
+  clients: ListFilterInputTypeOfClientFilterInput
+  joinedDate: DateTimeOperationFilterInput
+  locale: StringOperationFilterInput
+  or: [SubscriberFilterInput!]
+  phoneNumber: StringOperationFilterInput
+}
+
+input SubscriberSortInput {
+  joinedDate: SortEnumType @cost(weight: "10")
+  locale: SortEnumType @cost(weight: "10")
+  phoneNumber: SortEnumType @cost(weight: "10")
+}
+
+input TimeSpanOperationFilterInput {
+  eq: TimeSpan @cost(weight: "10")
+  gt: TimeSpan @cost(weight: "10")
+  gte: TimeSpan @cost(weight: "10")
+  in: [TimeSpan] @cost(weight: "10")
+  lt: TimeSpan @cost(weight: "10")
+  lte: TimeSpan @cost(weight: "10")
+  neq: TimeSpan @cost(weight: "10")
+  ngt: TimeSpan @cost(weight: "10")
+  ngte: TimeSpan @cost(weight: "10")
+  nin: [TimeSpan] @cost(weight: "10")
+  nlt: TimeSpan @cost(weight: "10")
+  nlte: TimeSpan @cost(weight: "10")
+}
+
+input TrialFilterInput {
+  and: [TrialFilterInput!]
+  createdAt: DateTimeOperationFilterInput
+  id: IntOperationFilterInput
+  or: [TrialFilterInput!]
+  planSubscription: PlanSubscriptionFilterInput
+  planSubscriptionId: UuidOperationFilterInput
+  trailOffer: TrialOfferFilterInput
+  trailOfferId: IntOperationFilterInput
+}
+
+input TrialOfferFilterInput {
+  and: [TrialOfferFilterInput!]
+  createdAt: DateTimeOperationFilterInput
+  description: StringOperationFilterInput
+  duration: TimeSpanOperationFilterInput
+  expiryDate: DateTimeOperationFilterInput
+  id: IntOperationFilterInput
+  name: StringOperationFilterInput
+  or: [TrialOfferFilterInput!]
+  priceTier: PriceTierFilterInput
+  priceTierId: IntOperationFilterInput
+  trials: ListFilterInputTypeOfTrialFilterInput
+}
+
+input UnsubscribeFromClientInput {
+  clientId: ID!
+}
+
+input UpdateClientInput {
+  customerId: String
+  id: ID!
+  locale: String
+  name: String
+  subscriptionId: UUID
+}
+
+input UpdateDiscountCodeInput {
+  code: String!
+  description: String
+  discount: Decimal!
+  duration: BasicDuration
+  expiryDate: DateTime
+  id: ID!
+  name: String!
+  priceTierId: ID
+}
+
+input UpdatePlanFeatureInput {
+  aiSupport: Boolean
+  maxMessages: Int
+  planId: ID!
+  supportTier: String
+}
+
+input UpdatePlanInput {
+  description: String
+  features: UpdatePlanFeatureInput
+  foreignServiceId: String
+  iconUrl: String
+  id: ID!
+  isActive: Boolean
+  name: String!
+  priceTiers: [UpdatePlanPriceTierInput!]
+}
+
+input UpdatePlanPriceTierInput {
+  description: String
+  duration: TimeSpan!
+  foreignServiceId: String
+  iconUrl: String
+  id: ID
+  name: String!
+  planId: ID!
+  price: Decimal!
+  status: String!
+}
+
+input UuidOperationFilterInput {
+  eq: UUID @cost(weight: "10")
+  gt: UUID @cost(weight: "10")
+  gte: UUID @cost(weight: "10")
+  in: [UUID] @cost(weight: "10")
+  lt: UUID @cost(weight: "10")
+  lte: UUID @cost(weight: "10")
+  neq: UUID @cost(weight: "10")
+  ngt: UUID @cost(weight: "10")
+  ngte: UUID @cost(weight: "10")
+  nin: [UUID] @cost(weight: "10")
+  nlt: UUID @cost(weight: "10")
+  nlte: UUID @cost(weight: "10")
+}
+
+"Defines when a policy shall be executed."
+enum ApplyPolicy {
+  "After the resolver was executed."
+  AFTER_RESOLVER
+  "Before the resolver was executed."
+  BEFORE_RESOLVER
+  "The policy is applied in the validation step before the execution."
+  VALIDATION
+}
+
+enum Audience {
+  ACTIVE_CLIENTS
+  ACTIVE_CLIENTS_WITHOUT_SUBSCRIBERS
+  ALL_CLIENTS
+  ALL_SUBSCRIBERS
+  EVERYONE
+}
+
+"The duration of a price tier"
+enum BasicDuration {
+  P30D
+  P365D
+  P7D
+}
+
+enum ErrorCode {
+  BROKER_NOT_AVAILABLE
+  CLUSTER_AUTHORIZATION_FAILED
+  CONCURRENT_TRANSACTIONS
+  DELEGATION_TOKEN_AUTH_DISABLED
+  DELEGATION_TOKEN_AUTHORIZATION_FAILED
+  DELEGATION_TOKEN_EXPIRED
+  DELEGATION_TOKEN_NOT_FOUND
+  DELEGATION_TOKEN_OWNER_MISMATCH
+  DELEGATION_TOKEN_REQUEST_NOT_ALLOWED
+  DUPLICATE_RESOURCE
+  DUPLICATE_SEQUENCE_NUMBER
+  ELECTION_NOT_NEEDED
+  ELIGIBLE_LEADERS_NOT_AVAILABLE
+  FEATURE_UPDATE_FAILED
+  FENCED_INSTANCE_ID
+  FENCED_LEADER_EPOCH
+  FENCED_MEMBER_EPOCH
+  FETCH_SESSION_ID_NOT_FOUND
+  GROUP_AUTHORIZATION_FAILED
+  GROUP_COORDINATOR_NOT_AVAILABLE
+  GROUP_ID_NOT_FOUND
+  GROUP_LOAD_IN_PRORESS @deprecated(reason: "Superseded by GroupLoadInProgress")
+  GROUP_MAX_SIZE_REACHED
+  GROUP_SUBSCRIBED_TO_TOPIC
+  ILLEGAL_GENERATION
+  ILLEGAL_SASL_STATE
+  INCONSISTENT_GROUP_PROTOCOL
+  INCONSISTENT_VOTER_SET
+  INVALID_COMMIT_OFFSET_SIZE
+  INVALID_CONFIG
+  INVALID_FETCH_SESSION_EPOCH
+  INVALID_GROUP_ID
+  INVALID_MSG
+  INVALID_MSG_SIZE
+  INVALID_PARTITIONS
+  INVALID_PRINCIPAL_TYPE
+  INVALID_PRODUCER_EPOCH
+  INVALID_PRODUCER_ID_MAPPING
+  INVALID_RECORD
+  INVALID_REPLICA_ASSIGNMENT
+  INVALID_REPLICATION_FACTOR
+  INVALID_REQUEST
+  INVALID_REQUIRED_ACKS
+  INVALID_SESSION_TIMEOUT
+  INVALID_TIMESTAMP
+  INVALID_TRANSACTION_TIMEOUT
+  INVALID_TXN_STATE
+  INVALID_UPDATE_VERSION
+  KAFKA_STORAGE_ERROR
+  LEADER_NOT_AVAILABLE
+  LISTENER_NOT_FOUND
+  LOCAL_ALL_BROKERS_DOWN
+  LOCAL_APPLICATION
+  LOCAL_ASSIGN_PARTITIONS
+  LOCAL_ASSIGNMENT_LOST
+  LOCAL_AUTHENTICATION
+  LOCAL_AUTO_OFFSET_RESET
+  LOCAL_BAD_COMPRESSION
+  LOCAL_BAD_MSG
+  LOCAL_CONFLICT
+  LOCAL_CRIT_SYS_RESOURCE
+  LOCAL_DESTROY
+  LOCAL_EXISTING_SUBSCRIPTION
+  LOCAL_FAIL
+  LOCAL_FATAL
+  LOCAL_FENCED
+  LOCAL_FS
+  LOCAL_GAPLESS_GUARANTEE
+  LOCAL_IN_PROGRESS
+  LOCAL_INCONSISTENT
+  LOCAL_INTR
+  LOCAL_INVALID_ARG
+  LOCAL_INVALID_DIFFERENT_RECORD
+  LOCAL_INVALID_TYPE
+  LOCAL_ISR_INSUFF
+  LOCAL_KEY_DESERIALIZATION
+  LOCAL_KEY_SERIALIZATION
+  LOCAL_LOG_TRUNCATION
+  LOCAL_MAX_POLL_EXCEEDED
+  LOCAL_MSG_TIMED_OUT
+  LOCAL_NO_ENT
+  LOCAL_NO_OFFSET
+  LOCAL_NODE_UPDATE
+  LOCAL_NOOP
+  LOCAL_NOT_CONFIGURED
+  LOCAL_NOT_IMPLEMENTED
+  LOCAL_OUTDATED
+  LOCAL_PARTIAL
+  LOCAL_PARTITION_EOF
+  LOCAL_PREV_IN_PROGRESS
+  LOCAL_PURGE_INFLIGHT
+  LOCAL_PURGE_QUEUE
+  LOCAL_QUEUE_FULL
+  LOCAL_READ_ONLY
+  LOCAL_RESOLVE
+  LOCAL_RETRY
+  LOCAL_REVOKE_PARTITIONS
+  LOCAL_SSL
+  LOCAL_STATE
+  LOCAL_TIMED_OUT
+  LOCAL_TIMED_OUT_QUEUE
+  LOCAL_TRANSPORT
+  LOCAL_UNDERFLOW
+  LOCAL_UNKNOWN_BROKER
+  LOCAL_UNKNOWN_GROUP
+  LOCAL_UNKNOWN_PARTITION
+  LOCAL_UNKNOWN_PROTOCOL
+  LOCAL_UNKNOWN_TOPIC
+  LOCAL_UNSUPPORTED_FEATURE
+  LOCAL_VALUE_DESERIALIZATION
+  LOCAL_VALUE_SERIALIZATION
+  LOCAL_WAIT_CACHE
+  LOCAL_WAIT_COORD
+  LOG_DIR_NOT_FOUND
+  MEMBER_ID_REQUIRED
+  MSG_SIZE_TOO_LARGE
+  NETWORK_EXCEPTION
+  NO_ERROR
+  NO_REASSIGNMENT_IN_PROGRESS
+  NON_EMPTY_GROUP
+  NOT_CONTROLLER
+  NOT_COORDINATOR_FOR_GROUP
+  NOT_ENOUGH_REPLICAS
+  NOT_ENOUGH_REPLICAS_AFTER_APPEND
+  NOT_LEADER_FOR_PARTITION
+  OFFSET_METADATA_TOO_LARGE
+  OFFSET_NOT_AVAILABLE
+  OFFSET_OUT_OF_RANGE
+  OPERATION_NOT_ATTEMPTED
+  OUT_OF_ORDER_SEQUENCE_NUMBER
+  POLICY_VIOLATION
+  PREFERRED_LEADER_NOT_AVAILABLE
+  PRINCIPAL_DESERIALIZATION_FAILURE
+  PRODUCER_FENCED
+  REASSIGNMENT_IN_PROGRESS
+  REBALANCE_IN_PROGRESS
+  RECORD_LIST_TOO_LARGE
+  REPLICA_NOT_AVAILABLE
+  REQUEST_TIMED_OUT
+  RESOURCE_NOT_FOUND
+  SASL_AUTHENTICATION_FAILED
+  SECURITY_DISABLED
+  STALE_BROKER_EPOCH
+  STALE_CTRL_EPOCH
+  STALE_MEMBER_EPOCH
+  TELEMETRY_TOO_LARGE
+  THROTTLING_QUOTA_EXCEEDED
+  TOPIC_ALREADY_EXISTS
+  TOPIC_AUTHORIZATION_FAILED
+  TOPIC_DELETION_DISABLED
+  TOPIC_EXCEPTION
+  TRANSACTION_COORDINATOR_FENCED
+  TRANSACTIONAL_ID_AUTHORIZATION_FAILED
+  UNACCEPTABLE_CREDENTIAL
+  UNKNOWN
+  UNKNOWN_LEADER_EPOCH
+  UNKNOWN_MEMBER_ID
+  UNKNOWN_PRODUCER_ID
+  UNKNOWN_SUBSCRIPTION_ID
+  UNKNOWN_TOPIC_ID
+  UNKNOWN_TOPIC_OR_PART
+  UNRELEASED_INSTANCE_ID
+  UNSTABLE_OFFSET_COMMIT
+  UNSUPPORTED_ASSIGNOR
+  UNSUPPORTED_COMPRESSION_TYPE
+  UNSUPPORTED_FOR_MESSAGE_FORMAT
+  UNSUPPORTED_SASL_MECHANISM
+  UNSUPPORTED_VERSION
+}
+
+enum PlanSupportTier {
+  BASIC
+  PREMIUM
+  STANDARD
+}
+
+"The status of a price tier"
+enum PriceTierStatus {
+  ACTIVE
+  ARCHIVED
+  DELETED
+  INACTIVE
+}
+
+enum SortEnumType {
+  ASC
+  DESC
+}
+
+"The authorize directive."
+directive @authorize(
+  "Defines when when the authorize directive shall be applied.By default the authorize directives are applied during the validation phase."
+  apply: ApplyPolicy! = BEFORE_RESOLVER
+  "The name of the authorization policy that determines access to the annotated resource."
+  policy: String
+  "Roles that are allowed to access the annotated resource."
+  roles: [String!]
+) repeatable on OBJECT | FIELD_DEFINITION
+
+"The purpose of the `cost` directive is to define a `weight` for GraphQL types, fields, and arguments. Static analysis can use these weights when calculating the overall cost of a query or response."
+directive @cost(
+  "The `weight` argument defines what value to add to the overall cost for every appearance, or possible appearance, of a type, field, argument, etc."
+  weight: String!
+) on SCALAR | OBJECT | FIELD_DEFINITION | ARGUMENT_DEFINITION | ENUM | INPUT_FIELD_DEFINITION
+
+"The purpose of the `@listSize` directive is to either inform the static analysis about the size of returned lists (if that information is statically available), or to point the analysis to where to find that information."
+directive @listSize(
+  "The `assumedSize` argument can be used to statically define the maximum length of a list returned by a field."
+  assumedSize: Int
+  "The `slicingArguments` argument can be used to define which of the field's arguments with numeric type are slicing arguments, so that their value determines the size of the list returned by that field. It may specify a list of multiple slicing arguments."
+  slicingArguments: [String!]
+  "The `slicingArgumentDefaultValue` argument can be used to define a default value for a slicing argument, which is used if the argument is not present in a query."
+  slicingArgumentDefaultValue: Int
+  "The `sizedFields` argument can be used to define that the value of the `assumedSize` argument or of a slicing argument does not affect the size of a list returned by a field itself, but that of a list returned by one of its sub-fields."
+  sizedFields: [String!]
+  "The `requireOneSlicingArgument` argument can be used to inform the static analysis that it should expect that exactly one of the defined slicing arguments is present in a query. If that is not the case (i.e., if none or multiple slicing arguments are present), the static analysis may throw an error."
+  requireOneSlicingArgument: Boolean! = true
+) on FIELD_DEFINITION
+
+"The `@specifiedBy` directive is used within the type system definition language to provide a URL for specifying the behavior of custom scalar definitions."
+directive @specifiedBy(
+  "The specifiedBy URL points to a human-readable specification. This field will only read a result for scalar types."
+  url: String!
+) on SCALAR
+
+"The `DateTime` scalar represents an ISO-8601 compliant date time type."
+scalar DateTime @specifiedBy(url: "https://www.graphql-scalars.com/date-time")
+
+"The `Decimal` scalar type represents a decimal floating-point number."
+scalar Decimal
+
+"The `TimeSpan` scalar represents an ISO-8601 compliant duration type."
+scalar TimeSpan
+
+scalar URL @specifiedBy(url: "https://tools.ietf.org/html/rfc3986")
+
+scalar UUID @specifiedBy(url: "https://tools.ietf.org/html/rfc4122")
