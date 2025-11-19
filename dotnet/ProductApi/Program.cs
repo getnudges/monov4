@@ -69,6 +69,10 @@ builder.Services
         new PlanEventProducer(Topics.Plans, new ProducerConfig {
             BootstrapServers = sp.GetRequiredService<IConfiguration>().GetKafkaBrokerList()
         }))
+    .AddSingleton<KafkaMessageProducer<PlanEventKey, PlanChangeEvent>>(sp =>
+        new PlanChangeEventProducer(Topics.Plans, new ProducerConfig {
+            BootstrapServers = sp.GetRequiredService<IConfiguration>().GetKafkaBrokerList()
+        }))
     .AddSingleton<KafkaMessageProducer<PriceTierEventKey, PriceTierEvent>>(sp =>
         new PriceTierEventProducer(Topics.PriceTiers, new ProducerConfig {
             BootstrapServers = sp.GetRequiredService<IConfiguration>().GetKafkaBrokerList()

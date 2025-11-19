@@ -1,7 +1,9 @@
 using System.Diagnostics;
+using System.Globalization;
 using HotChocolate.Utilities;
 using Microsoft.Extensions.Logging;
 using Monads;
+using Nudges.Kafka.Events;
 using Nudges.Models;
 using Stripe;
 
@@ -87,12 +89,12 @@ internal class StripeService(IStripeClient stripeClient, ILogger<StripeService> 
         }
     }
 
-    public async Task<Result<string, ProductCreationError>> CreateForeignProduct(IGetPlan_Plan plan, CancellationToken cancellationToken) {
+    public async Task<Result<string, ProductCreationError>> CreateForeignProduct(ProductCreateOptions plan, CancellationToken cancellationToken) {
         using var activity = ActivitySource.StartActivity(nameof(CreateForeignProduct), ActivityKind.Client, Activity.Current?.Context ?? default);
         activity?.SetTag("planId", plan.Id);
         activity?.Start();
         try {
-            var product = await _productService.CreateAsync(plan.ToShopifyProductCreateOptions(), new RequestOptions {
+            var product = await _productService.CreateAsync(plan, new RequestOptions {
                 IdempotencyKey = Activity.Current?.Id,
             }, cancellationToken);
             if (product is null) {
@@ -187,27 +189,27 @@ internal static partial class StripeProductServiceLogs {
 }
 
 internal static class ProductMappings {
-    public static ProductCreateOptions ToShopifyProductCreateOptions(this IGetPlan_Plan plan) =>
+    public static ProductCreateOptions ToShopifyProductCreateOptions(this PlanCreatedEvent plan) =>
         new() {
             Name = plan.Name,
             Description = string.IsNullOrEmpty(plan.Description) ? null : plan.Description,
-            Active = plan.IsActive,
+            //Active = plan.IsActive,
             Images = string.IsNullOrEmpty(plan.IconUrl) ? default : [plan.IconUrl],
             Type = "service",
             Metadata = new Dictionary<string, string> {
-                        { "planId", plan.Id },
+                        { "planId", plan.PlanId.ToString(CultureInfo.InvariantCulture) },
                     },
-            MarketingFeatures = [
-                new ProductMarketingFeatureOptions {
-                    Name = $"{plan.Features.MaxMessages} messages per billing period",
-                },
-                new ProductMarketingFeatureOptions {
-                    Name = $"{plan.Features.SupportTier} support",
-                },
-                new ProductMarketingFeatureOptions {
-                    Name = $"{(plan.Features.AiSupport == true ? string.Empty : "No ")}AI Features",
-                }
-            ],
+            //MarketingFeatures = [
+            //    new ProductMarketingFeatureOptions {
+            //        Name = $"{plan.Features.MaxMessages} messages per billing period",
+            //    },
+            //    new ProductMarketingFeatureOptions {
+            //        Name = $"{plan.Features.SupportTier} support",
+            //    },
+            //    new ProductMarketingFeatureOptions {
+            //        Name = $"{(plan.Features.AiSupport == true ? string.Empty : "No ")}AI Features",
+            //    }
+            //],
         };
 
     public static ProductUpdateOptions ToShopifyProductUpdateOptions(this IGetPlan_Plan plan) =>

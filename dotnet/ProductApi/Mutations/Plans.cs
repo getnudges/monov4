@@ -10,6 +10,7 @@ using Nudges.Kafka;
 using Nudges.Models;
 using Nudges.Telemetry;
 using Nudges.Kafka.Events;
+using ProductApi.Mutations;
 
 namespace ProductApi;
 
@@ -79,29 +80,11 @@ public partial class Mutation {
     [Authorize(Roles = [ClaimValues.Roles.Admin])]
     [Error<PlanCreationException>]
     public async Task<Plan> CreatePlan(ProductDbContext context,
-                                       KafkaMessageProducer<PlanKey, PlanEvent> productProducer,
-                                       INodeIdSerializer idSerializer,
+                                       KafkaMessageProducer<PlanEventKey, PlanChangeEvent> productProducer,
                                        CreatePlanInput input,
                                        CancellationToken cancellationToken) {
 
-        var newPlan = context.Plans.Add(new Plan {
-            Name = input.Name,
-            Description = input.Description,
-            IsActive = input.ActivateOnCreate,
-            IconUrl = input.IconUrl,
-            PriceTiers = input.PriceTiers?.Select(tier => new PriceTier {
-                Name = tier.Name,
-                Price = tier.Price,
-                Duration = tier.Duration,
-                Description = tier.Description,
-                IconUrl = tier.IconUrl,
-            }).ToList() ?? [],
-            PlanFeature = input.Features is { } feature ? new PlanFeature {
-                SupportTier = feature.SupportTier,
-                AiSupport = feature.AiSupport,
-                MaxMessages = feature.MaxMessages,
-            } : default
-        });
+        var newPlan = context.Plans.Add(input.ToPlan());
 
         await using var transaction = await context.Database.BeginTransactionAsync(cancellationToken);
         try {
@@ -109,15 +92,13 @@ public partial class Mutation {
 
             logger.LogPlanCreated(newPlan.Entity.Id, newPlan.Entity.Name);
 
-            var id = idSerializer.Format(nameof(Plan), newPlan.Entity.Id);
-
-            await productProducer.ProducePlanCreated(id, cancellationToken);
+            await productProducer.ProducePlanCreated(newPlan.Entity.ToPlanCreatedEvent(), cancellationToken);
 
             await transaction.CommitAsync(cancellationToken);
             return newPlan.Entity;
         } catch (Exception ex) {
             await transaction.RollbackAsync(cancellationToken);
-            throw new PlanCreationException(ex.GetDeepestInnerException().Message);
+            throw new PlanCreationException(ex.GetBaseException().Message);
         }
     }
 

@@ -178,18 +178,18 @@ internal static class HandlerBuilders {
                 });
                 services.AddTransient<IForeignProductService, StripeService>();
 
-                services.AddTransient<IMessageMiddleware<PlanKey, PlanEvent>, PlanMessageMiddleware>();
+                services.AddTransient<IMessageMiddleware<PlanEventKey, PlanChangeEvent>, PlanMessageMiddleware>();
                 services.AddTransient(static sp =>
                     KafkaMessageProcessorBuilder
-                        .For<PlanKey, PlanEvent>(
+                        .For<PlanEventKey, PlanChangeEvent>(
                             Topics.Plans,
                             sp.GetRequiredService<IConfiguration>().GetKafkaBrokerList(),
                             cancellationToken: sp.GetRequiredService<IHostApplicationLifetime>().ApplicationStopping)
-                        .Use(new TracingMiddleware<PlanKey, PlanEvent>())
-                        .Use(sp.GetRequiredService<IMessageMiddleware<PlanKey, PlanEvent>>())
+                        .Use(new TracingMiddleware<PlanEventKey, PlanChangeEvent>())
+                        .Use(sp.GetRequiredService<IMessageMiddleware<PlanEventKey, PlanChangeEvent>>())
                         .Build());
 
-                services.AddHostedService<MessageHandlerService<PlanKey, PlanEvent>>();
+                services.AddHostedService<MessageHandlerService<PlanEventKey, PlanChangeEvent>>();
             });
 
     public static IHostBuilder ConfigurePriceTierEventHandler(this IHostBuilder builder) =>

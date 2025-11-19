@@ -21,7 +21,7 @@ public class MutationObjectType : ObjectType<Mutation> {
             .UseMutationConvention();
 
         descriptor
-            .Field(f => f.CreatePlan(default!, default!, default!, default!, default!))
+            .Field(f => f.CreatePlan(default!, default!, default!, default!))
             .Use<TracingMiddleware>()
             .Argument("input", a => a.Type<NonNullType<CreatePlanInputType>>())
             .UseMutationConvention();

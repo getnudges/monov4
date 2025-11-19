@@ -19,7 +19,7 @@
         <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="8.0.10" />
         <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.3" />
         <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />
-        <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.4" />
+        <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.0-rc.2" />
         <PackageReference Include="Testcontainers" Version="3.10.0" />
         <PackageReference Include="Testcontainers.Postgresql" Version="3.10.0" />
         <PackageReference Include="Testcontainers.Redis" Version="3.10.0" />

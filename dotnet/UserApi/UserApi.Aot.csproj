@@ -28,7 +28,7 @@
       <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.8" />
       <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.8" />
       <PackageReference Include="Microsoft.Extensions.Http" Version="8.0.0" />
-      <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.0.8" />
+      <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.0-rc.2" />
       <PackageReference Include="HotChocolate.AspNetCore" Version="13.9.12" />
       <PackageReference Include="HotChocolate.Data.EntityFramework" Version="13.9.12" />
       <PackageReference Include="Stripe.net" Version="45.11.0" />
