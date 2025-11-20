@@ -55,6 +55,7 @@ docker-compose up -d plans-listener
 docker-compose up -d plan-subscription-listener
 docker-compose up -d price-tiers-listener
 docker-compose up -d user-authentication-listener
+docker-compose up -d foreign-products-listener
 
 # setup the webhook handler
 docker-compose up -d ngrok
@@ -63,7 +64,7 @@ docker-compose up -d webhooks
 docker-compose run --rm auth-init
 
 # setup the UIs
-# docker-compose up -d admin-ui
+# docker-compose up -d new-admin
 # docker-compose up -d new-signup
 
 # OTEL stuff

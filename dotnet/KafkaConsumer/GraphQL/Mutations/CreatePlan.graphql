@@ -1,0 +1,12 @@
+mutation CreatePlan($createPlanInput: CreatePlanInput!) {
+    createPlan(input: $createPlanInput) {
+      errors {
+        ... on Error {
+          message
+        }
+      }
+      plan {
+        id
+      }
+    }
+  }

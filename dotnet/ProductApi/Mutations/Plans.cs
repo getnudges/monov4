@@ -516,7 +516,7 @@ public record class PatchPlanInput(int Id,
                                    bool? IsActive);
 public class PatchPlanInputType : InputObjectType<PatchPlanInput> {
     protected override void Configure(IInputObjectTypeDescriptor<PatchPlanInput> descriptor) {
-        descriptor.Field(f => f.Id).Type<NonNullType<IdType>>().ID(nameof(Plan));
+        descriptor.Field(f => f.Id).Type<NonNullType<IntType>>();
         descriptor.Field(f => f.PriceTiers).Type<ListType<NonNullType<PatchPlanPriceTierInputType>>>();
         descriptor.Field(f => f.Features).Type<PatchPlanFeatureInputType>();
     }

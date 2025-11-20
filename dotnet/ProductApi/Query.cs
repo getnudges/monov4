@@ -110,7 +110,7 @@ public sealed class QueryObjectType : ObjectType<Query> {
             .UseFiltering()
             .UseSorting();
         descriptor.Field(f => f.GetPlanByForeignId(default!, default!, default!))
-            .Authorize(ClaimValues.Roles.Admin, ClaimValues.Roles.Client)
+            .Authorize(ClaimValues.Roles.Admin, ClaimValues.Roles.Service)
             .Argument("id", a => a.Type<NonNullType<StringType>>())
             .Type<PlanType>();
 

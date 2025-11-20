@@ -123,15 +123,14 @@ builder.Services.AddKeycloakWebApiAuthentication(builder.Configuration, options 
             return Task.CompletedTask;
         },
         OnTokenValidated = context => {
-            if (context.Principal?.HasRole(ClaimValues.Roles.Service) == true) {
-                Console.WriteLine("This is a service account");
-            }
-            Console.WriteLine("Token validated: {0}", string.Join(',', context.Principal?.Claims.Select(c => c.Value) ?? []));
+            //if (context.Principal?.HasRole(ClaimValues.Roles.Service) == true) {
+            //    Console.WriteLine("This is a service account");
+            //}
+            //Console.WriteLine("Token validated: {0}", string.Join(',', context.Principal?.Claims.Select(c => c.Value) ?? []));
             return Task.CompletedTask;
         },
         OnAuthenticationFailed = context => {
-            Console.WriteLine("Authentication failed: {0}", context.Exception.Message);
-            Console.WriteLine("Authority: {0}", context.Options.Authority);
+            //Console.WriteLine("Authentication failed: {0}", context.Exception.Message);
             return Task.CompletedTask;
         }
     };

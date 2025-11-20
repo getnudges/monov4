@@ -79,6 +79,10 @@ builder.Services.AddSingleton<KafkaMessageProducer<NotificationKey, Notification
     new NotificationEventProducer(Topics.Notifications, new ProducerConfig {
         BootstrapServers = sp.GetRequiredService<IConfiguration>().GetKafkaBrokerList()
     }));
+builder.Services.AddSingleton<KafkaMessageProducer<ForeignProductEventKey, ForeignProductEvent>>(static sp =>
+    new ForeignProductEventProducer(Topics.ForeignProducts, new ProducerConfig {
+        BootstrapServers = sp.GetRequiredService<IConfiguration>().GetKafkaBrokerList()
+    }));
 
 builder.Services.AddSingleton<IStripeClient>(s =>
     new StripeClient(builder.Configuration.GetStripeApiKey(), apiBase: builder.Configuration.GetStripeApiUrl()));
@@ -94,20 +98,23 @@ builder.Services.AddScoped<AuthenticationDelegatingHandler>();
 builder.Services.AddHttpClient<INudgesClient>(NudgesClient.ClientName)
     .AddHttpMessageHandler<AuthenticationDelegatingHandler>();
 
+builder.Services.AddTransient<ProductCreatedCommand>();
+builder.Services.AddTransient<PriceDeletedCommand>();
+builder.Services.AddTransient<ProductDeletedCommand>();
+builder.Services.AddTransient<PriceUpdatedCommand>();
+builder.Services.AddTransient<PriceCreatedCommand>();
+builder.Services.AddTransient<ProductUpdatedCommand>();
+builder.Services.AddTransient<CheckoutSessionCompletedCommand>();
+
 builder.Services.AddSingleton(s => new StripeEventCommandProcessorBuilder()
     // https://docs.stripe.com/api/events/types
-    .AddHandler("price.deleted", new PriceDeletedCommand(
-        s.GetRequiredService<INudgesClient>()))
-    .AddHandler("product.deleted", new ProductDeletedCommand(
-        s.GetRequiredService<INudgesClient>()))
-    .AddHandler("price.updated", new PriceUpdatedCommand(
-        s.GetRequiredService<INudgesClient>()))
-    .AddHandler("price.created", new PriceCreatedCommand(
-        s.GetRequiredService<INudgesClient>()))
-    .AddHandler("product.updated", new ProductUpdatedCommand(
-        s.GetRequiredService<INudgesClient>()))
-    .AddHandler("checkout.session.completed", new CheckoutSessionCompletedCommand(
-        s.GetRequiredService<INudgesClient>(), s.GetRequiredService<IStripeClient>()))
+    .AddHandler("price.deleted", s.GetRequiredService<PriceDeletedCommand>())
+    .AddHandler("product.created", s.GetRequiredService<ProductCreatedCommand>())
+    .AddHandler("product.deleted", s.GetRequiredService<ProductDeletedCommand>())
+    .AddHandler("product.updated", s.GetRequiredService<ProductUpdatedCommand>())
+    .AddHandler("price.updated", s.GetRequiredService<PriceUpdatedCommand>())
+    .AddHandler("price.created", s.GetRequiredService<PriceCreatedCommand>())
+    .AddHandler("checkout.session.completed", s.GetRequiredService<CheckoutSessionCompletedCommand>())
     .Build());
 
 builder.Services.AddTransient<CommandsCommand>();

@@ -39,15 +39,15 @@ public static class NudgesClientExtensions {
         return new GraphQLException("Couldn't find client");
     }
 
-    public static async Task<Result<IGetPlanByForeignId_PlanByForeignId, Exception>> GetPlanByForeignId(this INudgesClient client, string foreignId, CancellationToken cancellationToken) {
+    public static async Task<Result<Maybe<IGetPlanByForeignId_PlanByForeignId>, Exception>> GetPlanByForeignId(this INudgesClient client, string foreignId, CancellationToken cancellationToken) {
         var result = await client.GetPlanByForeignId.ExecuteAsync(foreignId, cancellationToken);
         if (result.Errors.Any()) {
             return new AggregateException(result.Errors.Select(e => e.Exception ?? new GraphQLException(e.Message)));
         }
         if (result.Data?.PlanByForeignId is not IGetPlanByForeignId_PlanByForeignId data) {
-            return new GraphQLException("Couldn't find plan");
+            return Result.Success<Maybe<IGetPlanByForeignId_PlanByForeignId>, Exception>(Maybe<IGetPlanByForeignId_PlanByForeignId>.None);
         }
-        return Result.Success<IGetPlanByForeignId_PlanByForeignId, Exception>(data);
+        return Result.Success<Maybe<IGetPlanByForeignId_PlanByForeignId>, Exception>(Maybe.Some(data));
     }
 
     public static async Task<Result<IGetPriceTierByForeignId_PriceTierByForeignId, Exception>> GetPriceTierByForeignId(this INudgesClient client, string foreignId, CancellationToken cancellationToken) {

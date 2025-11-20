@@ -41,13 +41,11 @@ internal static class AppConfiguration {
     [ConfigurationKey]
     public const string LocalizationApiUrl = "LOCALIZATION_API_URL";
     [ConfigurationKey]
-    public const string OidcServerUrl = "Keycloak:auth-server-url";
+    public const string OidcServerUrl = "Oidc:ServerUrl";
     [ConfigurationKey]
-    public const string OidcRealm = "Keycloak:realm";
+    public const string OidcRealm = "Oidc:Realm";
     [ConfigurationKey]
-    public const string OidcResource = "Keycloak:resource";
-    [ConfigurationKey]
-    public const string OidcClientSercret = "Keycloak:credentials:secret";
+    public const string OidcClientSercret = "Oidc:ClientSecret";
     [ConfigurationKey]
     public const string AuthApikey = "AUTH_API_KEY";
 }

@@ -10,6 +10,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Nudges.Auth;
 using Nudges.Configuration.Extensions;
+using Nudges.Kafka.Events;
 using Nudges.Kafka.Middleware;
 using Nudges.Localization.Client;
 using OpenTelemetry.Logs;
@@ -20,21 +21,23 @@ using Precision.WarpCache;
 using Precision.WarpCache.Grpc.Client;
 using Precision.WarpCache.MemoryCache;
 
-var notificationsCmd = new Command("notifications");
-var plansCmd = new Command("plans");
-var priceTierCmd = new Command("price-tiers");
-var planSubscriptionsCmd = new Command("plan-subscriptions");
-var paymentsCmd = new Command("payments");
-var clientsCmd = new Command("clients");
-var userAuthCmd = new Command("user-authentication");
+var notificationsCmd = new Command(Topics.Notifications);
+var plansCmd = new Command(Topics.Plans);
+var priceTierCmd = new Command(Topics.PriceTiers);
+var planSubscriptionsCmd = new Command(Topics.PlanSubscriptions);
+var paymentsCmd = new Command(Topics.Payments);
+var clientsCmd = new Command(Topics.Clients);
+var userAuthCmd = new Command(Topics.UserAuthentication);
+var foreignProductCmd = new Command(Topics.ForeignProducts);
 
-notificationsCmd.SetAction(r => CreateBaseHost(args, "notifications").ConfigureNotificationHandler().Build().RunAsync());
-plansCmd.SetAction(r => CreateBaseHost(args, "plans").ConfigurePlanEventHandler().Build().RunAsync());
-priceTierCmd.SetAction(r => CreateBaseHost(args, "price-tiers").ConfigurePriceTierEventHandler().Build().RunAsync());
-paymentsCmd.SetAction(r => CreateBaseHost(args, "payments").ConfigurePaymentEventHandler().Build().RunAsync());
-planSubscriptionsCmd.SetAction(r => CreateBaseHost(args, "plan-subscriptions").ConfigurePlanSubscriptionHandler().Build().RunAsync());
-clientsCmd.SetAction(r => CreateBaseHost(args, "clients").ConfigureClientHandler().Build().RunAsync());
-userAuthCmd.SetAction(r => CreateBaseHost(args, "user-authentication").ConfigureUserAuthenticationHandler().Build().RunAsync());
+notificationsCmd.SetAction(r => CreateBaseHost(args, Topics.Notifications).ConfigureNotificationHandler().Build().RunAsync());
+plansCmd.SetAction(r => CreateBaseHost(args, Topics.Plans).ConfigurePlanEventHandler().Build().RunAsync());
+priceTierCmd.SetAction(r => CreateBaseHost(args, Topics.PriceTiers).ConfigurePriceTierEventHandler().Build().RunAsync());
+paymentsCmd.SetAction(r => CreateBaseHost(args, Topics.Payments).ConfigurePaymentEventHandler().Build().RunAsync());
+planSubscriptionsCmd.SetAction(r => CreateBaseHost(args, Topics.PlanSubscriptions).ConfigurePlanSubscriptionHandler().Build().RunAsync());
+clientsCmd.SetAction(r => CreateBaseHost(args, Topics.Clients).ConfigureClientHandler().Build().RunAsync());
+userAuthCmd.SetAction(r => CreateBaseHost(args, Topics.UserAuthentication).ConfigureUserAuthenticationHandler().Build().RunAsync());
+foreignProductCmd.SetAction(r => CreateBaseHost(args, Topics.ForeignProducts).ConfigureForeignProductEventHandler().Build().RunAsync());
 
 var rootCommand = new RootCommand {
     notificationsCmd,
@@ -43,7 +46,8 @@ var rootCommand = new RootCommand {
     paymentsCmd,
     planSubscriptionsCmd,
     clientsCmd,
-    userAuthCmd
+    userAuthCmd,
+    foreignProductCmd,
 };
 
 await rootCommand.Parse(args).InvokeAsync();

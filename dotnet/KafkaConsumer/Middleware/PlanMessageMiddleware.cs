@@ -1,3 +1,4 @@
+using System.Globalization;
 using Confluent.Kafka;
 using KafkaConsumer.GraphQL;
 using KafkaConsumer.Services;
@@ -40,14 +41,12 @@ internal class PlanMessageMiddleware(ILogger<PlanMessageMiddleware> logger,
         using var client = new DisposableWrapper<INudgesClient>(nudgesClientFactory);
 
         var foreignCreateResult = await foreignProductService.CreateForeignProduct(plan, cancellationToken);
+
         return await foreignCreateResult.Map(async foreignId =>
+            // no events are fired by this guy, which is the point
             await client.Instance.PatchPlan(new PatchPlanInput {
-                Id = plan.Id,
+                Id = Convert.ToInt32(plan.Metadata["planId"], CultureInfo.InvariantCulture),
                 ForeignServiceId = foreignId,
-                //PriceTiers = [.. plan.PriceTiers.Select(tier => new PatchPlanPriceTierInput {
-                //        Id = tier.Id,
-                //        ForeignServiceId = tier.ForeignServiceId,
-                //    })],
             }, cancellationToken), err => {
                 logger.LogPlanUpdateError(err.Exception?.Message ?? err.Message);
                 return err.Exception?.GetBaseException() ?? new GraphQLException(err.Message);

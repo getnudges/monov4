@@ -19,6 +19,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <GraphQL Remove="graphql\mutations\CreatePlan.graphql" />
     <GraphQL Remove="GraphQL\Mutations\CreatePlanSubscription.graphql" />
     <GraphQL Remove="GraphQL\Mutations\PatchPlan.graphql" />
     <GraphQL Remove="GraphQL\Mutations\PatchPriceTier.graphql" />

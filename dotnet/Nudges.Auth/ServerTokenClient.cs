@@ -47,11 +47,12 @@ public sealed class ServerTokenClient(HttpClient client, IOptions<OidcConfig> co
                 { "grant_type", "client_credentials" },
             })
         };
-        logger.LogInformation("Requesting admin token for client {ClientId} in realm {Realm} with ClientSecret", _config.ClientId, _config.Realm, _config.ClientSecret);
+        //logger.LogInformation("Requesting admin token for client {ClientId} in realm {Realm} with ClientSecret", _config.ClientId, _config.Realm, _config.ClientSecret);
         return await SendRequestAsync(request, TokenResponseContext.Default.TokenResponse, cancellationToken);
     }
 
     public async Task<Result<TokenResponse, OidcException>> GetTokenAsync(CancellationToken cancellationToken = default) {
+        // uncomment to clear cache for testing
         //await _cacheStore.RemoveAsync($"{_config.Realm}:token:{_config.ClientId}", cancellationToken);
         var cached = await _cacheStore.GetAsync($"{_config.Realm}:token:{_config.ClientId}", cancellationToken);
         if (cached.Found) {
