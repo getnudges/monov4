@@ -13,6 +13,7 @@ COPY Nudges.Kafka.Analyzers/*.csproj ./Nudges.Kafka.Analyzers/
 COPY Nudges.HotChocolate.Utils/*.csproj ./Nudges.HotChocolate.Utils/
 COPY ProductApi/*.csproj ./ProductApi/
 COPY Nudges.Configuration/*.csproj ./Nudges.Configuration/
+COPY Nudges.Telemetry/*.csproj ./Nudges.Telemetry/
 
 RUN --mount=type=cache,target=/root/.nuget/packages \
     dotnet restore ProductApi/ProductApi.csproj

@@ -1,76 +1,60 @@
 using System.Net.Http.Headers;
 using Confluent.Kafka;
-using OpenTelemetry.Logs;
-using OpenTelemetry.Metrics;
-using OpenTelemetry.Resources;
-using OpenTelemetry.Trace;
-using Polly;
-using Polly.Contrib.WaitAndRetry;
-using Precision.WarpCache;
-using Precision.WarpCache.Grpc.Client;
-using Precision.WarpCache.MemoryCache;
-using Stripe;
 using Nudges.Auth;
 using Nudges.Configuration.Extensions;
 using Nudges.Kafka;
+using Nudges.Kafka.Events;
 using Nudges.Localization.Client;
+using Nudges.Telemetry;
 using Nudges.Webhooks;
 using Nudges.Webhooks.Endpoints;
 using Nudges.Webhooks.Endpoints.Handlers;
 using Nudges.Webhooks.Stripe;
 using Nudges.Webhooks.Stripe.Commands;
 using Nudges.Webhooks.Twilio;
-using Nudges.Kafka.Events;
+using Polly;
+using Polly.Contrib.WaitAndRetry;
+using Precision.WarpCache;
+using Precision.WarpCache.Grpc.Client;
+using Precision.WarpCache.MemoryCache;
+using Stripe;
 
-var builder = WebApplication.CreateSlimBuilder(args);
+var builder = WebApplication.CreateBuilder(args);
 
+// set configuration sources
 builder.Configuration
     .AddUserSecrets(typeof(Program).Assembly)
-    .AddEnvironmentVariables()
-    .AddFlatFilesFromMap(
-        builder.Configuration.GetValue("FILEMAP", string.Empty),
-        !builder.Environment.IsDevelopment());
+    .AddEnvironmentVariables();
 
+// configure Oidc settings
 builder.Services.Configure<OidcConfig>(builder.Configuration.GetSection("Oidc"));
 
-builder.Logging.AddSimpleConsole(o => o.SingleLine = true);
+// configure logging
+builder.Services.AddLogging(configure =>
+    configure.AddSimpleConsole(o => o.SingleLine = true).Configure(options => {
+        options.ActivityTrackingOptions =
+            ActivityTrackingOptions.TraceId | ActivityTrackingOptions.SpanId;
+    }));
 
+
+// configure OpenTelemetry
 if (builder.Configuration.GetValue<string>("OTLP_ENDPOINT_URL") is string url) {
-
-    builder.Services.AddOpenTelemetry()
-        .ConfigureResource(resource =>
-            resource.AddService(builder.Environment.ApplicationName))
-        .WithMetrics(o =>
-            o.AddRuntimeInstrumentation()
-                .AddMeter([
-                    "Microsoft.AspNetCore.Hosting",
-                    "Microsoft.AspNetCore.Server.Kestrel",
-                    "System.Net.Http",
-                    $"{typeof(StripeWebhookHandler).FullName}",
-                    $"{typeof(TwilioWebhookHandler).FullName}",
-                ]).AddPrometheusExporter())
-        .WithTracing(traceBuilder =>
-            traceBuilder
-                .SetSampler<AlwaysOnSampler>()
-                .AddGrpcClientInstrumentation()
-                .AddAspNetCoreInstrumentation(options => {
-                    options.Filter = context => context.Request.Method == "POST";
-                    options.RecordException = true;
-                })
-                .AddSource([
-                    $"{typeof(KafkaMessageProducer<,>).Namespace}.KafkaMessageProducer",
-                    $"{typeof(StripeWebhookHandler).FullName}",
-                    $"{typeof(TwilioWebhookHandler).FullName}",
-                ]))
-        .WithLogging();
-
-    builder.Services.ConfigureOpenTelemetryTracerProvider(o =>
-        o.AddOtlpExporter(o => o.Endpoint = new Uri(url)));
-
-    builder.Services.ConfigureOpenTelemetryLoggerProvider(o =>
-        o.AddOtlpExporter(o => o.Endpoint = new Uri(url)));
+    builder.Services.AddOpenTelemetryConfiguration(
+        url,
+        builder.Environment.ApplicationName, [
+            "Microsoft.AspNetCore.Hosting",
+            "Microsoft.AspNetCore.Server.Kestrel",
+            "System.Net.Http",
+            $"{typeof(StripeWebhookHandler).FullName}",
+            $"{typeof(TwilioWebhookHandler).FullName}",
+        ], [
+            $"{typeof(KafkaMessageProducer<,>).Namespace}.KafkaMessageProducer",
+            $"{typeof(StripeWebhookHandler).FullName}",
+            $"{typeof(TwilioWebhookHandler).FullName}",
+        ]);
 }
 
+// configure Kafka producers
 builder.Services.AddSingleton<KafkaMessageProducer<PaymentKey, PaymentEvent>>(static sp =>
     new PaymentEventProducer(Topics.Payments, new ProducerConfig {
         BootstrapServers = sp.GetRequiredService<IConfiguration>().GetKafkaBrokerList()
@@ -84,20 +68,19 @@ builder.Services.AddSingleton<KafkaMessageProducer<ForeignProductEventKey, Forei
         BootstrapServers = sp.GetRequiredService<IConfiguration>().GetKafkaBrokerList()
     }));
 
+// configure Stripe client
 builder.Services.AddSingleton<IStripeClient>(s =>
     new StripeClient(builder.Configuration.GetStripeApiKey(), apiBase: builder.Configuration.GetStripeApiUrl()));
-
-builder.Services.AddLocalizationClient(builder.Configuration.GetLocalizationApiUrl());
-
 builder.Services.AddTransient<IStripeVerifier, StripeVerifier>();
 
-builder.Services.AddSingleton<IMessageSender, MessageSender>();
 
+// configure GraphQL client
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<AuthenticationDelegatingHandler>();
 builder.Services.AddHttpClient<INudgesClient>(NudgesClient.ClientName)
     .AddHttpMessageHandler<AuthenticationDelegatingHandler>();
 
+// configure stripe webhook handlers
 builder.Services.AddTransient<ProductCreatedCommand>();
 builder.Services.AddTransient<PriceDeletedCommand>();
 builder.Services.AddTransient<ProductDeletedCommand>();
@@ -105,7 +88,6 @@ builder.Services.AddTransient<PriceUpdatedCommand>();
 builder.Services.AddTransient<PriceCreatedCommand>();
 builder.Services.AddTransient<ProductUpdatedCommand>();
 builder.Services.AddTransient<CheckoutSessionCompletedCommand>();
-
 builder.Services.AddSingleton(s => new StripeEventCommandProcessorBuilder()
     // https://docs.stripe.com/api/events/types
     .AddHandler("price.deleted", s.GetRequiredService<PriceDeletedCommand>())
@@ -116,7 +98,10 @@ builder.Services.AddSingleton(s => new StripeEventCommandProcessorBuilder()
     .AddHandler("price.created", s.GetRequiredService<PriceCreatedCommand>())
     .AddHandler("checkout.session.completed", s.GetRequiredService<CheckoutSessionCompletedCommand>())
     .Build());
+builder.Services.AddTransient<StripeWebhookHandler>();
 
+// configure twilio webhook handlers
+builder.Services.AddSingleton<IMessageSender, MessageSender>();
 builder.Services.AddTransient<CommandsCommand>();
 builder.Services.AddTransient<UnsubCommand>();
 builder.Services.AddTransient<AnnouncementCommand>();
@@ -129,21 +114,20 @@ builder.Services.AddSingleton(s => new TwilioEventCommandProcessorBuilder()
     // this command should *always* be last
     .AddHandler(AnnouncementCommand.Regex, s.GetRequiredService<AnnouncementCommand>())
     .Build());
-
-builder.Services.AddTransient<StripeWebhookHandler>();
 builder.Services.AddTransient<TwilioWebhookHandler>();
 
-builder.Services.AddWarpCacheClient(
-    builder.Configuration.GetCacheServerAddress(),
-    StringMessageSerializerContext.Default.String);
+builder.Services.AddLocalizationClient(builder.Configuration.GetLocalizationApiUrl());
 
+// configure WarpCache
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddSingleton<ICacheStore<string, string>, MemoryCacheStore<string, string>>();
 builder.Services.AddSingleton<IEvictionPolicy<string>>(new LruEvictionPolicy<string>(1000));
 builder.Services.AddSingleton<ChannelCacheMediator<string, string>>();
+builder.Services.AddWarpCacheClient(
+    builder.Configuration.GetCacheServerAddress(),
+    StringMessageSerializerContext.Default.String);
 
-builder.Services.Configure<OidcConfig>(builder.Configuration.GetSection("Oidc"));
-
+// configure server token client
 builder.Services.AddHttpClient<IServerTokenClient, ServerTokenClient>()
     .ConfigurePrimaryHttpMessageHandler(sp => {
         var env = sp.GetRequiredService<IHostEnvironment>();
@@ -152,20 +136,20 @@ builder.Services.AddHttpClient<IServerTokenClient, ServerTokenClient>()
                 ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
             } : new HttpClientHandler();
     })
-    .ConfigureHttpClient(client => {
-        client.BaseAddress = new Uri(builder.Configuration.GetOidcServerUrl());
-    });
+    .ConfigureHttpClient(client =>
+        client.BaseAddress = new Uri(builder.Configuration.GetOidcServerUrl()));
+
 builder.Services.AddNudgesClient()
     .ConfigureHttpClient((sp, client) => {
         var config = sp.GetRequiredService<IConfiguration>();
         client.BaseAddress = new Uri(config.GetGraphQLApiUrl());
-        using var scope = sp.CreateScope();
-        var token = scope.ServiceProvider.GetRequiredService<IServerTokenClient>()
-            .GetTokenAsync().ConfigureAwait(false).GetAwaiter().GetResult();
-        token.Match(token => {
-            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token.AccessToken);
-            // TODO: this throw is intentional.  It should break the startup.
-        }, e => throw e);
+        //using var scope = sp.CreateScope();
+        //var token = scope.ServiceProvider.GetRequiredService<IServerTokenClient>()
+        //    .GetTokenAsync().ConfigureAwait(false).GetAwaiter().GetResult();
+        //token.Match(token => {
+        //    client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token.AccessToken);
+        //    // TODO: this throw is intentional.  It should break the startup.
+        //}, e => throw e);
     });
 
 builder.Services.AddHealthChecks();
@@ -201,11 +185,11 @@ var api = app.MapGroup("/api");
 
 api.MapPost("/StripeWebhookHandler", async (StripeWebhookHandler handler, HttpContext context) =>
     // TODO: look into better retry logic since I'm using Result<,> now.
-    await RetryPolicy.ExecuteAsync(() => handler.Endpoint(context.Request)));
+    await RetryPolicy.ExecuteAsync(() => handler.Endpoint(context.Request, context.RequestAborted)));
 
-api.MapPost("/TwilioWebhookHandler", async (TwilioWebhookHandler handler, HttpContext context, CancellationToken cancellationToken) =>
+api.MapPost("/TwilioWebhookHandler", async (TwilioWebhookHandler handler, HttpContext context) =>
     // TODO: look into better retry logic since I'm using Result<,> now.
-    await handler.Endpoint(context.Request, cancellationToken));
+    RetryPolicy.ExecuteAsync(() => handler.Endpoint(context.Request, context.RequestAborted)));
 
 app.Run();
 

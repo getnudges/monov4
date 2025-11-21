@@ -9,10 +9,7 @@ using Nudges.Data;
 using Nudges.Data.Products;
 using Nudges.Kafka;
 using Nudges.Kafka.Events;
-using OpenTelemetry.Logs;
-using OpenTelemetry.Metrics;
-using OpenTelemetry.Resources;
-using OpenTelemetry.Trace;
+using Nudges.Telemetry;
 using ProductApi;
 using StackExchange.Redis;
 
@@ -22,36 +19,18 @@ builder.Logging.AddSimpleConsole(static o => o.SingleLine = true);
 
 if (builder.Configuration.GetValue<string>("OTLP_ENDPOINT_URL") is string url) {
 
-    builder.Services.AddOpenTelemetry()
-        .ConfigureResource(resource =>
-            resource.AddService(builder.Environment.ApplicationName))
-        .WithMetrics(o =>
-            o.AddRuntimeInstrumentation()
-                .AddMeter([
-                    "Microsoft.AspNetCore.Hosting",
-                    "Microsoft.AspNetCore.Server.Kestrel",
-                    "System.Net.Http",
-                    //"Microsoft.EntityFrameworkCore",
-                    $"{typeof(Mutation).FullName}"
-                ]).AddPrometheusExporter())
-        .WithTracing(traceBuilder =>
-            traceBuilder
-                .SetSampler<AlwaysOnSampler>()
-                //.AddEntityFrameworkCoreInstrumentation()
-                .AddSource([
-                    $"{typeof(KafkaMessageProducer<,>).Namespace}.KafkaMessageProducer",
-                    $"{typeof(Mutation).FullName}"
-                ]))
-        .WithLogging();
-
-    builder.Services.ConfigureOpenTelemetryMeterProvider(o =>
-        o.AddOtlpExporter(o => o.Endpoint = new Uri(url)));
-
-    builder.Services.ConfigureOpenTelemetryTracerProvider(o =>
-        o.AddOtlpExporter(o => o.Endpoint = new Uri(url)));
-
-    builder.Services.ConfigureOpenTelemetryLoggerProvider(o =>
-        o.AddOtlpExporter(o => o.Endpoint = new Uri(url)));
+    builder.Services.AddOpenTelemetryConfiguration(
+        url,
+        builder.Environment.ApplicationName, [
+            "Microsoft.AspNetCore.Hosting",
+            "Microsoft.AspNetCore.Server.Kestrel",
+            "System.Net.Http",
+            //"Microsoft.EntityFrameworkCore",
+            $"{typeof(Mutation).FullName}"
+        ], [
+            $"{typeof(KafkaMessageProducer<,>).Namespace}.KafkaMessageProducer",
+            $"{typeof(Mutation).FullName}"
+        ]);
 }
 
 builder.Services.AddTransient<IConnectionMultiplexer>(c =>

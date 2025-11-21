@@ -44,18 +44,13 @@
     <PackageReference Include="StrawberryShake.Transport.Http" Version="15.1.11" />
     <PackageReference Include="System.CommandLine" Version="2.0.0" />
     <PackageReference Include="Twilio" Version="7.13.6" />
-    <PackageReference Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.13.1" />
-    <PackageReference Include="OpenTelemetry.Exporter.Prometheus.AspNetCore" Version="1.11.0-beta.1" />
-    <PackageReference Include="OpenTelemetry.Extensions.Hosting" Version="1.13.1" />
-    <PackageReference Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.13.0" />
-    <PackageReference Include="OpenTelemetry.Instrumentation.Http" Version="1.13.0" />
-    <PackageReference Include="OpenTelemetry.Instrumentation.Runtime" Version="1.13.0" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Monads\Monads.csproj" />
     <ProjectReference Include="..\Nudges.Configuration\Nudges.Configuration.csproj" />
     <ProjectReference Include="..\Nudges.Kafka.Events\Nudges.Kafka.Events.csproj" />
+    <ProjectReference Include="..\Nudges.Telemetry\Nudges.Telemetry.csproj" />
     <ProjectReference Include="..\Precision.WarpCache\Precision.WarpCache.Grpc.Client\Precision.WarpCache.Grpc.Client.csproj" />
     <ProjectReference Include="..\Precision.WarpCache\Precision.WarpCache.MemoryCache\Precision.WarpCache.MemoryCache.csproj" />
     <ProjectReference Include="..\Precision.WarpCache\Precision.WarpCache\Precision.WarpCache.csproj" />

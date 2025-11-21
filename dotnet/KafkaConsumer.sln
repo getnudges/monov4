@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 18
-VisualStudioVersion = 18.0.11205.157 d18.0
+VisualStudioVersion = 18.0.11205.157
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "KafkaConsumer", "KafkaConsumer\KafkaConsumer.csproj", "{688C2D35-3E69-4E4B-B384-B6346D878C57}"
 EndProject
@@ -43,6 +43,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 	ProjectSection(SolutionItems) = preProject
 		.filenesting.json = .filenesting.json
 	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Nudges.Telemetry", "Nudges.Telemetry\Nudges.Telemetry.csproj", "{813277CD-C9FB-C096-1FD1-BF5D467AF411}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -122,6 +124,10 @@ Global
 		{CF98B33A-84CB-0F8B-E6D2-C43702DD72B5}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{CF98B33A-84CB-0F8B-E6D2-C43702DD72B5}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{CF98B33A-84CB-0F8B-E6D2-C43702DD72B5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{813277CD-C9FB-C096-1FD1-BF5D467AF411}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{813277CD-C9FB-C096-1FD1-BF5D467AF411}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{813277CD-C9FB-C096-1FD1-BF5D467AF411}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{813277CD-C9FB-C096-1FD1-BF5D467AF411}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

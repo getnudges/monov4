@@ -31,7 +31,7 @@ public class StripeWebhookHandler(IStripeVerifier stripeVerifier,
         return stripeEvent;
     }
 
-    public async Task<IResult> Endpoint(HttpRequest request) {
+    public async Task<IResult> Endpoint(HttpRequest request, CancellationToken cancellationToken) {
         WebhooksReceived.Add(1, [new("status", "received")]);
         var eventResult = await VerifyRequest(request);
 
@@ -40,7 +40,7 @@ public class StripeWebhookHandler(IStripeVerifier stripeVerifier,
         }
 
         return await eventResult.Match<IResult>(async r => {
-            var result = await HandleEvent(new(r, request), request.HttpContext.RequestAborted);
+            var result = await HandleEvent(new(r, request), cancellationToken);
             return result.Match(Results.Ok(), e => {
                 logger.LogException(e);
                 return Results.Problem(e.Message);
@@ -53,10 +53,18 @@ public class StripeWebhookHandler(IStripeVerifier stripeVerifier,
 
     private async Task<Maybe<Exception>> HandleEvent(StripeEventContext context, CancellationToken cancellationToken) {
 
+        logger.LogInformation("ActivitySource.Name: {Name}", ActivitySource.Name);
+        logger.LogInformation("Idempotency Key: {Key}", context.StripeEvent.Request.IdempotencyKey);
+
         using var activity = context.StripeEvent.Request.GetActivity(ActivitySource, $"HandleEvent_{context.StripeEvent.Type}");
+
+        logger.LogInformation("Activity created: {IsNull}, Activity ID: {Id}", activity == null, activity?.Id);
+
         WebhooksReceived.Add(1, [new("type", $"stripe.{context.StripeEvent.Type}")]);
         activity?.SetTag("stripe.eventId", context.StripeEvent.Id);
         activity?.Start();
+
+        logger.LogInformation("Activity started: {Id}, Current: {Current}", activity?.Id, Activity.Current?.Id);
 
         var startTime = Stopwatch.GetTimestamp();
         try {

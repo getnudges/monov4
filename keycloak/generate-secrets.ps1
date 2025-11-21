@@ -67,6 +67,14 @@ Where-Object {
 Select-Object -ExpandProperty clientId
 
 foreach ($service in $services) {
+    $secretFilePath = "$PSScriptRoot/.env.${service}"
+    
+    # Skip if the secret file already exists
+    if (Test-Path $secretFilePath) {
+        Write-Host "Secret file for $service already exists, skipping..."
+        continue
+    }
+    
     # Get client ID
     $clientResponse = Invoke-RestMethod -Method Get `
         -Uri "$keycloakUrl/admin/realms/$realm/clients?clientId=$service" `
@@ -87,8 +95,10 @@ foreach ($service in $services) {
     $clientIdEntry = "Oidc__ClientId=$service`n"
 
     # Append to secrets file
-    $clientIdEntry | Out-File -FilePath "$PSScriptRoot/.env.${service}" -NoNewline
-    $secretEntry | Out-File -FilePath "$PSScriptRoot/.env.${service}" -NoNewline -Append
+    $clientIdEntry | Out-File -FilePath $secretFilePath -NoNewline
+    $secretEntry | Out-File -FilePath $secretFilePath -NoNewline -Append
+    
+    Write-Host "Generated secret for $service"
 }
 
 Write-Host "Secrets extracted to .env files."

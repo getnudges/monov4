@@ -13,10 +13,7 @@ using Nudges.Configuration.Extensions;
 using Nudges.Kafka.Events;
 using Nudges.Kafka.Middleware;
 using Nudges.Localization.Client;
-using OpenTelemetry.Logs;
-using OpenTelemetry.Metrics;
-using OpenTelemetry.Resources;
-using OpenTelemetry.Trace;
+using Nudges.Telemetry;
 using Precision.WarpCache;
 using Precision.WarpCache.Grpc.Client;
 using Precision.WarpCache.MemoryCache;
@@ -71,42 +68,17 @@ static IHostBuilder CreateBaseHost(string[] args, string name) =>
                     services.AddLogging(configure => configure.AddSimpleConsole(o => o.SingleLine = true));
 
                     if (hostContext.Configuration.GetValue<string>("OTLP_ENDPOINT_URL") is string url) {
-                        services.AddOpenTelemetry()
-                            .ConfigureResource(resource =>
-                                resource.AddService($"{name}-{hostContext.HostingEnvironment.ApplicationName}"))
-                            .WithMetrics(metricsConfig =>
-                                metricsConfig
-                                    .AddRuntimeInstrumentation()
-                                    .AddMeter([
-                                        "Microsoft.AspNetCore.Hosting",
-                                        "Microsoft.AspNetCore.Server.Kestrel",
-                                        "System.Net.Http",
-                                        $"{typeof(TracingMiddleware<,>).FullName}",
-                                    ])
-                                    .AddPrometheusExporter())
-                            .WithTracing(traceConfig =>
-                                traceConfig
-                                    .SetSampler<AlwaysOnSampler>()
-                                    .AddAspNetCoreInstrumentation(o => {
-                                        o.RecordException = true;
-                                        o.Filter = context =>
-                                            context.Request.Method != "GET";
-                                    })
-                                    .AddHttpClientInstrumentation(o => {
-                                        o.RecordException = true;
-                                    })
-                                    .AddSource([
-                                        $"{typeof(TracingMiddleware<,>).Namespace}.TracingMiddleware",
-                                        $"{typeof(StripeService).FullName}"
-                                    ]))
-                            .WithLogging();
-
-                        services.ConfigureOpenTelemetryTracerProvider(o =>
-                            o.AddOtlpExporter(o => o.Endpoint = new Uri(url)));
-                        services.ConfigureOpenTelemetryLoggerProvider(o =>
-                            o.AddOtlpExporter(o => o.Endpoint = new Uri(url)));
-                        services.ConfigureOpenTelemetryMeterProvider(o =>
-                            o.AddOtlpExporter(o => o.Endpoint = new Uri(url)));
+                        services.AddOpenTelemetryConfiguration(
+                            url,
+                            $"{name}-{hostContext.HostingEnvironment.ApplicationName}", [
+                                "Microsoft.AspNetCore.Hosting",
+                                "Microsoft.AspNetCore.Server.Kestrel",
+                                "System.Net.Http",
+                                $"{typeof(TracingMiddleware<,>).FullName}",
+                            ], [
+                                $"{typeof(TracingMiddleware<,>).Namespace}.TracingMiddleware",
+                                $"{typeof(StripeService).FullName}"
+                            ]);
                     }
 
                     services.AddWarpCacheClient(
