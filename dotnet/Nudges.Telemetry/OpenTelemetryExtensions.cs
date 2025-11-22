@@ -1,4 +1,5 @@
 using Microsoft.Extensions.DependencyInjection;
+using OpenTelemetry.Instrumentation.AspNetCore;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
@@ -14,11 +15,18 @@ public static class OpenTelemetryExtensions {
         string[]? meters = null,
         string[]? sources = null,
         Action<TracerProviderBuilder>? configureTracing = null,
-        Action<MeterProviderBuilder>? configureMetrics = null) {
+        Action<MeterProviderBuilder>? configureMetrics = null,
+        Action<AspNetCoreTraceInstrumentationOptions>? configureAspNetCoreTraceInstrumentationOptions = null) {
 
         services.AddOpenTelemetry()
             .ConfigureResource(resource =>
-                resource.AddService(serviceName))
+                resource
+                    .AddService(serviceName)
+                    .AddAttributes(new Dictionary<string, object> {
+                        ["service.namespace"] = "Nudges",
+                        ["service.version"] = $"{typeof(OpenTelemetryExtensions).Assembly.GetName().Version}",
+                        ["deployment.environment"] = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Unknown"
+                    }))
             .WithMetrics(metricsConfig => {
                 metricsConfig
                     .AddRuntimeInstrumentation()
@@ -32,8 +40,7 @@ public static class OpenTelemetryExtensions {
                     .SetSampler<AlwaysOnSampler>()
                     .AddAspNetCoreInstrumentation(o => {
                         o.RecordException = true;
-                        o.Filter = context =>
-                            context.Request.Method != "GET";
+                        configureAspNetCoreTraceInstrumentationOptions?.Invoke(o);
                     })
                     .AddHttpClientInstrumentation(o =>
                         o.RecordException = true)

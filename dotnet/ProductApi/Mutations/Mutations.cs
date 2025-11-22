@@ -1,9 +1,10 @@
 using Nudges.Auth;
 using Nudges.HotChocolate.Utils;
+using ProductApi.Telemetry;
 
 namespace ProductApi;
 
-public partial class Mutation(ILogger<Mutation> logger) { }
+public partial class Mutation(ILogger<Mutation> logger, ITracePropagator tracePropagator) { }
 
 public class MutationObjectType : ObjectType<Mutation> {
     protected override void Configure(IObjectTypeDescriptor<Mutation> descriptor) {

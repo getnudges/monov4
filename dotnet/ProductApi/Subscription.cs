@@ -3,24 +3,25 @@ using HotChocolate.Authorization;
 using Nudges.Auth;
 using Nudges.Data.Products;
 using Nudges.Data.Products.Models;
+using ProductApi.Telemetry;
 
 namespace ProductApi;
 
 [Authorize(PolicyNames.Admin)]
 public class Subscription {
 
-    [Subscribe(MessageType = typeof(TracedEvent<Plan>))]
+    [Subscribe(MessageType = typeof(TracedMessage<Plan>))]
     public async Task<Plan?> OnPlanUpdated(
         [ID<Plan>] int id,
-        [EventMessage] TracedEvent<Plan> message,
+        [EventMessage] TracedMessage<Plan> message,
         ProductDbContext dbContext,
+        ITracePropagator tracePropagator,
         IHttpContextAccessor httpContextAccessor,
         CancellationToken cancellationToken) {
-        var parentContext = TelemetryPropagation.Extract(message.Headers);
-        using var activity = Mutation.ActivitySource.StartActivity(
-            nameof(OnPlanUpdated),
-            ActivityKind.Consumer,
-            parentContext);
+
+        var parent = tracePropagator.Extract(message.Trace);
+        using var activity = Mutation.ActivitySource
+            .StartConsumerActivity(nameof(OnPlanUpdated), parent);
 
         var plan = message.Payload;
         activity?.SetTag("plan.id", plan.Id);

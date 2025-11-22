@@ -2,25 +2,45 @@ using System.Diagnostics;
 using OpenTelemetry;
 using OpenTelemetry.Context.Propagation;
 
-namespace ProductApi;
+namespace ProductApi.Telemetry;
 
-public static class TelemetryPropagation {
-    private static readonly TextMapPropagator Propagator = Propagators.DefaultTextMapPropagator;
+public readonly record struct TraceHeaders(
+    IReadOnlyDictionary<string, string> Values);
 
-    public static IReadOnlyDictionary<string, string> InjectCurrent() {
-        var headers = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-        var propagationContext = new PropagationContext(Activity.Current?.Context ?? default, Baggage.Current);
-        Propagator.Inject(propagationContext, headers, static (d, k, v) => d[k] = v);
-        return headers;
-    }
-
-    public static ActivityContext Extract(IReadOnlyDictionary<string, string> headers) {
-        var parent = Propagator.Extract(default, headers, static (d, k) =>
-            d.TryGetValue(k, out var v) ? [v] : Array.Empty<string>());
-
-        return parent.ActivityContext;
-    }
+public interface ITracePropagator {
+    public TraceHeaders Inject();
+    public PropagationContext Extract(TraceHeaders headers);
 }
 
-// Simple envelope to carry trace headers with any payload.
-public sealed record TracedEvent<T>(T Payload, IReadOnlyDictionary<string, string> Headers);
+public sealed class TracePropagator : ITracePropagator {
+    private readonly TextMapPropagator _propagator = Propagators.DefaultTextMapPropagator;
+
+    public TraceHeaders Inject() {
+        var carrier = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        var context = new PropagationContext(
+            Activity.Current?.Context ?? default,
+            Baggage.Current);
+
+        _propagator.Inject(context, carrier, (d, k, v) => d[k] = v);
+        return new TraceHeaders(carrier);
+    }
+
+    public PropagationContext Extract(TraceHeaders headers) =>
+        _propagator.Extract(default, headers.Values,
+            (d, k) => d.TryGetValue(k, out var v) ? [v] : Array.Empty<string>());
+}
+
+public readonly record struct TracedMessage<T>(
+    T Payload,
+    TraceHeaders Trace);
+
+public static class ActivityExtensions {
+    public static Activity? StartConsumerActivity(
+        this ActivitySource source,
+        string name,
+        PropagationContext parent) =>
+        source.StartActivity(
+            name,
+            ActivityKind.Consumer,
+            parent.ActivityContext);
+}

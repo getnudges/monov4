@@ -2,15 +2,16 @@ using System.Diagnostics;
 using HotChocolate.Authorization;
 using HotChocolate.Subscriptions;
 using Microsoft.EntityFrameworkCore;
-using ProductApi.Models;
 using Nudges.Auth;
 using Nudges.Data.Products;
 using Nudges.Data.Products.Models;
 using Nudges.Kafka;
+using Nudges.Kafka.Events;
 using Nudges.Models;
 using Nudges.Telemetry;
-using Nudges.Kafka.Events;
+using ProductApi.Models;
 using ProductApi.Mutations;
+using ProductApi.Telemetry;
 
 namespace ProductApi;
 
@@ -284,8 +285,8 @@ public partial class Mutation {
         }
 
         // Inject current Activity into headers and send traced event
-        var headers = TelemetryPropagation.InjectCurrent();
-        await subscriptionSender.SendAsync(nameof(Subscription.OnPlanUpdated), new TracedEvent<Plan>(plan, headers), cancellationToken);
+        var headers = tracePropagator.Inject();
+        await subscriptionSender.SendAsync(nameof(Subscription.OnPlanUpdated), new TracedMessage<Plan>(plan, headers), cancellationToken);
         return plan;
     }
 

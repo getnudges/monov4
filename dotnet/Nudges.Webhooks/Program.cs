@@ -57,7 +57,7 @@ if (builder.Configuration.GetValue<string>("OTLP_ENDPOINT_URL") is string url) {
             $"{typeof(KafkaMessageProducer<,>).Namespace}.KafkaMessageProducer",
             $"{typeof(StripeWebhookHandler).FullName}",
             $"{typeof(TwilioWebhookHandler).FullName}",
-        ]);
+        ], null, null, o => o.Filter = ctx => ctx.Request.Method == "POST");
 }
 
 // configure Kafka producers
@@ -71,7 +71,7 @@ builder.Services.AddSingleton<KafkaMessageProducer<NotificationKey, Notification
     }));
 builder.Services.AddSingleton<KafkaMessageProducer<ForeignProductEventKey, ForeignProductEvent>>(static sp =>
     new ForeignProductEventProducer(Topics.ForeignProducts, new ProducerConfig {
-        BootstrapServers = sp.GetRequiredService<IConfiguration>().GetKafkaBrokerList()
+       BootstrapServers = sp.GetRequiredService<IConfiguration>().GetKafkaBrokerList()
     }));
 
 // configure Stripe client
@@ -149,14 +149,20 @@ builder.Services.AddNudgesClient()
     .ConfigureHttpClient((sp, client) => {
         var config = sp.GetRequiredService<IConfiguration>();
         client.BaseAddress = new Uri(config.GetGraphQLApiUrl());
-        //using var scope = sp.CreateScope();
-        //var token = scope.ServiceProvider.GetRequiredService<IServerTokenClient>()
-        //    .GetTokenAsync().ConfigureAwait(false).GetAwaiter().GetResult();
-        //token.Match(token => {
-        //    client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token.AccessToken);
-        //    // TODO: this throw is intentional.  It should break the startup.
-        //}, e => throw e);
+        using var scope = sp.CreateScope();
+        var token = scope.ServiceProvider.GetRequiredService<IServerTokenClient>()
+            .GetTokenAsync().ConfigureAwait(false).GetAwaiter().GetResult();
+        token.Match(token => {
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token.AccessToken);
+            // TODO: this throw is intentional.  It should break the startup.
+        }, e => throw e);
     });
+
+builder.Services.AddHeaderPropagation(o => {
+    o.Headers.Add("traceparent");
+    o.Headers.Add("tracestate");
+    o.Headers.Add("baggage");
+});
 
 builder.Services.AddHealthChecks();
 
