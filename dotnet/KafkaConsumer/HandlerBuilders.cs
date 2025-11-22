@@ -167,7 +167,7 @@ internal static class HandlerBuilders {
         builder
             .ConfigureServices(static (hostContext, services) => {
                 services.AddSingleton(static sp =>
-                    new PriceTierEventProducer(Topics.PriceTiers, new ProducerConfig {
+                    new PriceTierChangeEventProducer(Topics.PriceTiers, new ProducerConfig {
                         BootstrapServers = sp.GetRequiredService<IConfiguration>().GetKafkaBrokerList(),
                         AllowAutoCreateTopics = true,
                     }));
@@ -218,17 +218,17 @@ internal static class HandlerBuilders {
                 });
                 services.AddTransient<IForeignProductService, StripeService>();
 
-                services.AddTransient<IMessageMiddleware<PriceTierEventKey, PriceTierEvent>, PriceTierMessageMiddleware>();
+                services.AddTransient<IMessageMiddleware<PriceTierEventKey, PriceTierChangeEvent>, PriceTierMessageMiddleware>();
                 services.AddTransient(static sp =>
                     KafkaMessageProcessorBuilder
-                        .For<PriceTierEventKey, PriceTierEvent>(
+                        .For<PriceTierEventKey, PriceTierChangeEvent>(
                             Topics.PriceTiers,
                             sp.GetRequiredService<IConfiguration>().GetKafkaBrokerList(),
                             cancellationToken: sp.GetRequiredService<IHostApplicationLifetime>().ApplicationStopping)
-                        .Use(new TracingMiddleware<PriceTierEventKey, PriceTierEvent>())
-                        .Use(sp.GetRequiredService<IMessageMiddleware<PriceTierEventKey, PriceTierEvent>>())
+                        .Use(new TracingMiddleware<PriceTierEventKey, PriceTierChangeEvent>())
+                        .Use(sp.GetRequiredService<IMessageMiddleware<PriceTierEventKey, PriceTierChangeEvent>>())
                         .Build());
 
-                services.AddHostedService<MessageHandlerService<PriceTierEventKey, PriceTierEvent>>();
+                services.AddHostedService<MessageHandlerService<PriceTierEventKey, PriceTierChangeEvent>>();
             });
 }

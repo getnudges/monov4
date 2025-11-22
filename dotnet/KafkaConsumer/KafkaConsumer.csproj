@@ -49,6 +49,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Monads\Monads.csproj" />
     <ProjectReference Include="..\Nudges.Configuration\Nudges.Configuration.csproj" />
+    <ProjectReference Include="..\Nudges.Contracts\Nudges.Contracts.csproj" />
     <ProjectReference Include="..\Nudges.Kafka.Events\Nudges.Kafka.Events.csproj" />
     <ProjectReference Include="..\Nudges.Telemetry\Nudges.Telemetry.csproj" />
     <ProjectReference Include="..\Precision.WarpCache\Precision.WarpCache.Grpc.Client\Precision.WarpCache.Grpc.Client.csproj" />

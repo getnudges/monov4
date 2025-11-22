@@ -189,15 +189,15 @@ internal static partial class StripeProductServiceLogs {
 }
 
 internal static class ProductMappings {
-    public static ProductCreateOptions ToShopifyProductCreateOptions(this PlanCreatedEvent plan) =>
+    public static ProductCreateOptions ToShopifyProductCreateOptions(this PlanCreatedEvent data) =>
         new() {
-            Name = plan.Name,
-            Description = string.IsNullOrEmpty(plan.Description) ? null : plan.Description,
+            Name = data.Plan.Name,
+            Description = string.IsNullOrEmpty(data.Plan.Description) ? null : data.Plan.Description,
             //Active = plan.IsActive,
-            Images = string.IsNullOrEmpty(plan.IconUrl) ? default : [plan.IconUrl],
+            Images = string.IsNullOrEmpty(data.Plan.IconUrl) ? default : [data.Plan.IconUrl],
             Type = "service",
             Metadata = new Dictionary<string, string> {
-                        { "planId", plan.PlanId.ToString(CultureInfo.InvariantCulture) },
+                        { "planId", data.Plan.Id.ToString(CultureInfo.InvariantCulture) },
                     },
             //MarketingFeatures = [
             //    new ProductMarketingFeatureOptions {

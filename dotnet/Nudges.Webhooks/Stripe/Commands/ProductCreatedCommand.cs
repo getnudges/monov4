@@ -20,15 +20,15 @@ internal sealed class ProductCreatedCommand(INudgesClient nudgesClient,
         var result = await nudgesClient.GetPlanByForeignId(product.Id, cancellationToken).Map(async maybePlan =>
             await maybePlan.Match(async () => {
                 // Plan doesn't exist - this was created manually in Stripe
-                // Create it in our system
+                // Ignore it
                 logger.LogNewPlanFromStripe(product.Id);
-                try {
-                    await foreignProductProducer.ProduceForeignProductCreated(
-                    product.ToForeignProductCreatedEvent(),
-                    cancellationToken);
-                } catch (Exception ex) {
-                    return ex;
-                }
+                //try {
+                //    await foreignProductProducer.ProduceForeignProductCreated(
+                //    product.ToForeignProductCreatedEvent(),
+                //    cancellationToken);
+                //} catch (Exception ex) {
+                //    return ex;
+                //}
                 return Maybe<Exception>.None;
             }, async plan => {
                 // Plan exists - this was created by OUR UI, not manually in Stripe
@@ -79,6 +79,6 @@ internal static partial class ProductCreatedCommandLogs {
     [LoggerMessage(
         EventId = 1003,
         Level = LogLevel.Information,
-        Message = "New plan detected from Stripe for Foreign Product ID: {ForeignProductId}, producing CREATED event")]
+        Message = "New plan detected from Stripe for Foreign Product ID: {ForeignProductId}, ignoring.")]
     public static partial void LogNewPlanFromStripe(this ILogger logger, string foreignProductId);
 }

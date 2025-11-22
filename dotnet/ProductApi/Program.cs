@@ -69,16 +69,12 @@ builder.Services
         new NotificationEventProducer(Topics.Notifications, new ProducerConfig {
             BootstrapServers = sp.GetRequiredService<IConfiguration>().GetKafkaBrokerList()
         }))
-    .AddSingleton<KafkaMessageProducer<PlanKey, PlanEvent>>(sp =>
-        new PlanEventProducer(Topics.Plans, new ProducerConfig {
-            BootstrapServers = sp.GetRequiredService<IConfiguration>().GetKafkaBrokerList()
-        }))
     .AddSingleton<KafkaMessageProducer<PlanEventKey, PlanChangeEvent>>(sp =>
         new PlanChangeEventProducer(Topics.Plans, new ProducerConfig {
            BootstrapServers = sp.GetRequiredService<IConfiguration>().GetKafkaBrokerList()
         }))
-    .AddSingleton<KafkaMessageProducer<PriceTierEventKey, PriceTierEvent>>(sp =>
-        new PriceTierEventProducer(Topics.PriceTiers, new ProducerConfig {
+    .AddSingleton<KafkaMessageProducer<PriceTierEventKey, PriceTierChangeEvent>>(sp =>
+        new PriceTierChangeEventProducer(Topics.PriceTiers, new ProducerConfig {
             BootstrapServers = sp.GetRequiredService<IConfiguration>().GetKafkaBrokerList()
         }))
     .AddSingleton<KafkaMessageProducer<PlanSubscriptionKey, PlanSubscriptionEvent>>(sp =>

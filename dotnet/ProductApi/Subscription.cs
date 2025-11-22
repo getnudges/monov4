@@ -33,7 +33,7 @@ public class Subscription {
         //    activity?.SetTag("net.sock.client_id", httpContext.Connection.Id);
         //    activity?.SetTag("graphql.subscriber.user", httpContext.User.Identity?.Name);
         //}
-        if (plan.Id != id) {
+        if (plan?.Id != id) {
             //activity?.SetStatus(ActivityStatusCode.Ok, "Filtered out");
             return default;
         }

@@ -10,9 +10,10 @@ namespace KafkaConsumer.Middleware;
 
 internal class PriceTierMessageMiddleware(ILogger<PriceTierMessageMiddleware> logger,
                                           Func<INudgesClient> nudgesClientFactory,
-                                          IForeignProductService foreignProductService) : IMessageMiddleware<PriceTierEventKey, PriceTierEvent> {
+                                          IForeignProductService foreignProductService)
+    : IMessageMiddleware<PriceTierEventKey, PriceTierChangeEvent> {
 
-    public async Task<MessageContext<PriceTierEventKey, PriceTierEvent>> InvokeAsync(MessageContext<PriceTierEventKey, PriceTierEvent> context, MessageHandler<PriceTierEventKey, PriceTierEvent> next) {
+    public async Task<MessageContext<PriceTierEventKey, PriceTierChangeEvent>> InvokeAsync(MessageContext<PriceTierEventKey, PriceTierChangeEvent> context, MessageHandler<PriceTierEventKey, PriceTierChangeEvent> next) {
         var result = await HandleMessageAsync(context.ConsumeResult, context.CancellationToken);
         result.Match(
             _ => logger.LogAction($"Message {context.ConsumeResult.Message.Key} handled successfully."),
@@ -20,48 +21,46 @@ internal class PriceTierMessageMiddleware(ILogger<PriceTierMessageMiddleware> lo
         return context;
     }
 
-    public async Task<Result<bool, Exception>> HandleMessageAsync(ConsumeResult<PriceTierEventKey, PriceTierEvent> cr, CancellationToken cancellationToken) {
+    public async Task<Result<bool, Exception>> HandleMessageAsync(ConsumeResult<PriceTierEventKey, PriceTierChangeEvent> cr, CancellationToken cancellationToken) {
         logger.LogAction($"Received message {cr.Message.Key}");
-        return await (cr switch {
-            { Message.Key.EventType: nameof(PriceTierEventKey.PriceTierCreated), Message.Key.EventKey: var priceTierNodeId } =>
-                HandlePriceTierCreated(priceTierNodeId, cancellationToken),
-            { Message.Key.EventType: nameof(PriceTierEventKey.PriceTierUpdated), Message.Key.EventKey: var priceTierNodeId } =>
-                HandlePriceTierUpdated(priceTierNodeId, cancellationToken),
-            { Message.Key.EventType: nameof(PriceTierEventKey.PriceTierDeleted), Message.Key.EventKey: var priceTierNodeId } =>
-                HandlePriceTierDeleted(priceTierNodeId, cancellationToken),
+
+        return await (cr.Message.Value switch {
+            PriceTierCreatedEvent createdEvent => HandlePriceTierCreated(createdEvent, cancellationToken),
+            PriceTierUpdatedEvent updatedEvent => HandlePriceTierUpdated(updatedEvent, cancellationToken),
+            PriceTierDeletedEvent deletedEvent => HandlePriceTierDeleted(deletedEvent, cancellationToken),
             _ => Result.ExceptionTask(new UnhandledMessageException($"No handler registered for event {cr.Message.Key}.")),
         });
     }
 
-    private async Task<Result<bool, Exception>> HandlePriceTierCreated(string priceTierNodeId, CancellationToken cancellationToken) {
+    private async Task<Result<bool, Exception>> HandlePriceTierCreated(PriceTierCreatedEvent data, CancellationToken cancellationToken) {
         using var client = new DisposableWrapper<INudgesClient>(nudgesClientFactory);
 
-        return await client.Instance.GetPriceTier(priceTierNodeId, cancellationToken).Map(async priceTier =>
-            await foreignProductService.GetPriceIdByLookupId(priceTier.Id, cancellationToken).Match(async foreignId => {
-                var result = await client.Instance.PatchPriceTier(new PatchPriceTierInput {
-                    Id = priceTierNodeId,
-                    ForeignServiceId = foreignId,
-                }, cancellationToken);
-                logger.LogPriceTierCreated(priceTierNodeId);
-                var x = result.Match<Result<bool, Exception>>(true, e => e.GetBaseException());
-                return x;
-            }, () => new MissingDataException("Could not find PriceTier")));
+        if (string.IsNullOrEmpty(data.PriceTier.ForeignServiceId)) {
+            logger.LogWarning("PriceTierCreatedEvent received with null or empty ForeignServiceId. Cannot create foreign price.");
+            return Result.Success<bool, Exception>(true);
+        }
+
+        var result = await client.Instance.PatchPriceTier(new PatchPriceTierInput {
+            Id = data.PriceTier.ForeignServiceId,
+            Name = data.PriceTier.Name,
+            Description = data.PriceTier.Description,
+            Price = data.PriceTier.Price,
+            Duration = data.PriceTier.Duration,
+            IconUrl = data.PriceTier.IconUrl,
+            Status = data.PriceTier.Status,
+            ForeignServiceId = data.PriceTier.ForeignServiceId
+        }, cancellationToken);
+
+        return result.Match(Result.Success<bool, Exception>(true), Result.Exception);
+
     }
 
-    private async Task<Result<bool, Exception>> HandlePriceTierUpdated(string priceTierNodeId, CancellationToken cancellationToken) {
-        using var client = new DisposableWrapper<INudgesClient>(nudgesClientFactory);
-
-        return await client.Instance.GetPriceTier(priceTierNodeId, cancellationToken).Map(async priceTier => {
-            var foreignUpdateResult = await foreignProductService.UpdateForeignPrice(priceTier, cancellationToken);
-            return foreignUpdateResult.Match(success => {
-                logger.LogPriceTierUpdated(priceTierNodeId);
-                return true;
-            }, err => err.Exception?.GetBaseException() ?? new GraphQLException(err.Message));
-        });
+    private Task<Result<bool, Exception>> HandlePriceTierUpdated(PriceTierUpdatedEvent data, CancellationToken cancellationToken) {
+        return Task.FromResult(Result.Success<bool, Exception>(true));
     }
 
-    private async Task<Result<bool, Exception>> HandlePriceTierDeleted(string priceTierForeignServiceId, CancellationToken cancellationToken) =>
-        await DeleteForeignPrice(priceTierForeignServiceId, cancellationToken);
+    private Task<Result<bool, Exception>> HandlePriceTierDeleted(PriceTierDeletedEvent data, CancellationToken cancellationToken) =>
+        Task.FromResult(Result.Success<bool, Exception>(true));
 
     private async Task<Result<bool, Exception>> DeleteForeignPrice(string id, CancellationToken cancellationToken) {
         var foreignUpdateResult = await foreignProductService.DeleteForeignPrice(id, cancellationToken);

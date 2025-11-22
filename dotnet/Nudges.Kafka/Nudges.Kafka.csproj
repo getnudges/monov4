@@ -23,4 +23,8 @@
     <InternalsVisibleTo Include="Nudges.Kafka.Tests.Unit" />
     <InternalsVisibleTo Include="Nudges.Kafka.Tests.Integration" />
   </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Nudges.Contracts\Nudges.Contracts.csproj" />
+  </ItemGroup>
 </Project>
