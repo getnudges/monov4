@@ -199,7 +199,7 @@ internal static class HandlerBuilders {
                 services.AddTransient(static sp =>
                     KafkaMessageProcessorBuilder
                         .For<ForeignProductEventKey, ForeignProductEvent>(
-                            Topics.Plans,
+                            Topics.ForeignProducts,
                             sp.GetRequiredService<IConfiguration>().GetKafkaBrokerList(),
                             cancellationToken: sp.GetRequiredService<IHostApplicationLifetime>().ApplicationStopping)
                         .Use(new TracingMiddleware<ForeignProductEventKey, ForeignProductEvent>())

@@ -15,24 +15,26 @@ public class Subscription {
         [ID<Plan>] int id,
         [EventMessage] TracedMessage<Plan> message,
         ProductDbContext dbContext,
-        ITracePropagator tracePropagator,
-        IHttpContextAccessor httpContextAccessor,
+        //ITracePropagator tracePropagator,
+        //IHttpContextAccessor httpContextAccessor,
         CancellationToken cancellationToken) {
 
-        var parent = tracePropagator.Extract(message.Trace);
-        using var activity = Mutation.ActivitySource
-            .StartConsumerActivity(nameof(OnPlanUpdated), parent);
-
         var plan = message.Payload;
-        activity?.SetTag("plan.id", plan.Id);
-        activity?.SetTag("plan.name", plan.Name);
-        activity?.SetTag("graphql.subscription.requestedId", id);
-        if (httpContextAccessor.HttpContext is { } httpContext) {
-            activity?.SetTag("net.sock.client_id", httpContext.Connection.Id);
-            activity?.SetTag("graphql.subscriber.user", httpContext.User.Identity?.Name);
-        }
+
+        //var parent = tracePropagator.Extract(message.Trace);
+        //using var activity = Mutation.ActivitySource
+        //    .StartConsumerActivity(nameof(OnPlanUpdated), parent);
+
+        //activity?.SetTag("plan.id", plan.Id);
+        //activity?.SetTag("plan.name", plan.Name);
+        //activity?.SetTag("graphql.subscription.requestedId", id);
+        //activity?.SetTag("graphql.transport", "websocket");
+        //if (httpContextAccessor.HttpContext is { } httpContext) {
+        //    activity?.SetTag("net.sock.client_id", httpContext.Connection.Id);
+        //    activity?.SetTag("graphql.subscriber.user", httpContext.User.Identity?.Name);
+        //}
         if (plan.Id != id) {
-            activity?.SetStatus(ActivityStatusCode.Ok, "Filtered out");
+            //activity?.SetStatus(ActivityStatusCode.Ok, "Filtered out");
             return default;
         }
         if (plan.PlanFeature is null) {
@@ -41,7 +43,7 @@ public class Subscription {
         if (plan.PriceTiers is null) {
             await dbContext.Entry(plan).Collection(p => p.PriceTiers).LoadAsync(cancellationToken);
         }
-        activity?.SetStatus(ActivityStatusCode.Ok);
+        //activity?.SetStatus(ActivityStatusCode.Ok);
         return plan;
     }
 

@@ -56,7 +56,7 @@ public sealed class ServerTokenClient(HttpClient client, IOptions<OidcConfig> co
         //await _cacheStore.RemoveAsync($"{_config.Realm}:token:{_config.ClientId}", cancellationToken);
         var cached = await _cacheStore.GetAsync($"{_config.Realm}:token:{_config.ClientId}", cancellationToken);
         if (cached.Found) {
-            // TODO: Should ExpiryTime be an int?
+            // TODO: Should ExpiryTime be an int
             return new TokenResponse(
                 cached.Value,
                 Convert.ToInt32(cached.ExpiryTime > int.MaxValue ? int.MaxValue : Convert.ToInt32(cached.ExpiryTime, CultureInfo.InvariantCulture)));

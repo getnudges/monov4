@@ -8,7 +8,7 @@ using OpenTelemetry.Trace;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddGrpc(o => o.EnableDetailedErrors = builder.Environment.IsDevelopment());
+builder.Services.AddGrpc(o => o.EnableDetailedErrors = true);
 
 if (builder.Configuration.GetValue<string>("OTLP_ENDPOINT_URL") is string url) {
 

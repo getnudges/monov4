@@ -78,7 +78,7 @@ static IHostBuilder CreateBaseHost(string[] args, string name) =>
                             ], [
                                 $"{typeof(TracingMiddleware<,>).Namespace}.TracingMiddleware",
                                 $"{typeof(StripeService).FullName}"
-                            ]);
+                            ], null, null, o => o.Filter = ctx => ctx.Request.Method == "POST");
                     }
 
                     services.AddWarpCacheClient(
