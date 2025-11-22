@@ -33,6 +33,7 @@ import { Trash2 } from "lucide-react";
 import { useSnackbar } from "@/components/Snackbar";
 import { useRelayScreenContext } from "@/Router/withRelay";
 import type { PlanQuery } from "./__generated__/PlanQuery.graphql";
+import { GraphQLSubscriptionError } from "./hooks/types";
 
 const planSchema = z.object({
   id: z.string().optional(),
@@ -391,18 +392,23 @@ export default function PlanEditor({ plan }: Props) {
 }
 
 const EditPlanForm = ({ id, ...props }: PlanFormProps & { id: string }) => {
-  const [planUpdatedError, setPlanUpdatedError] = useState<Error | null>(null);
-  usePlanUpdatedSubscription(id, (e) => setPlanUpdatedError(e));
+  const [planUpdatedErrors, setPlanUpdatedErrors] = useState<
+    GraphQLSubscriptionError[]
+  >([]);
+  usePlanUpdatedSubscription(id, (e) => setPlanUpdatedErrors(e));
 
   return (
     <>
       <PlanForm {...props} />
-      {!!planUpdatedError && (
+      {planUpdatedErrors.length > 0 && (
         <ErrorDialog
-          error={planUpdatedError}
-          startOpen={!!planUpdatedError}
+          error={{
+            message: planUpdatedErrors.map((e) => e.message).join("\n"),
+            name: "Subscription Error",
+          }}
+          startOpen={planUpdatedErrors.length > 0}
           title="Subscription Error"
-          onClose={() => setPlanUpdatedError(null)}
+          onClose={() => setPlanUpdatedErrors([])}
         />
       )}
     </>

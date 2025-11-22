@@ -1,6 +1,3 @@
-import { RelayEnvironmentProvider } from "react-relay";
-
-import RelayEnvironment from "./RelayEnvironment";
 import Screens from "./Screens";
 import { AuthProvider } from "./AuthProvider";
 import { Router } from "wouter";
@@ -8,19 +5,20 @@ import Layout from "@/components/layout";
 
 import "./App.css";
 import { SnackbarProvider } from "./components/Snackbar";
+import RelayEnvironmentProviderWrapper from "./RelayEnvironmentProviderWrapper";
 
 function App() {
   return (
     <Router>
-      <RelayEnvironmentProvider environment={RelayEnvironment}>
-        <AuthProvider>
-          <SnackbarProvider>
+      <SnackbarProvider>
+        <RelayEnvironmentProviderWrapper>
+          <AuthProvider>
             <Layout>
               <Screens />
             </Layout>
-          </SnackbarProvider>
-        </AuthProvider>
-      </RelayEnvironmentProvider>
+          </AuthProvider>
+        </RelayEnvironmentProviderWrapper>
+      </SnackbarProvider>
     </Router>
   );
 }
