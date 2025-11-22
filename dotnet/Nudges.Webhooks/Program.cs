@@ -30,11 +30,17 @@ builder.Configuration
 builder.Services.Configure<OidcConfig>(builder.Configuration.GetSection("Oidc"));
 
 // configure logging
-builder.Services.AddLogging(configure =>
-    configure.AddSimpleConsole(o => o.SingleLine = true).Configure(options => {
-        options.ActivityTrackingOptions =
-            ActivityTrackingOptions.TraceId | ActivityTrackingOptions.SpanId;
-    }));
+builder.Logging.ClearProviders();
+builder.Logging.AddSimpleConsole(o => {
+    o.SingleLine = true;
+    o.TimestampFormat = "yyyy-MM-dd HH:mm:ss.fff ";
+});
+builder.Logging.Configure(options => {
+    options.ActivityTrackingOptions =
+        ActivityTrackingOptions.TraceId |
+        ActivityTrackingOptions.SpanId |
+        ActivityTrackingOptions.ParentId;
+});
 
 
 // configure OpenTelemetry

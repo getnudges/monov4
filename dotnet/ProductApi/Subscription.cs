@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using HotChocolate.Authorization;
 using Nudges.Auth;
 using Nudges.Data.Products;
@@ -5,12 +6,32 @@ using Nudges.Data.Products.Models;
 
 namespace ProductApi;
 
+[Authorize(PolicyNames.Admin)]
 public class Subscription {
 
-    [Subscribe(MessageType = typeof(Plan))]
-    [Authorize(PolicyNames.Admin)]
-    public async Task<Plan?> OnPlanUpdated([ID<Plan>] int id, [EventMessage] Plan plan, ProductDbContext dbContext, CancellationToken cancellationToken) {
+    [Subscribe(MessageType = typeof(TracedEvent<Plan>))]
+    public async Task<Plan?> OnPlanUpdated(
+        [ID<Plan>] int id,
+        [EventMessage] TracedEvent<Plan> message,
+        ProductDbContext dbContext,
+        IHttpContextAccessor httpContextAccessor,
+        CancellationToken cancellationToken) {
+        var parentContext = TelemetryPropagation.Extract(message.Headers);
+        using var activity = Mutation.ActivitySource.StartActivity(
+            nameof(OnPlanUpdated),
+            ActivityKind.Consumer,
+            parentContext);
+
+        var plan = message.Payload;
+        activity?.SetTag("plan.id", plan.Id);
+        activity?.SetTag("plan.name", plan.Name);
+        activity?.SetTag("graphql.subscription.requestedId", id);
+        if (httpContextAccessor.HttpContext is { } httpContext) {
+            activity?.SetTag("net.sock.client_id", httpContext.Connection.Id);
+            activity?.SetTag("graphql.subscriber.user", httpContext.User.Identity?.Name);
+        }
         if (plan.Id != id) {
+            activity?.SetStatus(ActivityStatusCode.Ok, "Filtered out");
             return default;
         }
         if (plan.PlanFeature is null) {
@@ -19,6 +40,7 @@ public class Subscription {
         if (plan.PriceTiers is null) {
             await dbContext.Entry(plan).Collection(p => p.PriceTiers).LoadAsync(cancellationToken);
         }
+        activity?.SetStatus(ActivityStatusCode.Ok);
         return plan;
     }
 

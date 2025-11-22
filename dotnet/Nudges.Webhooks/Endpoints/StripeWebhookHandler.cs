@@ -1,10 +1,10 @@
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
 using Monads;
-using OpenTelemetry;
-using Stripe;
 using Nudges.Configuration.Extensions;
 using Nudges.Webhooks.Stripe;
+using OpenTelemetry;
+using Stripe;
 
 namespace Nudges.Webhooks.Endpoints;
 
@@ -23,22 +23,26 @@ public class StripeWebhookHandler(IStripeVerifier stripeVerifier,
 
     private async Task<Result<Event, Exception>> VerifyRequest(HttpRequest request) {
         Event stripeEvent = default!;
-        using var streamReader = new StreamReader(request.Body);
-        var body = await streamReader.ReadToEndAsync();
-        if (request.Headers.TryGetValue("stripe-signature", out var sig)) {
-            return stripeVerifier.Verify(sig!, _stripeEndpointSecret, body);
+        try {
+            using var streamReader = new StreamReader(request.Body);
+            var body = await streamReader.ReadToEndAsync();
+            if (request.Headers.TryGetValue("stripe-signature", out var sig)) {
+                return stripeVerifier.Verify(sig!, _stripeEndpointSecret, body);
+            }
+            return stripeEvent;
+        } catch (Exception ex) {
+            return ex;
         }
-        return stripeEvent;
     }
 
     public async Task<IResult> Endpoint(HttpRequest request, CancellationToken cancellationToken) {
         WebhooksReceived.Add(1, [new("status", "received")]);
-        var eventResult = await VerifyRequest(request);
 
         if (Activity.Current?.Context.IsValid() == true) {
             request.HttpContext.Items["traceparent"] = Activity.Current.TraceId;
         }
 
+        var eventResult = await VerifyRequest(request);
         return await eventResult.Match<IResult>(async r => {
             var result = await HandleEvent(new(r, request), cancellationToken);
             return result.Match(Results.Ok(), e => {

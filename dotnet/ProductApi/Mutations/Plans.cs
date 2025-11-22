@@ -282,7 +282,10 @@ public partial class Mutation {
                 await priceTierEventProducer.ProducePriceTierUpdated(nodeId, cancellationToken);
             }
         }
-        await subscriptionSender.SendAsync(nameof(Subscription.OnPlanUpdated), plan, cancellationToken);
+
+        // Inject current Activity into headers and send traced event
+        var headers = TelemetryPropagation.InjectCurrent();
+        await subscriptionSender.SendAsync(nameof(Subscription.OnPlanUpdated), new TracedEvent<Plan>(plan, headers), cancellationToken);
         return plan;
     }
 
@@ -390,7 +393,7 @@ public static class PriceTierTypeExtensions {
         );
     public static UpdatePlanPriceTierInput ToUpdatePlanPriceTierInput(this PriceTier tier) =>
         new(
-            tier.PlanId ?? 0,  // HACK: clean this up
+            tier.PlanId,
             tier.Id,
             tier.Price,
             tier.Duration,

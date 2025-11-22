@@ -67,7 +67,7 @@ public class ModelProducerGenerator : IIncrementalGenerator {
                 public override Task<global::Confluent.Kafka.DeliveryResult<{{model.KeyNamespace}}.{{model.KeyTypeName}}, {{model.ModelNamespace}}.{{model.ModelTypeName}}>> Produce(
                     {{model.KeyNamespace}}.{{model.KeyTypeName}} key, {{model.ModelNamespace}}.{{model.ModelTypeName}} data, global::System.Threading.CancellationToken cancellationToken = default) {
                     using var activity = KafkaMessageProducer<{{model.KeyNamespace}}.{{model.KeyTypeName}}, {{model.ModelNamespace}}.{{model.ModelTypeName}}>.ActivitySource.StartActivity(
-                        "ProduceKafkaMessage_{{model.KeyTypeName}}", global::System.Diagnostics.ActivityKind.Producer, global::System.Diagnostics.Activity.Current?.Context ?? default);
+                        "ProduceKafkaMessage_{{model.ModelTypeName}}", global::System.Diagnostics.ActivityKind.Producer, global::System.Diagnostics.Activity.Current?.Context ?? default);
                     try {
                         activity?.SetTag("kafka.topic", topic);
                         activity?.SetTag("message.key", key?.ToString());
