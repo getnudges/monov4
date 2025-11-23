@@ -4,17 +4,17 @@ namespace AuthApi;
 
 internal static class AppConfig {
     [ConfigurationKey]
-    public const string OidcServerUrl = "Oidc__ServerUrl";
+    public const string OidcServerUrl = "Oidc:ServerUrl";
     [ConfigurationKey]
-    public const string OidcRealm = "Oidc__Realm";
+    public const string OidcRealm = "Oidc:Realm";
     [ConfigurationKey]
-    public const string OidcClientId = "Oidc__ClientId";
+    public const string OidcClientId = "Oidc:ClientId";
     [ConfigurationKey]
-    public const string OidcClientSecret = "Oidc__ClientSecret";
+    public const string OidcClientSecret = "Oidc:ClientSecret";
     [ConfigurationKey]
-    public const string OidcAdminUsername = "Oidc__AdminCredentials__Username";
+    public const string OidcAdminUsername = "Oidc:AdminCredentials:Username";
     [ConfigurationKey]
-    public const string OidcAdminPassword = "Oidc__AdminCredentials__Password";
+    public const string OidcAdminPassword = "Oidc:AdminCredentials:Password";
     [ConfigurationKey]
     public const string CacheServerAddress = "CACHE_SERVER_ADDRESS";
     [ConfigurationKey]

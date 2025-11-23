@@ -55,7 +55,7 @@
     "project": "dotnet/ProductApi/ProductApi.csproj",
     "envSource": "./keycloak/.env.product-api",
     "localOverrides": {
-      "ConnectionStrings__ProductDb": "Host=localhost;Port=5432;Database=productdb;Username=productdb;Password=Kb7OK8tBc1nQfus9;",
+      "ConnectionStrings__ProductDb": "Host=localhost;Port=5432;Database=productdb;Username=productdb;Password={{PRODUCTDB_PASSWORD}};",
       "CACHE_SERVER_ADDRESS": "http://localhost:7777",
       "KAFKA_BROKER_LIST": "localhost:9092",
       "OTLP_ENDPOINT_URL": "http://localhost:4317",
@@ -71,7 +71,7 @@
     "project": "dotnet/UserApi/UserApi.csproj",
     "envSource": "./keycloak/.env.user-api",
     "localOverrides": {
-      "ConnectionStrings__UserDb": "Host=localhost;Port=5432;Database=userdb;Username=userdb;Password=Kb7OK8tBc1nQfus9;",
+      "ConnectionStrings__UserDb": "Host=localhost;Port=5432;Database=userdb;Username=userdb;Password={{USERDB_PASSWORD}};",
       "CACHE_SERVER_ADDRESS": "http://localhost:7777",
       "KAFKA_BROKER_LIST": "localhost:9092",
       "OTLP_ENDPOINT_URL": "http://localhost:4317",
@@ -87,7 +87,7 @@
     "project": "dotnet/PaymentApi/PaymentApi.csproj",
     "envSource": "./keycloak/.env.payment-api",
     "localOverrides": {
-      "ConnectionStrings__PaymentDb": "Host=localhost;Port=5432;Database=paymentdb;Username=paymentdb;Password=Kb7OK8tBc1nQfus9;",
+      "ConnectionStrings__PaymentDb": "Host=localhost;Port=5432;Database=paymentdb;Username=paymentdb;Password={{PAYMENTDB_PASSWORD}};",
       "CACHE_SERVER_ADDRESS": "http://localhost:7777",
       "KAFKA_BROKER_LIST": "localhost:9092",
       "OTLP_ENDPOINT_URL": "http://localhost:4317",

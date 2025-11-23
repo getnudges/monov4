@@ -216,12 +216,7 @@ if ($Docker -and $masterValues.Count -eq 0) {
         MONITOR_API_KEY                                                              = New-RandomString -length 32
         AUTH_API_URL                                                                 = 'http://auth-api:5555'
         GRAPHQL_API_URL                                                              = 'http://host.docker.internal:5900/graphql'
-        # STRIPE_API_KEY         = "sk_test_$(New-RandomString -length 32)"
-        # STRIPE_WEBHOOKS_SECRET = "whsec_$(New-RandomString -length 32)"
         STRIPE_API_URL                                                               = 'http://payment-processor-proxy:4243'
-        # TWILIO_ACCOUNT_SID     = "AC$(New-RandomString -length 32)"
-        # TWILIO_AUTH_TOKEN      = New-RandomString -length 32
-        # TWILIO_MESSAGE_SERVICE_SID = "MG$(New-RandomString -length 32)"
         CACHE_SERVER_ADDRESS                                                         = 'http://warp-cache:7777'
         LOCALIZATION_API_URL                                                         = 'http://localizer-api:8888'
         KAFKA_BROKER_LIST                                                            = 'kafka:29092'
@@ -239,6 +234,9 @@ if ($Docker -and $masterValues.Count -eq 0) {
         Authentication__Schemes__Bearer__TokenValidationParameters__ValidIssuer      = 'https://keycloak.local:8443/realms/nudges'
         Authentication__Schemes__Bearer__TokenValidationParameters__ValidateAudience = 'false'
         IdentityModel__Logging                                                       = 'true'
+        ConnectionStrings__ProductDb                                                 = "Host=postgres;Port=5432;Database=productdb;Username=productdb;Password=$pwd;"
+        ConnectionStrings__PaymentDb                                                 = "Host=postgres;Port=5432;Database=paymentdb;Username=paymentdb;Password=$pwd;"
+        ConnectionStrings__UserDb                                                    = "Host=postgres;Port=5432;Database=userdb;Username=userdb;Password=$pwd;"
     }
 
     Write-EnvFile -path $masterPath -values $masterValues -headerComment "Nudges Master Environment Configuration"
