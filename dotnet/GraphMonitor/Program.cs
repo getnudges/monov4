@@ -35,7 +35,8 @@ app.Use(async (context, next) => {
         return;
     }
     if (context.Request.Headers.TryGetValue("X-Api-Key", out var value) &&
-        value == context.RequestServices.GetRequiredService<IConfiguration>().GetValue<string>("API_KEY")) {
+        value == context.RequestServices.GetRequiredService<IConfiguration>().GetValue<string>("MONITOR_API_KEY"))
+    {
         await next.Invoke(context);
         return;
     }

@@ -32,8 +32,8 @@
     <PackageReference Include="Polly.Contrib.WaitAndRetry" Version="1.1.1" />
     <PackageReference Include="StrawberryShake.Server" Version="15.1.11" />
     <PackageReference Include="StrawberryShake.Transport.Http" Version="15.1.11" />
-    <PackageReference Include="Stripe.net" Version="49.2.0" />
-    <PackageReference Include="Twilio" Version="7.13.6" />
+    <PackageReference Include="Stripe.net" Version="50.0.0" />
+    <PackageReference Include="Twilio" Version="7.13.7" />
   </ItemGroup>
 
   <ItemGroup>

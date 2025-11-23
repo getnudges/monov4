@@ -24,6 +24,7 @@ COPY Nudges.Auth/Nudges.Auth.csproj ./Nudges.Auth/
 COPY Nudges.Localization.Client/Nudges.Localization.Client.csproj ./Nudges.Localization.Client/
 COPY Nudges.Models/Nudges.Models.csproj ./Nudges.Models/
 COPY Nudges.Telemetry/Nudges.Telemetry.csproj ./Nudges.Telemetry/
+COPY Nudges.Contracts/Nudges.Contracts.csproj ./Nudges.Contracts/
 
 RUN --mount=type=cache,target=/root/.nuget/packages \
     dotnet restore KafkaConsumer.Docker.sln
@@ -39,16 +40,19 @@ COPY Nudges.Stripe/ ./Nudges.Stripe/
 COPY Nudges.Configuration/ ./Nudges.Configuration/
 COPY Nudges.Configuration.Analyzers/ ./Nudges.Configuration.Analyzers/
 COPY Precision.WarpCache/ ./Precision.WarpCache/
+COPY Precision.WarpCache/Precision.WarpCache.Grpc.Client/ ./Precision.WarpCache/Precision.WarpCache.Grpc.Client/
+COPY Precision.WarpCache/Precision.WarpCache.MemoryCache/ ./Precision.WarpCache/Precision.WarpCache.MemoryCache/
+COPY Precision.WarpCache/Precision.WarpCache/ ./Precision.WarpCache/Precision.WarpCache/
 COPY Nudges.Auth.Web/ ./Nudges.Auth.Web/
 COPY Nudges.Auth/ ./Nudges.Auth/
 COPY Nudges.Localization.Client/ ./Nudges.Localization.Client/
 COPY Nudges.Models/ ./Nudges.Models/
 COPY Nudges.Telemetry/ ./Nudges.Telemetry/
+COPY Nudges.Contracts/ ./Nudges.Contracts/
 
 WORKDIR /src/KafkaConsumer
 
-RUN --mount=type=cache,target=/root/.nuget/packages \
-    dotnet publish KafkaConsumer.csproj -c Release -o /app /p:UseAppHost=false
+RUN dotnet publish KafkaConsumer.csproj -c Release -o /app /p:UseAppHost=false
 
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
 WORKDIR /app

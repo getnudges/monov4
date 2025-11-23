@@ -1,2 +1,2 @@
-X-Api-Key: {{API_KEY}}
+X-Api-Key: {{MONITOR_API_KEY}}
 Content-Type: text/plain

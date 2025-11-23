@@ -44,6 +44,13 @@
       }
     }
   },
+  "GraphQLGateway": {
+    "project": "dotnet/GraphQLGateway/GraphQLGateway/GraphQLGateway.csproj",
+    "localOverrides": {
+      "OTLP_ENDPOINT_URL": "http://localhost:4317",
+      "CACHE_SERVER_ADDRESS": "http://localhost:7777"
+    }
+  },
   "ProductApi": {
     "project": "dotnet/ProductApi/ProductApi.csproj",
     "envSource": "./keycloak/.env.product-api",

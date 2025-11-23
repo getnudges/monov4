@@ -21,6 +21,8 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Logging.AddSimpleConsole(static o => o.SingleLine = true);
 
+builder.Configuration.AddEnvironmentVariables().AddUserSecrets<Program>(optional: true);
+
 if (builder.Configuration.GetOltpEndpointUrl() is string url) {
 
     builder.Services.AddOpenTelemetryConfiguration(

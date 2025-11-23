@@ -110,6 +110,27 @@ function Render-Template {
     Write-Host "✔ Generated $outputPath"
 }
 
+function New-ConfigFromTemplate {
+    param (
+        [string]$templatePath,
+        [string]$outputPath,
+        [hashtable]$values
+    )
+    
+    Write-Host "Generating $outputPath from template..."
+    $templateContent = Get-Content $templatePath -Raw
+    
+    $newContent = $templateContent
+    foreach ($key in $values.Keys) {
+        $pattern = '\{\{\s*' + [regex]::Escape($key) + '\s*\}\}'
+        $value = $values[$key]
+        $newContent = [regex]::Replace($newContent, $pattern, [System.Text.RegularExpressions.MatchEvaluator] { param($m) return $value })
+    }
+    
+    Set-Content -Path $outputPath -Value $newContent
+    Write-Host "Generated $outputPath successfully"
+}
+
 ###############################################################################
 # .env.master creation and loading
 ###############################################################################
@@ -129,6 +150,7 @@ if ($Docker -and $masterValues.Count -eq 0) {
         ADMIN_PASSWORD         = $adminPwd
         API_KEY                = New-RandomString -length 32
         AUTH_API_KEY           = New-RandomString -length 32
+        MONITOR_API_KEY        = New-RandomString -length 32
         AUTH_API_URL           = 'http://auth-api:5555'
         GRAPHQL_API_URL        = 'http://host.docker.internal:5900/graphql'
         STRIPE_API_KEY         = "sk_test_$(New-RandomString -length 32)"
@@ -220,6 +242,11 @@ if ($Docker) {
     Get-ChildItem -Path . -Filter ".env.template" -Recurse | ForEach-Object {
         $outputPath = $_.FullName -replace '\.template$', '.docker'
         Render-Template -templatePath $_.FullName -outputPath $outputPath -values $placeholders
+    }
+
+    Get-ChildItem -Path . -Filter "headers.template" -Recurse | ForEach-Object {
+        $outputPath = $_.FullName -replace '\.template$', ''
+        New-ConfigFromTemplate -templatePath $_.FullName -outputPath $outputPath -values $placeholders
     }
 }
 
