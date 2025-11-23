@@ -2,31 +2,42 @@
 $env:COMPOSE_BAKE = "true"
 
 # Generate environment files if they don't exist
-./initialize-env.ps1
+./initialize-env
 
-# basic stuff
-docker-compose up -d postgres
+# set up the base services
 docker-compose up -d redis
-
-# keycloak (we need to wait so the generate-scripts can connect)
-docker-compose up -d --wait keycloak
-
-# Generate Keycloak secrets
-.\keycloak\generate-secrets.ps1
-
 docker-compose up -d warp-cache
+docker-compose up -d localizer-api
 
-# docker-compose up -d unleash
+docker-compose up -d kafka
+docker-compose run --rm kafka-init-topics
 
-# setup databases
+docker-compose up -d postgres
+
 docker-compose run --rm --entrypoint="/app/migrateUserDb" db-migrator
 docker-compose run --rm --entrypoint="/app/migrateProductDb" db-migrator
 docker-compose run --rm --entrypoint="/app/migratePaymentDb" db-migrator
 docker-compose run --rm db-seeder
 
-# setup the rest of the APIs
-docker-compose up -d localizer-api
+# keycloak (we need to wait so the generate-scripts can connect)
+docker-compose up -d --wait keycloak
+
+# Generate Keycloak secrets
+./keycloak/generate-secrets
+
+docker-compose run --rm auth-init
+
 docker-compose up -d auth-api
+
+# setup the kafka listeners
+docker-compose up -d notifications-listener
+docker-compose up -d payments-listener
+docker-compose up -d clients-listener
+docker-compose up -d plans-listener
+docker-compose up -d plan-subscription-listener
+docker-compose up -d price-tiers-listener
+docker-compose up -d user-authentication-listener
+docker-compose up -d foreign-products-listener
 
 # setup the subgraphs for the gateway
 docker-compose up -d user-api
@@ -43,29 +54,16 @@ curl -sSf @headers http://localhost:5145/product-api -d "http://host.docker.inte
 curl -sSf @headers http://localhost:5145/payment-api -d "http://host.docker.internal:5400/graphql"
 docker-compose up -d graphql-gateway
 
-# setup kafka
-docker-compose up -d kafka
-docker-compose run --rm kafka-init-topics
-
-# setup the kafka listeners
-docker-compose up -d notifications-listener
-docker-compose up -d payments-listener
-docker-compose up -d clients-listener
-docker-compose up -d plans-listener
-docker-compose up -d plan-subscription-listener
-docker-compose up -d price-tiers-listener
-docker-compose up -d user-authentication-listener
-docker-compose up -d foreign-products-listener
-
 # setup the webhook handler
 docker-compose up -d ngrok
 docker-compose up -d webhooks
 
-docker-compose run --rm auth-init
+# setup the proxy to stripe
+docker-compose up -d payment-processor-proxy
 
 # setup the UIs
-# docker-compose up -d new-admin
+docker-compose up -d new-admin
 # docker-compose up -d new-signup
 
 # OTEL stuff
-# docker-compose up -d grafana
+docker-compose up -d grafana

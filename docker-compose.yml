@@ -38,7 +38,8 @@ services:
       - "9000:9000"
       - "8443:8443"
     healthcheck:
-      test: ["CMD-SHELL", "timeout 1 bash -c '</dev/tcp/localhost/9000' || exit 1"]
+      test:
+        ["CMD-SHELL", "timeout 1 bash -c '</dev/tcp/localhost/9000' || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 30
@@ -46,19 +47,6 @@ services:
     # depends_on:
     #   - postgres
     #   - maildev
-
-  unleash:
-    hostname: unleash
-    container_name: unleash
-    image: unleashorg/unleash-server:latest
-    networks:
-      - Nudges
-    ports:
-      - "4444:4242"
-    env_file:
-      - ./unleash/.env.docker
-    # depends_on:
-    #   - postgres
 
   otel-collector:
     image: otel/opentelemetry-collector:latest
@@ -252,7 +240,6 @@ services:
     # depends_on:
     #   keycloak:
     #       condition: service_healthy
-
 
   graph-monitor:
     hostname: graph-monitor
@@ -645,18 +632,17 @@ services:
       - ./dotnet/.env.docker
       - ./keycloak/.env.auth-api
     environment:
-      ASPNETCORE_HTTPS_PORTS: 5555
-      ASPNETCORE_URLS: https://+
+      ASPNETCORE_URLS: https://+:443
       ASPNETCORE_Kestrel__Certificates__Default__Path: /https/aspnetapp.pfx
       ASPNETCORE_Kestrel__Certificates__Default__Password: pass
       Logging__LogLevel__Default: Debug
     volumes:
       - ./certs/aspnetapp.pfx:/https/aspnetapp.pfx:ro
     # depends_on:
-      # - kafka
-      # - warp-cache
-      # keycloak:
-      #   condition: service_healthy
+    # - kafka
+    # - warp-cache
+    # keycloak:
+    #   condition: service_healthy
 
   ngrok:
     image: ngrok/ngrok:latest
@@ -688,6 +674,7 @@ services:
       - "7071:7071"
     environment:
       ASPNETCORE_ENVIRONMENT: Development
+      Logging__LogLevel__Default: Debug
       HTTP_PORTS: 7071
       Logging__LogLevel__System.Net.Http.HttpClient.NudgesClient.LogicalHandler: Warning
     env_file:
@@ -712,22 +699,22 @@ services:
       - "8082:8082"
     environment:
       KAFKA_NODE_ID: 1
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: 'CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT'
-      KAFKA_ADVERTISED_LISTENERS: 'PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092'
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: "CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT"
+      KAFKA_ADVERTISED_LISTENERS: "PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092"
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
-      KAFKA_PROCESS_ROLES: 'broker,controller'
-      KAFKA_CONTROLLER_QUORUM_VOTERS: '1@kafka:29093'
-      KAFKA_LISTENERS: 'PLAINTEXT://0.0.0.0:29092,CONTROLLER://kafka:29093,PLAINTEXT_HOST://0.0.0.0:9092'
-      KAFKA_INTER_BROKER_LISTENER_NAME: 'PLAINTEXT'
-      KAFKA_CONTROLLER_LISTENER_NAMES: 'CONTROLLER'
-      KAFKA_LOG_DIRS: '/tmp/kraft-combined-logs'
+      KAFKA_PROCESS_ROLES: "broker,controller"
+      KAFKA_CONTROLLER_QUORUM_VOTERS: "1@kafka:29093"
+      KAFKA_LISTENERS: "PLAINTEXT://0.0.0.0:29092,CONTROLLER://kafka:29093,PLAINTEXT_HOST://0.0.0.0:9092"
+      KAFKA_INTER_BROKER_LISTENER_NAME: "PLAINTEXT"
+      KAFKA_CONTROLLER_LISTENER_NAMES: "CONTROLLER"
+      KAFKA_LOG_DIRS: "/tmp/kraft-combined-logs"
       KAFKA_REST_HOST_NAME: rest-proxy
-      KAFKA_REST_BOOTSTRAP_SERVERS: 'kafka:29092'
+      KAFKA_REST_BOOTSTRAP_SERVERS: "kafka:29092"
       KAFKA_REST_LISTENERS: "http://0.0.0.0:8082"
-      CLUSTER_ID: '4L6g3nShT-eMCtK--X86sw'
+      CLUSTER_ID: "4L6g3nShT-eMCtK--X86sw"
 
   kafka-init-topics:
     networks:
@@ -753,6 +740,21 @@ services:
 
       kafka-topics --create --topic test --partitions 1 --replication-factor 1 --if-not-exists --bootstrap-server kafka:29092 && \
       kafka-console-producer --bootstrap-server kafka:29092 --topic test < /data/message.json'"
+
+  kafka-ui:
+    hostname: kafka-ui
+    container_name: kafka-ui
+    image: provectuslabs/kafka-ui:latest
+    networks:
+      - Nudges
+    ports:
+      - "8080:8080"
+    environment:
+      KAFKA_CLUSTERS_0_NAME: local
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:29092
+      DYNAMIC_CONFIG_ENABLED: "true"
+    depends_on:
+      - kafka
 
 secrets:
   graph-monitor-headers:
