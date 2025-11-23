@@ -1,7 +1,8 @@
 import { type RelayRoute } from "@/Router/withRelay";
 import type { PlanQuery } from "./__generated__/PlanQuery.graphql";
 import type { PlanEditor_plan$key } from "@/fragments/__generated__/PlanEditor_plan.graphql";
-import { CreatePlan, EditPlan } from "./forms";
+import CreatePlan from "./forms/CreatePlan";
+import EditPlan from "./forms/EditPlan";
 
 export default function PlanPage({
   data,

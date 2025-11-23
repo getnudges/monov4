@@ -12,7 +12,7 @@ import type {
 import Alert from "@/components/AlertDialog";
 import CreatePlanForm from "./CreatePlanForm";
 import { useToaster } from "@/components/Toaster";
-import { usePlanForm, type PlanFormValues } from "../../PlanForms";
+import { usePlanForm, type PlanFormValues } from "../usePlanForm";
 
 export default function PlanCreator() {
   const [, navTo] = useLocation();

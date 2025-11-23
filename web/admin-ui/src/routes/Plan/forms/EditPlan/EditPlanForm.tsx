@@ -1,7 +1,7 @@
 import { useFormContext } from "react-hook-form";
 import TextInput from "@/components/TextInput";
 import { Form } from "radix-ui";
-import type { PlanFormValues } from "../../PlanForms";
+import type { PlanFormValues } from "../usePlanForm";
 
 export type EditPlanFormProps = Readonly<{
   onSubmit: (data: PlanFormValues) => void;

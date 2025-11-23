@@ -1,5 +1,5 @@
 import { useFormContext } from "react-hook-form";
-import { type PlanFormValues } from "../../PlanForms";
+import { type PlanFormValues } from "../usePlanForm";
 import TextInput from "@/components/TextInput";
 import { Form } from "radix-ui";
 

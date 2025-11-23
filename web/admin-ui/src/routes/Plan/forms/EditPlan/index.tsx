@@ -21,7 +21,7 @@ import type {
   PlanEditorDeletePlanMutation$variables,
 } from "@/mutations/__generated__/PlanEditorDeletePlanMutation.graphql";
 import PlanEditorDeletePlan from "@/mutations/PlanEditorDeletePlan";
-import { usePlanForm, type PlanFormValues } from "../../PlanForms";
+import { usePlanForm, type PlanFormValues } from "../usePlanForm";
 import PlanEditor_plan from "@/fragments/PlanEditor";
 
 type PlanEditorProps = Readonly<{
