@@ -91,5 +91,28 @@
       "Authentication__Schemes__Bearer__RequireHttpsMetadata": "true",
       "IdentityModel__Logging": "true"
     }
+  },
+  "Webhooks": {
+    "project": "dotnet/Nudges.Webhooks/Nudges.Webhooks.csproj",
+    "envSource": "./keycloak/.env.webhooks",
+    "localOverrides": {
+      "REDIS_URL": "localhost:6379",
+      "CACHE_SERVER_ADDRESS": "http://localhost:7777",
+      "KAFKA_BROKER_LIST": "localhost:9092",
+      "GRAPHQL_API_URL": "http://localhost:5900/graphql",
+      "AUTH_API_URL": "http://localhost:5555",
+      "LOCALIZATION_API_URL": "http://localhost:8888",
+      "STRIPE_API_URL": "http://localhost:4243",
+      "IGNORE_SSL_CERT_VALIDATION": "true"
+    },
+    "oidc": {
+      "fromEnvFile": true,
+      "map": {
+        "Oidc__ClientId": "Oidc:ClientId",
+        "Oidc__ClientSecret": "Oidc:ClientSecret",
+        "Oidc__Realm": "Oidc:Realm",
+        "Oidc__ServerUrl": "Oidc:ServerUrl"
+      }
+    }
   }
 }

@@ -498,11 +498,11 @@ if ($Local) {
                 foreach ($k in $undefinedKeys) { Write-Host "      - $k" }
             }
 
-            $unusedKeys = $localEnv.Keys | Where-Object { $_ -notin $requiredKeys }
-            if ($unusedKeys.Count -gt 0) {
-                Write-Host "   ⚠ Environment contains additional keys not in template:"
-                foreach ($k in $unusedKeys) { Write-Host "      - $k" }
-            }
+            # $unusedKeys = $localEnv.Keys | Where-Object { $_ -notin $requiredKeys }
+            # if ($unusedKeys.Count -gt 0) {
+            #     Write-Host "   ⚠ Environment contains additional keys not in template:"
+            #     foreach ($k in $unusedKeys) { Write-Host "      - $k" }
+            # }
 
             #
             # Build user-secret map (from filtered values)
