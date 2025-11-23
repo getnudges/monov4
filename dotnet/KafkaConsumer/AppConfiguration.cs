@@ -4,10 +4,6 @@ namespace KafkaConsumer;
 
 internal static class AppConfiguration {
     [ConfigurationKey]
-    public const string UnleashServerUrl = "UNLEASH_SERVER_URL";
-    [ConfigurationKey]
-    public const string UnleashServerApiTokens = "UNLEASH_CLIENT_API_TOKENS";
-    [ConfigurationKey]
     public const string OidcServerUrl = "Oidc:ServerUrl";
     [ConfigurationKey]
     public const string OidcRealm = "Oidc:Realm";

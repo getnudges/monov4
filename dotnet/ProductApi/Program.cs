@@ -21,7 +21,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Logging.AddSimpleConsole(static o => o.SingleLine = true);
 
-if (builder.Configuration.GetValue<string>("OTLP_ENDPOINT_URL") is string url) {
+if (builder.Configuration.GetOltpEndpointUrl() is string url) {
 
     builder.Services.AddOpenTelemetryConfiguration(
         url,

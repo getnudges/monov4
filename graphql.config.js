@@ -7,6 +7,13 @@ module.exports = {
       ],
       documents: ["web/admin-ui/src/**/*.{graphql,js,ts,jsx,tsx}"],
     },
+    newAdmin: {
+      schema: [
+        "web/new-admin/schema.graphql",
+        "./relay-compiler-directives-v10.0.1.graphql",
+      ],
+      documents: ["web/new-admin/src/**/*.{graphql,js,ts,jsx,tsx}"],
+    },
     signupSite: {
       schema: [
         "web/new-signup/schema.graphql",

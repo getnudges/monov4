@@ -41,11 +41,11 @@ internal static class AppConfiguration {
     [ConfigurationKey]
     public const string LocalizationApiUrl = "LOCALIZATION_API_URL";
     [ConfigurationKey]
-    public const string OidcServerUrl = "Oidc:ServerUrl";
+    public const string OidcServerUrl = "Oidc__ServerUrl";
     [ConfigurationKey]
-    public const string OidcRealm = "Oidc:Realm";
+    public const string OidcRealm = "Oidc__Realm";
     [ConfigurationKey]
-    public const string OidcClientSercret = "Oidc:ClientSecret";
+    public const string OidcClientSercret = "Oidc__ClientSecret";
     [ConfigurationKey]
     public const string AuthApikey = "AUTH_API_KEY";
 }

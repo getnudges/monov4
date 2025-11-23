@@ -1,0 +1,95 @@
+{
+  "AuthApi": {
+    "project": "dotnet/AuthApi/AuthApi.csproj",
+    "envSource": "./keycloak/.env.auth-api",
+    "localOverrides": {
+      "KAFKA_BROKER_LIST": "localhost:9092",
+      "CACHE_SERVER_ADDRESS": "http://localhost:7777",
+      "OTLP_ENDPOINT_URL": "http://localhost:4317",
+      "OIDC_SERVER_AUTH_URL": "https://keycloak.local:8443"
+    },
+    "oidc": {
+      "fromEnvFile": true,
+      "map": {
+        "Oidc__ClientId": "Oidc:ClientId",
+        "Oidc__ClientSecret": "Oidc:ClientSecret",
+        "Oidc__Realm": "Oidc:Realm",
+        "Oidc__ServerUrl": "Oidc:ServerUrl",
+        "Oidc__AdminCredentials__Username": "Oidc:AdminCredentials:Username",
+        "Oidc__AdminCredentials__Password": "Oidc:AdminCredentials:Password"
+      }
+    }
+  },
+  "KafkaConsumer": {
+    "project": "dotnet/KafkaConsumer/KafkaConsumer.csproj",
+    "envSource": "./keycloak/.env.kafka-consumer",
+    "localOverrides": {
+      "REDIS_URL": "localhost:6379",
+      "KAFKA_BROKER_LIST": "localhost:9092",
+      "AUTH_API_URL": "https://localhost:5555",
+      "OTLP_ENDPOINT_URL": "http://localhost:4317",
+      "GRAPHQL_API_URL": "http://localhost:5900/graphql",
+      "LOCALIZATION_API_URL": "http://localhost:8888",
+      "CACHE_SERVER_ADDRESS": "http://localhost:7777",
+      "STRIPE_API_URL": "http://localhost:4243",
+      "OIDC_SERVER_AUTH_URL": "https://keycloak.local:8443"
+    },
+    "oidc": {
+      "fromEnvFile": true,
+      "map": {
+        "Oidc__ClientId": "Oidc:ClientId",
+        "Oidc__ClientSecret": "Oidc:ClientSecret",
+        "Oidc__Realm": "Oidc:Realm",
+        "Oidc__ServerUrl": "Oidc:ServerUrl"
+      }
+    }
+  },
+  "ProductApi": {
+    "project": "dotnet/ProductApi/ProductApi.csproj",
+    "envSource": "./keycloak/.env.product-api",
+    "localOverrides": {
+      "ConnectionStrings__ProductDb": "Host=localhost;Port=5432;Database=productdb;Username=productdb;Password=Kb7OK8tBc1nQfus9;",
+      "CACHE_SERVER_ADDRESS": "http://localhost:7777",
+      "KAFKA_BROKER_LIST": "localhost:9092",
+      "OTLP_ENDPOINT_URL": "http://localhost:4317",
+      "OIDC_SERVER_AUTH_URL": "https://keycloak.local:8443",
+      "Authentication__Schemes__Bearer__Authority": "https://keycloak.local:8443/realms/nudges",
+      "Authentication__Schemes__Bearer__TokenValidationParameters__ValidIssuer": "https://keycloak.local:8443/realms/nudges",
+      "Authentication__Schemes__Bearer__TokenValidationParameters__ValidateAudience": "false",
+      "Authentication__Schemes__Bearer__RequireHttpsMetadata": "true",
+      "IdentityModel__Logging": "true"
+    }
+  },
+  "UserApi": {
+    "project": "dotnet/UserApi/UserApi.csproj",
+    "envSource": "./keycloak/.env.user-api",
+    "localOverrides": {
+      "ConnectionStrings__UserDb": "Host=localhost;Port=5432;Database=userdb;Username=userdb;Password=Kb7OK8tBc1nQfus9;",
+      "CACHE_SERVER_ADDRESS": "http://localhost:7777",
+      "KAFKA_BROKER_LIST": "localhost:9092",
+      "OTLP_ENDPOINT_URL": "http://localhost:4317",
+      "OIDC_SERVER_AUTH_URL": "https://keycloak.local:8443",
+      "Authentication__Schemes__Bearer__Authority": "https://keycloak.local:8443/realms/nudges",
+      "Authentication__Schemes__Bearer__TokenValidationParameters__ValidIssuer": "https://keycloak.local:8443/realms/nudges",
+      "Authentication__Schemes__Bearer__TokenValidationParameters__ValidateAudience": "false",
+      "Authentication__Schemes__Bearer__RequireHttpsMetadata": "true",
+      "IdentityModel__Logging": "true"
+    }
+  },
+  "PaymentApi": {
+    "project": "dotnet/PaymentApi/PaymentApi.csproj",
+    "envSource": "./keycloak/.env.payment-api",
+    "localOverrides": {
+      "ConnectionStrings__PaymentDb": "Host=localhost;Port=5432;Database=paymentdb;Username=paymentdb;Password=Kb7OK8tBc1nQfus9;",
+      "CACHE_SERVER_ADDRESS": "http://localhost:7777",
+      "KAFKA_BROKER_LIST": "localhost:9092",
+      "OTLP_ENDPOINT_URL": "http://localhost:4317",
+      "OIDC_SERVER_AUTH_URL": "https://keycloak.local:8443",
+      "Authentication__Schemes__Bearer__Authority": "https://keycloak.local:8443/realms/nudges",
+      "Authentication__Schemes__Bearer__TokenValidationParameters__ValidIssuer": "https://keycloak.local:8443/realms/nudges",
+      "Authentication__Schemes__Bearer__TokenValidationParameters__ValidateAudience": "false",
+      "Authentication__Schemes__Bearer__RequireHttpsMetadata": "true",
+      "IdentityModel__Logging": "true"
+    }
+  }
+}
