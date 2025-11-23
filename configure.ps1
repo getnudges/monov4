@@ -131,6 +131,73 @@ function New-ConfigFromTemplate {
     Write-Host "Generated $outputPath successfully"
 }
 
+# -----------------------------------------
+# Load or acquire external provider secrets
+# -----------------------------------------
+
+$externalEnvPath = ".env.external"
+
+# Create file if missing
+if (-not (Test-Path $externalEnvPath)) {
+    @"
+# External provider credentials (not generated)
+
+STRIPE_API_KEY=<required: set manually>
+STRIPE_WEBHOOKS_SECRET=<required: set manually>
+
+TWILIO_ACCOUNT_SID=<required: set manually>
+TWILIO_AUTH_TOKEN=<required: set manually>
+TWILIO_MESSAGE_SERVICE_SID=<required: set manually>
+"@ | Set-Content $externalEnvPath
+}
+
+# Read current external values
+$externalEnv = @{}
+Get-Content $externalEnvPath | ForEach-Object {
+    if ($_ -match '^\s*([^#][^=]+)=(.*)$') {
+        $externalEnv[$matches[1].Trim()] = $matches[2].Trim()
+    }
+}
+
+# Keys requiring real values
+$requiredExternalKeys = @(
+    "STRIPE_API_KEY",
+    "STRIPE_WEBHOOKS_SECRET",
+    "TWILIO_ACCOUNT_SID",
+    "TWILIO_AUTH_TOKEN",
+    "TWILIO_MESSAGE_SERVICE_SID"
+)
+
+$updated = $false
+
+foreach ($key in $requiredExternalKeys) {
+    $val = $externalEnv[$key]
+
+    if (-not $val -or $val -match '<required:') {
+        Write-Host "`n🔐 $key is required and not set." -ForegroundColor Yellow
+        $newVal = Read-Host "   Enter value for $key"
+        
+        # Save to .env.external
+        (Get-Content $externalEnvPath).Replace(
+            "$key=<required: set manually>",
+            "$key=$newVal"
+        ) | Set-Content $externalEnvPath
+
+        # Update local value map
+        $externalEnv[$key] = $newVal
+        $updated = $true
+    }
+}
+
+if ($updated) {
+    Write-Host "`n✅ External credentials saved to .env.external"
+}
+
+# Merge into masterValues (so placeholders inherit them)
+foreach ($key in $requiredExternalKeys) {
+    $masterValues[$key] = $externalEnv[$key]
+}
+
 ###############################################################################
 # .env.master creation and loading
 ###############################################################################
