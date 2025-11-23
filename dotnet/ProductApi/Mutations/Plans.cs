@@ -2,14 +2,16 @@ using System.Diagnostics;
 using HotChocolate.Authorization;
 using HotChocolate.Subscriptions;
 using Microsoft.EntityFrameworkCore;
-using ProductApi.Models;
 using Nudges.Auth;
 using Nudges.Data.Products;
 using Nudges.Data.Products.Models;
 using Nudges.Kafka;
+using Nudges.Kafka.Events;
 using Nudges.Models;
 using Nudges.Telemetry;
-using Nudges.Kafka.Events;
+using ProductApi.Models;
+using ProductApi.Mutations;
+using ProductApi.Telemetry;
 
 namespace ProductApi;
 
@@ -19,10 +21,9 @@ public partial class Mutation {
     [Error<PlanNotFoundException>]
     [Error<PlanDeleteException>]
     public async Task<Plan> DeletePlan(ProductDbContext context,
-                                        KafkaMessageProducer<PlanKey, PlanEvent> productProducer,
-                                        INodeIdSerializer idSerializer,
-                                        DeletePlanInput input,
-                                        CancellationToken cancellationToken) {
+                                       KafkaMessageProducer<PlanEventKey, PlanChangeEvent> productProducer,
+                                       DeletePlanInput input,
+                                       CancellationToken cancellationToken) {
 
         var found = await context.Plans.FindAsync([input.Id], cancellationToken);
         if (found is not { } plan) {
@@ -40,8 +41,7 @@ public partial class Mutation {
         if (string.IsNullOrEmpty(plan.ForeignServiceId)) {
             return plan;
         }
-        var id = idSerializer.Format(nameof(Plan), plan.Id);
-        await productProducer.ProducePlanDeleted(plan.ForeignServiceId, cancellationToken);
+        await productProducer.ProducePlanDeleted(plan.ToPlanDeletedEvent(DateTimeOffset.UtcNow), cancellationToken);
         return plan;
 
     }
@@ -49,9 +49,7 @@ public partial class Mutation {
     [Error<PriceTierNotFoundException>]
     [Error<PriceTierDeleteException>]
     public async Task<Plan> DeletePriceTier(ProductDbContext context,
-                                            KafkaMessageProducer<PriceTierEventKey, PriceTierEvent> eventProducer,
-                                            INodeIdSerializer idSerializer,
-                                            DeletePriceTierInput input,
+                                            KafkaMessageProducer<PriceTierEventKey, PriceTierChangeEvent> eventProducer, DeletePriceTierInput input,
                                             CancellationToken cancellationToken) {
 
         var found = await context.PriceTiers.FindAsync([input.Id], cancellationToken);
@@ -63,15 +61,15 @@ public partial class Mutation {
         try {
             await context.SaveChangesAsync(cancellationToken);
         } catch (Exception ex) {
-            throw new PriceTierDeleteException(priceTier.Id, ex.InnerException?.Message ?? ex.Message);
+            throw new PriceTierDeleteException(priceTier.Id, ex.Message);
         }
         logger.LogPriceTierDeleted(priceTier.Id, priceTier.Name);
 
         if (string.IsNullOrEmpty(priceTier.ForeignServiceId)) {
             return priceTier.Plan!;
         }
-        var id = idSerializer.Format(nameof(PriceTier), priceTier.Id);
-        await eventProducer.ProducePriceTierDeleted(priceTier.ForeignServiceId, cancellationToken);
+
+        await eventProducer.ProducePriceTierDeleted(priceTier.ToPriceTierDeletedEvent(DateTimeOffset.UtcNow), cancellationToken);
         return priceTier.Plan!;
 
     }
@@ -79,29 +77,11 @@ public partial class Mutation {
     [Authorize(Roles = [ClaimValues.Roles.Admin])]
     [Error<PlanCreationException>]
     public async Task<Plan> CreatePlan(ProductDbContext context,
-                                       KafkaMessageProducer<PlanKey, PlanEvent> productProducer,
-                                       INodeIdSerializer idSerializer,
+                                       KafkaMessageProducer<PlanEventKey, PlanChangeEvent> productProducer,
                                        CreatePlanInput input,
                                        CancellationToken cancellationToken) {
 
-        var newPlan = context.Plans.Add(new Plan {
-            Name = input.Name,
-            Description = input.Description,
-            IsActive = input.ActivateOnCreate,
-            IconUrl = input.IconUrl,
-            PriceTiers = input.PriceTiers?.Select(tier => new PriceTier {
-                Name = tier.Name,
-                Price = tier.Price,
-                Duration = tier.Duration,
-                Description = tier.Description,
-                IconUrl = tier.IconUrl,
-            }).ToList() ?? [],
-            PlanFeature = input.Features is { } feature ? new PlanFeature {
-                SupportTier = feature.SupportTier,
-                AiSupport = feature.AiSupport,
-                MaxMessages = feature.MaxMessages,
-            } : default
-        });
+        var newPlan = context.Plans.Add(input.ToPlan());
 
         await using var transaction = await context.Database.BeginTransactionAsync(cancellationToken);
         try {
@@ -109,22 +89,19 @@ public partial class Mutation {
 
             logger.LogPlanCreated(newPlan.Entity.Id, newPlan.Entity.Name);
 
-            var id = idSerializer.Format(nameof(Plan), newPlan.Entity.Id);
-
-            await productProducer.ProducePlanCreated(id, cancellationToken);
+            await productProducer.ProducePlanCreated(newPlan.Entity.ToPlanCreatedEvent(), cancellationToken);
 
             await transaction.CommitAsync(cancellationToken);
             return newPlan.Entity;
         } catch (Exception ex) {
             await transaction.RollbackAsync(cancellationToken);
-            throw new PlanCreationException(ex.GetDeepestInnerException().Message);
+            throw new PlanCreationException(ex.GetBaseException().Message);
         }
     }
 
     [Error<PlanCreationException>]
     public async Task<PlanSubscription> CreatePlanSubscription(ProductDbContext context,
                                                                 KafkaMessageProducer<PlanSubscriptionKey, PlanSubscriptionEvent> kafkaProducer,
-                                                                INodeIdSerializer idSerializer,
                                                                 CreatePlanSubscriptionInput input,
                                                                 HttpContext httpContext,
                                                                 CancellationToken cancellationToken) {
@@ -172,9 +149,8 @@ public partial class Mutation {
     public async Task<Plan> UpdatePlan(ProductDbContext context,
                                        ITopicEventSender subscriptionSender,
                                        UpdatePlanInput input,
-                                       INodeIdSerializer idSerializer,
-                                       KafkaMessageProducer<PlanKey, PlanEvent> productProducer,
-                                       KafkaMessageProducer<PriceTierEventKey, PriceTierEvent> priceTierEventProducer,
+                                       KafkaMessageProducer<PlanEventKey, PlanChangeEvent> productProducer,
+                                       KafkaMessageProducer<PriceTierEventKey, PriceTierChangeEvent> priceTierEventProducer,
                                        CancellationToken cancellationToken) {
 
         var plan = await context.Plans.FindAsync([input.Id], cancellationToken)
@@ -212,13 +188,11 @@ public partial class Mutation {
 
         foreach (var tierToReport in tiersToUpdate) {
             if (tierToReport.ForeignServiceId is null) {
-                var nodeId = idSerializer.Format(nameof(PriceTier), tierToReport.Id);
-                await priceTierEventProducer.ProducePriceTierCreated(nodeId, cancellationToken);
+                await priceTierEventProducer.ProducePriceTierCreated(tierToReport.ToPriceTierCreatedEvent(), cancellationToken);
             }
         }
 
-        var productNodeId = idSerializer.Format(nameof(Plan), plan.Id);
-        await productProducer.ProducePlanUpdated(productNodeId, cancellationToken);
+        await productProducer.ProducePlanUpdated(plan.ToPlanUpdatedEvent(), cancellationToken);
 
         plan.PlanFeature.Plan = default!;
         foreach (var tier in plan.PriceTiers) {
@@ -238,8 +212,7 @@ public partial class Mutation {
                                       ITopicEventSender subscriptionSender,
                                       PatchPlanInput input,
                                       HttpContext httpContext,
-                                      INodeIdSerializer idSerializer,
-                                      KafkaMessageProducer<PriceTierEventKey, PriceTierEvent> priceTierEventProducer,
+                                      KafkaMessageProducer<PriceTierEventKey, PriceTierChangeEvent> priceTierEventProducer,
                                       CancellationToken cancellationToken) {
 
         using var activity = ActivitySource.StartActivity(nameof(PatchPlan), ActivityKind.Server, httpContext.Request.GetActivityContext());
@@ -294,14 +267,16 @@ public partial class Mutation {
             // TODO: send event
         }
         foreach (var tierToReport in tiersToUpdate) {
-            var nodeId = idSerializer.Format(nameof(PriceTier), tierToReport.Id);
             if (tierToReport.ForeignServiceId is null) {
-                await priceTierEventProducer.ProducePriceTierCreated(nodeId, cancellationToken);
+                await priceTierEventProducer.ProducePriceTierCreated(tierToReport.ToPriceTierCreatedEvent(), cancellationToken);
             } else {
-                await priceTierEventProducer.ProducePriceTierUpdated(nodeId, cancellationToken);
+                await priceTierEventProducer.ProducePriceTierUpdated(tierToReport.ToPriceTierUpdatedEvent(), cancellationToken);
             }
         }
-        await subscriptionSender.SendAsync(nameof(Subscription.OnPlanUpdated), plan, cancellationToken);
+
+        // Inject current Activity into headers and send traced event
+        var headers = tracePropagator.Inject();
+        await subscriptionSender.SendAsync(nameof(Subscription.OnPlanUpdated), new TracedMessage<Plan>(plan, headers), cancellationToken);
         return plan;
     }
 
@@ -409,7 +384,7 @@ public static class PriceTierTypeExtensions {
         );
     public static UpdatePlanPriceTierInput ToUpdatePlanPriceTierInput(this PriceTier tier) =>
         new(
-            tier.PlanId ?? 0,  // HACK: clean this up
+            tier.PlanId,
             tier.Id,
             tier.Price,
             tier.Duration,
@@ -420,8 +395,6 @@ public static class PriceTierTypeExtensions {
             tier.IconUrl
         );
 }
-
-
 
 public class PlanCreationException(string message) : Exception(message);
 
@@ -535,7 +508,7 @@ public record class PatchPlanInput(int Id,
                                    bool? IsActive);
 public class PatchPlanInputType : InputObjectType<PatchPlanInput> {
     protected override void Configure(IInputObjectTypeDescriptor<PatchPlanInput> descriptor) {
-        descriptor.Field(f => f.Id).Type<NonNullType<IdType>>().ID(nameof(Plan));
+        descriptor.Field(f => f.Id).Type<NonNullType<IntType>>();
         descriptor.Field(f => f.PriceTiers).Type<ListType<NonNullType<PatchPlanPriceTierInputType>>>();
         descriptor.Field(f => f.Features).Type<PatchPlanFeatureInputType>();
     }

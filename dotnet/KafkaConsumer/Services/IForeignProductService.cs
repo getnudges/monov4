@@ -1,11 +1,12 @@
 using Monads;
+using Stripe;
 
 namespace KafkaConsumer.Services;
 
 internal interface IForeignProductService {
     public Task<Result<string, Exception>> CreateCustomer(string id, string phone, string name, CancellationToken cancellationToken);
     public Task<Maybe<string>> GetPriceIdByLookupId(string priceTierId, CancellationToken cancellationToken);
-    public Task<Result<string, ProductCreationError>> CreateForeignProduct(IGetPlan_Plan plan, CancellationToken cancellationToken);
+    public Task<Result<string, ProductCreationError>> CreateForeignProduct(ProductCreateOptions plan, CancellationToken cancellationToken);
     public Task<Result<bool, ProductUpdateError>> UpdateForeignProduct(IGetPlan_Plan plan, CancellationToken cancellationToken);
     public Task<Result<bool, ProductDeleteError>> DeleteForeignProduct(string id, CancellationToken cancellationToken);
     public Task<Result<string, PriceTierCreationError>> CreateForeignPrice(IGetPriceTier_PriceTier tier, CancellationToken cancellationToken);

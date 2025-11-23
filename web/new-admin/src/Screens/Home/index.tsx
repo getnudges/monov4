@@ -1,23 +1,8 @@
-import graphql from "babel-plugin-relay/macro";
 import { Link, useLocation } from "wouter";
 
 import { RelayRoute } from "@/Router/withRelay";
 import type { HomeQuery } from "./__generated__/HomeQuery.graphql";
 import { Button } from "@/components/ui/button";
-
-export const HomeQueryDef = graphql`
-  query HomeQuery {
-    plans {
-      edges {
-        cursor
-        node {
-          id
-          name
-        }
-      }
-    }
-  }
-`;
 
 export default function HomePage({ data }: Readonly<RelayRoute<HomeQuery>>) {
   const [, setLocation] = useLocation();

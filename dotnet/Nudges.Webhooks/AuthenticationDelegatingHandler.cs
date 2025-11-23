@@ -6,8 +6,8 @@ namespace Nudges.Webhooks;
 
 internal sealed class AuthenticationDelegatingHandler(IServerTokenClient authService,
                                                       ChannelCacheMediator<string, string> channelCache,
-                                                      IHttpContextAccessor httpContextAccessor,
-                                                      IConfiguration configuration) : DelegatingHandler {
+                                                      IHttpContextAccessor httpContextAccessor)
+    : DelegatingHandler {
 
     protected override async Task<HttpResponseMessage> SendAsync(
         HttpRequestMessage request,
@@ -21,10 +21,8 @@ internal sealed class AuthenticationDelegatingHandler(IServerTokenClient authSer
             // TODO: need to add caching of this token
             var tokenId = await GetToken();
 
-            if (tokenId is not null) {
-                request.Headers.Authorization =
-                    new AuthenticationHeaderValue("Bearer", tokenId);
-            }
+            request.Headers.Authorization =
+                new AuthenticationHeaderValue("Bearer", tokenId);
         }
 
         return await base.SendAsync(request, cancellationToken);
@@ -37,10 +35,14 @@ internal sealed class AuthenticationDelegatingHandler(IServerTokenClient authSer
         }
         var tokens = await authService.GetTokenAsync();
 
-        // TODO: this is kinda ugly, tbh
         var tokenId = tokens.Match<string>(
             success => success.AccessToken,
             failure => string.Empty);
+
+        // this is kinda ugly, tbh
+        if (string.IsNullOrEmpty(tokenId)) {
+            throw new InvalidOperationException("Could not get server token");
+        }
 
         await channelCache.SetAsync("token", tokenId);
         return tokenId;

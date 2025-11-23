@@ -1,5 +1,3 @@
-import graphql from "babel-plugin-relay/macro";
-
 import type { PortalQuery } from "./__generated__/PortalQuery.graphql";
 import { useRelayScreenContext, type RelayRoute } from "@/Router/withRelay";
 import { Redirect } from "wouter";
@@ -9,16 +7,6 @@ import ErrorDialog from "@/components/ErrorDialog";
 import OtpInputForm, { type OtpInputFormData } from "@/components/OtpInputForm";
 import Countdown from "@/components/Countdown";
 import { Button } from "@/components/ui/button";
-
-export const PortalQueryDef = graphql`
-  query PortalQuery {
-    viewer {
-      ... on Client {
-        id
-      }
-    }
-  }
-`;
 
 export default function PortalPage({
   data,

@@ -122,6 +122,27 @@ public static class NudgesClientExtensions {
         }
     }
 
+    public static async Task<Result<bool, Exception>> CreatePlan(this INudgesClient client, CreatePlanInput input, CancellationToken cancellationToken) {
+        try {
+            var result = await client.CreatePlan.ExecuteAsync(input, cancellationToken);
+
+            if (result.Errors.Any()) {
+                throw new AggregateException(result.Errors.Select(e => new GraphQLException(e.Message)));
+            }
+            if (result.Data?.CreatePlan?.Errors?.Any() == true) {
+                // TODO: figure out how to get the actual errors out of here.
+                throw new AggregateException(result.Data.CreatePlan.Errors.Select(e => new GraphQLException(e.ToString())));
+            }
+            return true;
+        } catch (OperationCanceledException) {
+            throw; // preserve cancellation semantics
+        } catch (Exception ex) {
+            Activity.Current?.AddException(ex);
+            Activity.Current?.SetStatus(ActivityStatusCode.Error, ex.Message);
+            return ex;
+        }
+    }
+
     public static async Task<Result<IGetClient_Client, Exception>> GetClient(this INudgesClient client, string clientNodeId, CancellationToken cancellationToken) {
         try {
             var result = await client.GetClient.ExecuteAsync(clientNodeId, cancellationToken);

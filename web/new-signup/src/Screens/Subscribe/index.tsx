@@ -1,5 +1,3 @@
-import graphql from "babel-plugin-relay/macro";
-
 import type { SubscribeQuery } from "./__generated__/SubscribeQuery.graphql";
 import type {
   Subscribe_CreateClientMutation,
@@ -12,15 +10,7 @@ import OtpInputForm from "./OtpInputForm";
 import { useMutation } from "react-relay/hooks";
 import { Button } from "@/components/ui/button";
 import ErrorDialog from "@/components/ErrorDialog";
-
-export const SubscribeQueryDef = graphql`
-  query SubscribeQuery($slug: String!) {
-    clientBySlug(slug: $slug) {
-      id
-      name
-    }
-  }
-`;
+import graphql from "babel-plugin-relay/macro";
 
 export const CountdownSeconds = 30;
 

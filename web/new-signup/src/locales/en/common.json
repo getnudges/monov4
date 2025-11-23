@@ -1,0 +1,14 @@
+{
+  "welcome": "Welcome to our application!",
+  "logout": "Log Out",
+  "login": "Log In",
+  "signup": "Sign Up",
+  "dashboard": "Dashboard",
+  "plans": "Plans",
+  "loading": "Loading...",
+  "paidFeatures": "Paid Features",
+  "footer": {
+    "copyright": "All rights reserved."
+  },
+  "test_key": "This is a test key"
+}

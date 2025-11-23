@@ -1,9 +1,10 @@
 import Query from "./__generated__/SignUpQuery.graphql";
-import SignUpPage, { SignUpQueryDef } from ".";
+import { SignUpQueryDef } from "./SignUp";
+import React from "react";
 
 export default {
   path: "/signup",
-  component: SignUpPage,
+  component: React.lazy(() => import(".")),
   gqlQuery: SignUpQueryDef,
   query: Query,
 };

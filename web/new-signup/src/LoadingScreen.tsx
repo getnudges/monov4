@@ -1,7 +1,10 @@
+import { useTranslation } from "react-i18next";
+
 export default function LoadingScreen() {
+  const { t } = useTranslation("common");
   return (
     <div>
-      <p>Loading...</p>
+      <p>{t("loading")}</p>
     </div>
   );
 }

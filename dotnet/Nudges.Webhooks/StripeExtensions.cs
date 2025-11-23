@@ -2,6 +2,7 @@ using System.Diagnostics;
 using Stripe;
 
 namespace Nudges.Webhooks;
+
 internal static class StripeExtensions {
     private static readonly string[] ActiveSubscriptionStatuses = ["active", "trialing"];
 

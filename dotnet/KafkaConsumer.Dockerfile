@@ -23,6 +23,7 @@ COPY Nudges.Auth.Web/Nudges.Auth.Web.csproj ./Nudges.Auth.Web/
 COPY Nudges.Auth/Nudges.Auth.csproj ./Nudges.Auth/
 COPY Nudges.Localization.Client/Nudges.Localization.Client.csproj ./Nudges.Localization.Client/
 COPY Nudges.Models/Nudges.Models.csproj ./Nudges.Models/
+COPY Nudges.Telemetry/Nudges.Telemetry.csproj ./Nudges.Telemetry/
 
 RUN --mount=type=cache,target=/root/.nuget/packages \
     dotnet restore KafkaConsumer.Docker.sln
@@ -42,6 +43,7 @@ COPY Nudges.Auth.Web/ ./Nudges.Auth.Web/
 COPY Nudges.Auth/ ./Nudges.Auth/
 COPY Nudges.Localization.Client/ ./Nudges.Localization.Client/
 COPY Nudges.Models/ ./Nudges.Models/
+COPY Nudges.Telemetry/ ./Nudges.Telemetry/
 
 WORKDIR /src/KafkaConsumer
 

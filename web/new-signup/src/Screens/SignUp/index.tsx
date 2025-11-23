@@ -1,5 +1,3 @@
-import graphql from "babel-plugin-relay/macro";
-
 import type { SignUpQuery } from "./__generated__/SignUpQuery.graphql";
 import type {
   SignUp_CreateClientMutation,
@@ -19,21 +17,8 @@ import { Button } from "@/components/ui/button";
 import ErrorDialog from "@/components/ErrorDialog";
 import Countdown from "@/components/Countdown";
 import { OtpInputFormData } from "@/components/OtpInputForm";
-
-export const SignUpQueryDef = graphql`
-  query SignUpQuery {
-    viewer {
-      ... on Client {
-        id
-        subscriptionId
-        subscription {
-          status
-        }
-      }
-    }
-    totalClients
-  }
-`;
+import graphql from "babel-plugin-relay/macro";
+import { SignUpQueryDef } from "./SignUp";
 
 export const CountdownSeconds = 30;
 

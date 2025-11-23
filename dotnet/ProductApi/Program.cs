@@ -1,4 +1,6 @@
+using System.Text.RegularExpressions;
 using Confluent.Kafka;
+using HotChocolate.Diagnostics;
 using Keycloak.AuthServices.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization.Infrastructure;
@@ -9,11 +11,10 @@ using Nudges.Data;
 using Nudges.Data.Products;
 using Nudges.Kafka;
 using Nudges.Kafka.Events;
-using OpenTelemetry.Logs;
-using OpenTelemetry.Metrics;
-using OpenTelemetry.Resources;
+using Nudges.Telemetry;
 using OpenTelemetry.Trace;
 using ProductApi;
+using ProductApi.Telemetry;
 using StackExchange.Redis;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -22,36 +23,39 @@ builder.Logging.AddSimpleConsole(static o => o.SingleLine = true);
 
 if (builder.Configuration.GetValue<string>("OTLP_ENDPOINT_URL") is string url) {
 
-    builder.Services.AddOpenTelemetry()
-        .ConfigureResource(resource =>
-            resource.AddService(builder.Environment.ApplicationName))
-        .WithMetrics(o =>
-            o.AddRuntimeInstrumentation()
-                .AddMeter([
-                    "Microsoft.AspNetCore.Hosting",
-                    "Microsoft.AspNetCore.Server.Kestrel",
-                    "System.Net.Http",
-                    //"Microsoft.EntityFrameworkCore",
-                    $"{typeof(Mutation).FullName}"
-                ]).AddPrometheusExporter())
-        .WithTracing(traceBuilder =>
-            traceBuilder
-                .SetSampler<AlwaysOnSampler>()
-                //.AddEntityFrameworkCoreInstrumentation()
-                .AddSource([
-                    $"{typeof(KafkaMessageProducer<,>).Namespace}.KafkaMessageProducer",
-                    $"{typeof(Mutation).FullName}"
-                ]))
-        .WithLogging();
+    builder.Services.AddOpenTelemetryConfiguration(
+        url,
+        builder.Environment.ApplicationName, [
+            "Microsoft.AspNetCore.Hosting",
+            "Microsoft.AspNetCore.Server.Kestrel",
+            "System.Net.Http",
+            "Microsoft.EntityFrameworkCore",
+            $"{typeof(Mutation).FullName}"
+        ], [
+            $"{typeof(KafkaMessageProducer<,>).Namespace}.KafkaMessageProducer",
+            $"{typeof(Mutation).FullName}"
+        ], o => {
+            o.AddHotChocolateInstrumentation();
+        }, null, options => {
+            options.RecordException = true;
+            options.Filter = ctx => ctx.Request.Method == "POST";
 
-    builder.Services.ConfigureOpenTelemetryMeterProvider(o =>
-        o.AddOtlpExporter(o => o.Endpoint = new Uri(url)));
+            options.EnrichWithHttpResponse = (activity, response) => {
+                if (response.HttpContext.Items.TryGetValue("OperationName", out var opNameObj) &&
+                    opNameObj is string opName &&
+                    !string.IsNullOrWhiteSpace(opName)) {
+                    activity.DisplayName = opName;
+                    activity.SetTag("graphql.operation.name", opName);
+                }
 
-    builder.Services.ConfigureOpenTelemetryTracerProvider(o =>
-        o.AddOtlpExporter(o => o.Endpoint = new Uri(url)));
+                if (response.HttpContext.Items.TryGetValue("GraphQLOperationType", out var opTypeObj) &&
+                    opTypeObj is string opType) {
+                    activity.SetTag("graphql.operation.type", opType);
+                }
 
-    builder.Services.ConfigureOpenTelemetryLoggerProvider(o =>
-        o.AddOtlpExporter(o => o.Endpoint = new Uri(url)));
+                activity.SetTag("graphql.transport", "http");
+            };
+        });
 }
 
 builder.Services.AddTransient<IConnectionMultiplexer>(c =>
@@ -65,12 +69,12 @@ builder.Services
         new NotificationEventProducer(Topics.Notifications, new ProducerConfig {
             BootstrapServers = sp.GetRequiredService<IConfiguration>().GetKafkaBrokerList()
         }))
-    .AddSingleton<KafkaMessageProducer<PlanKey, PlanEvent>>(sp =>
-        new PlanEventProducer(Topics.Plans, new ProducerConfig {
-            BootstrapServers = sp.GetRequiredService<IConfiguration>().GetKafkaBrokerList()
+    .AddSingleton<KafkaMessageProducer<PlanEventKey, PlanChangeEvent>>(sp =>
+        new PlanChangeEventProducer(Topics.Plans, new ProducerConfig {
+           BootstrapServers = sp.GetRequiredService<IConfiguration>().GetKafkaBrokerList()
         }))
-    .AddSingleton<KafkaMessageProducer<PriceTierEventKey, PriceTierEvent>>(sp =>
-        new PriceTierEventProducer(Topics.PriceTiers, new ProducerConfig {
+    .AddSingleton<KafkaMessageProducer<PriceTierEventKey, PriceTierChangeEvent>>(sp =>
+        new PriceTierChangeEventProducer(Topics.PriceTiers, new ProducerConfig {
             BootstrapServers = sp.GetRequiredService<IConfiguration>().GetKafkaBrokerList()
         }))
     .AddSingleton<KafkaMessageProducer<PlanSubscriptionKey, PlanSubscriptionEvent>>(sp =>
@@ -95,7 +99,7 @@ builder.Services.AddAuthorizationBuilder()
 
 builder.Services.AddHttpContextAccessor();
 
-
+builder.Services.AddSingleton<ITracePropagator, TracePropagator>();
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme);
 builder.Services.AddKeycloakWebApiAuthentication(builder.Configuration, options => {
@@ -119,18 +123,23 @@ builder.Services.AddKeycloakWebApiAuthentication(builder.Configuration, options 
             return Task.CompletedTask;
         },
         OnTokenValidated = context => {
-            if (context.Principal?.HasRole(ClaimValues.Roles.Service) == true) {
-                Console.WriteLine("This is a service account");
-            }
-            Console.WriteLine("Token validated: {0}", string.Join(',', context.Principal?.Claims.Select(c => c.Value) ?? []));
+            //if (context.Principal?.HasRole(ClaimValues.Roles.Service) == true) {
+            //    Console.WriteLine("This is a service account");
+            //}
+            //Console.WriteLine("Token validated: {0}", string.Join(',', context.Principal?.Claims.Select(c => c.Value) ?? []));
             return Task.CompletedTask;
         },
         OnAuthenticationFailed = context => {
-            Console.WriteLine("Authentication failed: {0}", context.Exception.Message);
-            Console.WriteLine("Authority: {0}", context.Options.Authority);
+            //Console.WriteLine("Authentication failed: {0}", context.Exception.Message);
             return Task.CompletedTask;
         }
     };
+});
+
+builder.Services.AddHeaderPropagation(o => {
+    o.Headers.Add("traceparent");
+    o.Headers.Add("tracestate");
+    o.Headers.Add("baggage");
 });
 
 builder.Services.AddAuthorizationBuilder()
@@ -160,6 +169,11 @@ builder.Services
     .ModifyRequestOptions(opt =>
         opt.IncludeExceptionDetails = builder.Environment.IsDevelopment())
     .AddRedisSubscriptions(p => p.GetRequiredService<IConnectionMultiplexer>())
+    .AddInstrumentation(o => {
+        o.Scopes = ActivityScopes.ResolveFieldValue;
+        o.IncludeDocument = false;
+        o.RequestDetails = RequestDetails.Default;
+    })
     .InitializeOnStartup();
 
 builder.Services.AddHealthChecks();
@@ -172,6 +186,23 @@ if (builder.Configuration.GetValue<string>("OTLP_ENDPOINT_URL") is not null) {
     app.MapPrometheusScrapingEndpoint();
 }
 
+app.Use(async (context, next) => {
+    if (!context.Request.Path.StartsWithSegments(PathString.FromUriComponent("/graphql"))) {
+        await next();
+        return;
+    }
+
+    var (activityName, operationType) = await GetTraceActivity(context.Request, context.RequestAborted);
+
+    // Stash for the ASP.NET Core + HotChocolate enrichers
+    context.Items["OperationName"] = activityName;
+    if (!string.IsNullOrWhiteSpace(operationType)) {
+        context.Items["GraphQLOperationType"] = operationType;
+    }
+
+    await next();
+});
+
 app.UseAuthentication();
 app.UseAuthorization();
 
@@ -180,3 +211,40 @@ app.UseWebSockets();
 app.MapGraphQL();
 
 app.RunWithGraphQLCommands(args);
+
+// -----------------------------------------------------------------------------
+// Helpers
+// -----------------------------------------------------------------------------
+static async Task<(string Name, string? OperationType)> GetTraceActivity(HttpRequest request, CancellationToken cancellationToken) {
+    try {
+        request.EnableBuffering();
+        using var reader = new StreamReader(
+            request.Body,
+            encoding: System.Text.Encoding.UTF8,
+            detectEncodingFromByteOrderMarks: false,
+            leaveOpen: true);
+
+        var requestBody = await reader.ReadToEndAsync(cancellationToken);
+        request.Body.Position = 0;
+
+        var matches = MutationNameRegex.Matches(requestBody);
+        if (matches.Count > 0) {
+            var opType = matches[0].Groups[1].Value; // query | mutation | subscription
+            var opName = matches[0].Groups[2].Value; // operation name
+            return (opName, opType);
+        }
+
+        return ("GraphQLRequest(Unknown)", null);
+    } catch {
+        return ("GraphQLRequest(Err)", null);
+    }
+}
+
+// Needed for WebApplicationFactory, tests, etc.
+public partial class Program {
+    // Capture query | mutation | subscription operation + name
+    private static readonly Regex MutationNameRegex = MutationNameRegexDef();
+
+    [GeneratedRegex(@"\b(query|mutation|subscription)\s+(\w+)\s*\(", RegexOptions.Compiled)]
+    private static partial Regex MutationNameRegexDef();
+}

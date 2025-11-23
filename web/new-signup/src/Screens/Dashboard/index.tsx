@@ -1,5 +1,3 @@
-import graphql from "babel-plugin-relay/macro";
-
 import type { DashboardQuery } from "./__generated__/DashboardQuery.graphql";
 import type { Dashboard_ClientView$key } from "./__generated__/Dashboard_ClientView.graphql";
 import type { RelayRoute } from "@/Router/withRelay";
@@ -9,6 +7,7 @@ import { useFragment, useSubscription } from "react-relay";
 import { Dashboard_OnClientUpdatedSubscription } from "./__generated__/Dashboard_OnClientUpdatedSubscription.graphql";
 import { Redirect } from "wouter";
 import { ClientDashboard } from "./client-dashboard";
+import graphql from "babel-plugin-relay/macro";
 
 function useClientUpdatedSubscription(
   id: string,
@@ -34,17 +33,6 @@ function useClientUpdatedSubscription(
     )
   );
 }
-
-export const DashboardQueryDef = graphql`
-  query DashboardQuery {
-    viewer {
-      ... on Client {
-        id
-        ...Dashboard_ClientView
-      }
-    }
-  }
-`;
 
 type ClientViewProps = {
   viewer: Dashboard_ClientView$key;

@@ -1,23 +1,8 @@
-import graphql from "babel-plugin-relay/macro";
 import { Link, useLocation } from "wouter";
 
 import { RelayRoute } from "@/Router/withRelay";
 import type { PlansQuery } from "./__generated__/PlansQuery.graphql";
 import { Button } from "@/components/ui/button";
-
-export const PlansQueryDef = graphql`
-  query PlansQuery {
-    plans(first: 50) {
-      edges {
-        cursor
-        node {
-          id
-          name
-        }
-      }
-    }
-  }
-`;
 
 export default function PlansPage({ data }: Readonly<RelayRoute<PlansQuery>>) {
   const [, setLocation] = useLocation();

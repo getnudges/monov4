@@ -9,11 +9,12 @@ internal sealed class ProductDeletedCommand(INudgesClient nudgesClient) : IEvent
         if (context.StripeEvent.Data.Object is not Product product) {
             return new MissingDataException("Could not find product in event data");
         }
-        var result = await nudgesClient.GetPlanByForeignId(product.Id, cancellationToken).Map(async plan =>
-            await nudgesClient.DeletePlan(new DeletePlanInput {
+        var result = await nudgesClient.GetPlanByForeignId(product.Id, cancellationToken).Map(async maybePlan =>
+            // TODO: this should be an event rather than a direct delete.
+            maybePlan.Map(async plan => await nudgesClient.DeletePlan(new DeletePlanInput {
                 Id = plan.Id
-            }, cancellationToken));
+            }, cancellationToken)));
 
-        return result.Match<Maybe<Exception>>(e => Maybe<Exception>.None, e => e.GetBaseException());
+        return result.Match<Maybe<Exception>>(e => Maybe<Exception>.None, e => e);
     }
 }

@@ -1,9 +1,10 @@
 using Nudges.Auth;
 using Nudges.HotChocolate.Utils;
+using ProductApi.Telemetry;
 
 namespace ProductApi;
 
-public partial class Mutation(ILogger<Mutation> logger) { }
+public partial class Mutation(ILogger<Mutation> logger, ITracePropagator tracePropagator) { }
 
 public class MutationObjectType : ObjectType<Mutation> {
     protected override void Configure(IObjectTypeDescriptor<Mutation> descriptor) {
@@ -21,27 +22,27 @@ public class MutationObjectType : ObjectType<Mutation> {
             .UseMutationConvention();
 
         descriptor
-            .Field(f => f.CreatePlan(default!, default!, default!, default!, default!))
+            .Field(f => f.CreatePlan(default!, default!, default!, default!))
             .Use<TracingMiddleware>()
             .Argument("input", a => a.Type<NonNullType<CreatePlanInputType>>())
             .UseMutationConvention();
 
         descriptor
-            .Field(f => f.CreatePlanSubscription(default!, default!, default!, default!, default!, default!))
+            .Field(f => f.CreatePlanSubscription(default!, default!, default!, default!, default!))
             .Use<TracingMiddleware>()
             .Authorize(PolicyNames.Admin)
             .Argument("input", a => a.Type<NonNullType<CreatePlanSubscriptionInputType>>())
             .UseMutationConvention();
 
         descriptor
-            .Field(f => f.UpdatePlan(default!, default!, default!, default!, default!, default!, default!))
+            .Field(f => f.UpdatePlan(default!, default!, default!, default!, default!, default!))
             .Use<TracingMiddleware>()
             .Authorize(PolicyNames.Admin)
             .Argument("input", a => a.Type<NonNullType<UpdatePlanInputType>>())
             .UseMutationConvention();
 
         descriptor
-            .Field(f => f.PatchPlan(default!, default!, default!, default!, default!, default!, default!))
+            .Field(f => f.PatchPlan(default!, default!, default!, default!, default!, default!))
             .Use<TracingMiddleware>()
             .Authorize(PolicyNames.Admin)
             .Argument("input", a => a.Type<NonNullType<PatchPlanInputType>>())
@@ -57,14 +58,14 @@ public class MutationObjectType : ObjectType<Mutation> {
             .UseMutationConvention();
 
         descriptor
-            .Field(f => f.DeletePriceTier(default!, default!, default!, default!, default!))
+            .Field(f => f.DeletePriceTier(default!, default!, default!, default!))
             .Use<TracingMiddleware>()
             .Authorize(PolicyNames.Admin)
             .Argument("input", a => a.Type<NonNullType<DeletePriceTierInputType>>())
             .UseMutationConvention();
 
         descriptor
-            .Field(f => f.DeletePlan(default!, default!, default!, default!, default!))
+            .Field(f => f.DeletePlan(default!, default!, default!, default!))
             .Use<TracingMiddleware>()
             .Authorize(PolicyNames.Admin)
             .Argument("input", a => a.Type<NonNullType<DeletePlanInputType>>())

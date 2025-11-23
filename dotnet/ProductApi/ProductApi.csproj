@@ -10,6 +10,7 @@
     <ItemGroup>
       <ProjectReference Include="..\Nudges.Auth.Web\Nudges.Auth.Web.csproj" />
       <ProjectReference Include="..\Nudges.Auth\Nudges.Auth.csproj" />
+      <ProjectReference Include="..\Nudges.Contracts\Nudges.Contracts.csproj" />
       <ProjectReference Include="..\Nudges.Data\Nudges.Data.csproj" />
       <ProjectReference Include="..\Nudges.HotChocolate.Utils\Nudges.HotChocolate.Utils.csproj" />
       <ProjectReference Include="..\Nudges.Kafka.Events\Nudges.Kafka.Events.csproj" />
@@ -20,23 +21,17 @@
     </ItemGroup>
 
     <ItemGroup>
+      <PackageReference Include="HotChocolate.Diagnostics" Version="15.1.11" />
       <PackageReference Include="HotChocolate.Subscriptions.Redis" Version="15.1.11" />
       <PackageReference Include="Keycloak.AuthServices.Authentication" Version="2.7.0" />
       <PackageReference Include="HotChocolate.AspNetCore.Authorization" Version="15.1.11" />
       <PackageReference Include="HotChocolate.AspNetCore.CommandLine" Version="15.1.11" />
       <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.0" />
-      <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="9.0.10" />
-      <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.4" />
+      <PackageReference Include="Microsoft.AspNetCore.HeaderPropagation" Version="10.0.0" />
+      <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="10.0.0" />
+      <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.0-rc.2" />
       <PackageReference Include="HotChocolate.AspNetCore" Version="15.1.11" />
       <PackageReference Include="HotChocolate.Data.EntityFramework" Version="15.1.11" />
-      <PackageReference Include="OpenTelemetry.Exporter.Console" Version="1.13.1" />
-      <PackageReference Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.13.1" />
-      <PackageReference Include="OpenTelemetry.Exporter.Prometheus.AspNetCore" Version="1.11.0-beta.1" />
-      <PackageReference Include="OpenTelemetry.Extensions.Hosting" Version="1.13.1" />
-      <PackageReference Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.13.0" />
-      <PackageReference Include="OpenTelemetry.Instrumentation.EntityFrameworkCore" Version="1.11.0-beta.2" />
-      <PackageReference Include="OpenTelemetry.Instrumentation.Http" Version="1.13.0" />
-      <PackageReference Include="OpenTelemetry.Instrumentation.Runtime" Version="1.13.0" />
     </ItemGroup>
 
     <ItemGroup>

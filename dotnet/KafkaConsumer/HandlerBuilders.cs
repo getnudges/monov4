@@ -167,7 +167,7 @@ internal static class HandlerBuilders {
         builder
             .ConfigureServices(static (hostContext, services) => {
                 services.AddSingleton(static sp =>
-                    new PriceTierEventProducer(Topics.PriceTiers, new ProducerConfig {
+                    new PriceTierChangeEventProducer(Topics.PriceTiers, new ProducerConfig {
                         BootstrapServers = sp.GetRequiredService<IConfiguration>().GetKafkaBrokerList(),
                         AllowAutoCreateTopics = true,
                     }));
@@ -178,18 +178,35 @@ internal static class HandlerBuilders {
                 });
                 services.AddTransient<IForeignProductService, StripeService>();
 
-                services.AddTransient<IMessageMiddleware<PlanKey, PlanEvent>, PlanMessageMiddleware>();
+                services.AddTransient<IMessageMiddleware<PlanEventKey, PlanChangeEvent>, PlanMessageMiddleware>();
                 services.AddTransient(static sp =>
                     KafkaMessageProcessorBuilder
-                        .For<PlanKey, PlanEvent>(
+                        .For<PlanEventKey, PlanChangeEvent>(
                             Topics.Plans,
                             sp.GetRequiredService<IConfiguration>().GetKafkaBrokerList(),
                             cancellationToken: sp.GetRequiredService<IHostApplicationLifetime>().ApplicationStopping)
-                        .Use(new TracingMiddleware<PlanKey, PlanEvent>())
-                        .Use(sp.GetRequiredService<IMessageMiddleware<PlanKey, PlanEvent>>())
+                        .Use(new TracingMiddleware<PlanEventKey, PlanChangeEvent>())
+                        .Use(sp.GetRequiredService<IMessageMiddleware<PlanEventKey, PlanChangeEvent>>())
                         .Build());
 
-                services.AddHostedService<MessageHandlerService<PlanKey, PlanEvent>>();
+                services.AddHostedService<MessageHandlerService<PlanEventKey, PlanChangeEvent>>();
+            });
+
+    public static IHostBuilder ConfigureForeignProductEventHandler(this IHostBuilder builder) =>
+        builder
+            .ConfigureServices(static (hostContext, services) => {
+                services.AddTransient<IMessageMiddleware<ForeignProductEventKey, ForeignProductEvent>, ForeignProductMessageMiddleware>();
+                services.AddTransient(static sp =>
+                    KafkaMessageProcessorBuilder
+                        .For<ForeignProductEventKey, ForeignProductEvent>(
+                            Topics.ForeignProducts,
+                            sp.GetRequiredService<IConfiguration>().GetKafkaBrokerList(),
+                            cancellationToken: sp.GetRequiredService<IHostApplicationLifetime>().ApplicationStopping)
+                        .Use(new TracingMiddleware<ForeignProductEventKey, ForeignProductEvent>())
+                        .Use(sp.GetRequiredService<IMessageMiddleware<ForeignProductEventKey, ForeignProductEvent>>())
+                        .Build());
+
+                services.AddHostedService<MessageHandlerService<ForeignProductEventKey, ForeignProductEvent>>();
             });
 
     public static IHostBuilder ConfigurePriceTierEventHandler(this IHostBuilder builder) =>
@@ -201,17 +218,17 @@ internal static class HandlerBuilders {
                 });
                 services.AddTransient<IForeignProductService, StripeService>();
 
-                services.AddTransient<IMessageMiddleware<PriceTierEventKey, PriceTierEvent>, PriceTierMessageMiddleware>();
+                services.AddTransient<IMessageMiddleware<PriceTierEventKey, PriceTierChangeEvent>, PriceTierMessageMiddleware>();
                 services.AddTransient(static sp =>
                     KafkaMessageProcessorBuilder
-                        .For<PriceTierEventKey, PriceTierEvent>(
+                        .For<PriceTierEventKey, PriceTierChangeEvent>(
                             Topics.PriceTiers,
                             sp.GetRequiredService<IConfiguration>().GetKafkaBrokerList(),
                             cancellationToken: sp.GetRequiredService<IHostApplicationLifetime>().ApplicationStopping)
-                        .Use(new TracingMiddleware<PriceTierEventKey, PriceTierEvent>())
-                        .Use(sp.GetRequiredService<IMessageMiddleware<PriceTierEventKey, PriceTierEvent>>())
+                        .Use(new TracingMiddleware<PriceTierEventKey, PriceTierChangeEvent>())
+                        .Use(sp.GetRequiredService<IMessageMiddleware<PriceTierEventKey, PriceTierChangeEvent>>())
                         .Build());
 
-                services.AddHostedService<MessageHandlerService<PriceTierEventKey, PriceTierEvent>>();
+                services.AddHostedService<MessageHandlerService<PriceTierEventKey, PriceTierChangeEvent>>();
             });
 }

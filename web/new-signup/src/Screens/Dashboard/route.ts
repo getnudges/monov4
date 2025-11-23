@@ -2,12 +2,16 @@ import { RouteDefinition } from "@/Router/withRelay";
 import Query, {
   type DashboardQuery,
 } from "./__generated__/DashboardQuery.graphql";
-import DashboardPage, { DashboardQueryDef } from ".";
+import { DashboardQueryDef } from "./Dashboard";
 import { withAuthorization } from "@/AuthProvider";
+import React from "react";
 
 export default {
   path: "/dashboard",
-  component: withAuthorization(DashboardPage, ["client"]),
+  component: withAuthorization(
+    React.lazy(() => import(".")),
+    ["client"]
+  ),
   gqlQuery: DashboardQueryDef,
   query: Query,
 } satisfies RouteDefinition<DashboardQuery>;

@@ -1,10 +1,11 @@
 import { RouteDefinition } from "@/Router/withRelay";
 import Query, { type LoginQuery } from "./__generated__/LoginQuery.graphql";
-import LoginPage, { LoginQueryDef } from ".";
+import { LoginQueryDef } from "./Login";
+import React from "react";
 
 export default {
   path: "/login",
-  component: LoginPage,
+  component: React.lazy(() => import(".")),
   gqlQuery: LoginQueryDef,
   query: Query,
 } satisfies RouteDefinition<LoginQuery>;

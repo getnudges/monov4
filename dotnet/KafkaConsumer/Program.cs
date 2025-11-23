@@ -10,31 +10,31 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Nudges.Auth;
 using Nudges.Configuration.Extensions;
+using Nudges.Kafka.Events;
 using Nudges.Kafka.Middleware;
 using Nudges.Localization.Client;
-using OpenTelemetry.Logs;
-using OpenTelemetry.Metrics;
-using OpenTelemetry.Resources;
-using OpenTelemetry.Trace;
+using Nudges.Telemetry;
 using Precision.WarpCache;
 using Precision.WarpCache.Grpc.Client;
 using Precision.WarpCache.MemoryCache;
 
-var notificationsCmd = new Command("notifications");
-var plansCmd = new Command("plans");
-var priceTierCmd = new Command("price-tiers");
-var planSubscriptionsCmd = new Command("plan-subscriptions");
-var paymentsCmd = new Command("payments");
-var clientsCmd = new Command("clients");
-var userAuthCmd = new Command("user-authentication");
+var notificationsCmd = new Command(Topics.Notifications);
+var plansCmd = new Command(Topics.Plans);
+var priceTierCmd = new Command(Topics.PriceTiers);
+var planSubscriptionsCmd = new Command(Topics.PlanSubscriptions);
+var paymentsCmd = new Command(Topics.Payments);
+var clientsCmd = new Command(Topics.Clients);
+var userAuthCmd = new Command(Topics.UserAuthentication);
+var foreignProductCmd = new Command(Topics.ForeignProducts);
 
-notificationsCmd.SetAction(r => CreateBaseHost(args, "notifications").ConfigureNotificationHandler().Build().RunAsync());
-plansCmd.SetAction(r => CreateBaseHost(args, "plans").ConfigurePlanEventHandler().Build().RunAsync());
-priceTierCmd.SetAction(r => CreateBaseHost(args, "price-tiers").ConfigurePriceTierEventHandler().Build().RunAsync());
-paymentsCmd.SetAction(r => CreateBaseHost(args, "payments").ConfigurePaymentEventHandler().Build().RunAsync());
-planSubscriptionsCmd.SetAction(r => CreateBaseHost(args, "plan-subscriptions").ConfigurePlanSubscriptionHandler().Build().RunAsync());
-clientsCmd.SetAction(r => CreateBaseHost(args, "clients").ConfigureClientHandler().Build().RunAsync());
-userAuthCmd.SetAction(r => CreateBaseHost(args, "user-authentication").ConfigureUserAuthenticationHandler().Build().RunAsync());
+notificationsCmd.SetAction(r => CreateBaseHost(args, Topics.Notifications).ConfigureNotificationHandler().Build().RunAsync());
+plansCmd.SetAction(r => CreateBaseHost(args, Topics.Plans).ConfigurePlanEventHandler().Build().RunAsync());
+priceTierCmd.SetAction(r => CreateBaseHost(args, Topics.PriceTiers).ConfigurePriceTierEventHandler().Build().RunAsync());
+paymentsCmd.SetAction(r => CreateBaseHost(args, Topics.Payments).ConfigurePaymentEventHandler().Build().RunAsync());
+planSubscriptionsCmd.SetAction(r => CreateBaseHost(args, Topics.PlanSubscriptions).ConfigurePlanSubscriptionHandler().Build().RunAsync());
+clientsCmd.SetAction(r => CreateBaseHost(args, Topics.Clients).ConfigureClientHandler().Build().RunAsync());
+userAuthCmd.SetAction(r => CreateBaseHost(args, Topics.UserAuthentication).ConfigureUserAuthenticationHandler().Build().RunAsync());
+foreignProductCmd.SetAction(r => CreateBaseHost(args, Topics.ForeignProducts).ConfigureForeignProductEventHandler().Build().RunAsync());
 
 var rootCommand = new RootCommand {
     notificationsCmd,
@@ -43,7 +43,8 @@ var rootCommand = new RootCommand {
     paymentsCmd,
     planSubscriptionsCmd,
     clientsCmd,
-    userAuthCmd
+    userAuthCmd,
+    foreignProductCmd,
 };
 
 await rootCommand.Parse(args).InvokeAsync();
@@ -67,42 +68,17 @@ static IHostBuilder CreateBaseHost(string[] args, string name) =>
                     services.AddLogging(configure => configure.AddSimpleConsole(o => o.SingleLine = true));
 
                     if (hostContext.Configuration.GetValue<string>("OTLP_ENDPOINT_URL") is string url) {
-                        services.AddOpenTelemetry()
-                            .ConfigureResource(resource =>
-                                resource.AddService($"{name}-{hostContext.HostingEnvironment.ApplicationName}"))
-                            .WithMetrics(metricsConfig =>
-                                metricsConfig
-                                    .AddRuntimeInstrumentation()
-                                    .AddMeter([
-                                        "Microsoft.AspNetCore.Hosting",
-                                        "Microsoft.AspNetCore.Server.Kestrel",
-                                        "System.Net.Http",
-                                        $"{typeof(TracingMiddleware<,>).FullName}",
-                                    ])
-                                    .AddPrometheusExporter())
-                            .WithTracing(traceConfig =>
-                                traceConfig
-                                    .SetSampler<AlwaysOnSampler>()
-                                    .AddAspNetCoreInstrumentation(o => {
-                                        o.RecordException = true;
-                                        o.Filter = context =>
-                                            context.Request.Method != "GET";
-                                    })
-                                    .AddHttpClientInstrumentation(o => {
-                                        o.RecordException = true;
-                                    })
-                                    .AddSource([
-                                        $"{typeof(TracingMiddleware<,>).Namespace}.TracingMiddleware",
-                                        $"{typeof(StripeService).FullName}"
-                                    ]))
-                            .WithLogging();
-
-                        services.ConfigureOpenTelemetryTracerProvider(o =>
-                            o.AddOtlpExporter(o => o.Endpoint = new Uri(url)));
-                        services.ConfigureOpenTelemetryLoggerProvider(o =>
-                            o.AddOtlpExporter(o => o.Endpoint = new Uri(url)));
-                        services.ConfigureOpenTelemetryMeterProvider(o =>
-                            o.AddOtlpExporter(o => o.Endpoint = new Uri(url)));
+                        services.AddOpenTelemetryConfiguration(
+                            url,
+                            $"{name}-{hostContext.HostingEnvironment.ApplicationName}", [
+                                "Microsoft.AspNetCore.Hosting",
+                                "Microsoft.AspNetCore.Server.Kestrel",
+                                "System.Net.Http",
+                                $"{typeof(TracingMiddleware<,>).FullName}",
+                            ], [
+                                $"{typeof(TracingMiddleware<,>).Namespace}.TracingMiddleware",
+                                $"{typeof(StripeService).FullName}"
+                            ], null, null, o => o.Filter = ctx => ctx.Request.Method == "POST");
                     }
 
                     services.AddWarpCacheClient(

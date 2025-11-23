@@ -22,7 +22,7 @@ $keyPem | Out-File -FilePath "$PSScriptRoot\aspnetapp.key" -Encoding ASCII
 
 # Create symbolic links for web/new-signup
 $signupDir = Join-Path (Split-Path $PSScriptRoot -Parent) "web\new-signup"
-$adminDir = Join-Path (Split-Path $PSScriptRoot -Parent) "web\new-admin"
+$adminDir = Join-Path (Split-Path $PSScriptRoot -Parent) "web\admin-ui"
 $signupCrt = Join-Path $signupDir "aspnetapp.crt"
 $signupKey = Join-Path $signupDir "aspnetapp.key"
 $adminCrt = Join-Path $adminDir "aspnetapp.crt"
@@ -41,4 +41,4 @@ New-Item -ItemType SymbolicLink -Path $adminCrt -Target "$PSScriptRoot\aspnetapp
 New-Item -ItemType SymbolicLink -Path $adminKey -Target "$PSScriptRoot\aspnetapp.key" -Force | Out-Null
 
 Write-Host "✓ Certificates generated and symlinked to web/new-signup"
-Write-Host "✓ Certificates generated and symlinked to web/new-admin"
+Write-Host "✓ Certificates generated and symlinked to web/admin-ui"

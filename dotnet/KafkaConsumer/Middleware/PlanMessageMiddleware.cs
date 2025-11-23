@@ -1,3 +1,4 @@
+using System.Globalization;
 using Confluent.Kafka;
 using KafkaConsumer.GraphQL;
 using KafkaConsumer.Services;
@@ -5,14 +6,15 @@ using Microsoft.Extensions.Logging;
 using Monads;
 using Nudges.Kafka.Events;
 using Nudges.Kafka.Middleware;
+using Stripe;
 
 namespace KafkaConsumer.Middleware;
 
 internal class PlanMessageMiddleware(ILogger<PlanMessageMiddleware> logger,
                                      Func<INudgesClient> nudgesClientFactory,
-                                     IForeignProductService foreignProductService) : IMessageMiddleware<PlanKey, PlanEvent> {
+                                     IForeignProductService foreignProductService) : IMessageMiddleware<PlanEventKey, PlanChangeEvent> {
 
-    public async Task<MessageContext<PlanKey, PlanEvent>> InvokeAsync(MessageContext<PlanKey, PlanEvent> context, MessageHandler<PlanKey, PlanEvent> next) {
+    public async Task<MessageContext<PlanEventKey, PlanChangeEvent>> InvokeAsync(MessageContext<PlanEventKey, PlanChangeEvent> context, MessageHandler<PlanEventKey, PlanChangeEvent> next) {
         var result = await HandleMessageAsync(context.ConsumeResult, context.CancellationToken);
         result.Match(
             _ => logger.LogMessageHandled(context.ConsumeResult.Message.Key),
@@ -20,66 +22,53 @@ internal class PlanMessageMiddleware(ILogger<PlanMessageMiddleware> logger,
         return context;
     }
 
-    public async Task<Result<bool, Exception>> HandleMessageAsync(ConsumeResult<PlanKey, PlanEvent> cr, CancellationToken cancellationToken) {
+    public async Task<Result<bool, Exception>> HandleMessageAsync(ConsumeResult<PlanEventKey, PlanChangeEvent> cr, CancellationToken cancellationToken) {
         logger.LogMessageReceived(cr.Message.Key);
-        return await (cr switch {
-            { Message.Key.EventType: nameof(PlanKey.PlanCreated), Message.Key.EventKey: var planNodeId } =>
-                HandlePlanCreated(planNodeId, cancellationToken),
-            { Message.Key.EventType: nameof(PlanKey.PlanUpdated), Message.Key.EventKey: var planNodeId } =>
-                HandlePlanUpdated(planNodeId, cancellationToken),
-            { Message.Key.EventType: nameof(PlanKey.PlanDeleted), Message.Key.EventKey: var planNodeId } =>
-                HandlePlanDeleted(planNodeId, cancellationToken),
+        return await (cr.Message.Value switch {
+            PlanCreatedEvent created => HandlePlanCreated(created, cancellationToken),
+            PlanUpdatedEvent updated => HandlePlanUpdated(updated, cancellationToken),
             _ => Result.ExceptionTask(new UnhandledMessageException($"No handler registered for event {cr.Message.Key}.")),
         });
     }
 
-    private async Task<Result<bool, Exception>> HandlePlanCreated(string planNodeId, CancellationToken cancellationToken) {
+    private async Task<Result<bool, Exception>> HandlePlanCreated(PlanCreatedEvent planCreatedEvent, CancellationToken cancellationToken) {
         using var client = new DisposableWrapper<INudgesClient>(nudgesClientFactory);
-        var planResult = await client.Instance.GetPlan(planNodeId, cancellationToken);
 
-        return await planResult.Map(plan => CreateForeignProduct(plan, cancellationToken));
+        return await CreateForeignProduct(planCreatedEvent.ToShopifyProductCreateOptions(), cancellationToken);
     }
 
-    private async Task<Result<bool, Exception>> CreateForeignProduct(IGetPlan_Plan plan, CancellationToken cancellationToken) {
+    private async Task<Result<bool, Exception>> CreateForeignProduct(ProductCreateOptions plan, CancellationToken cancellationToken) {
         using var client = new DisposableWrapper<INudgesClient>(nudgesClientFactory);
 
         var foreignCreateResult = await foreignProductService.CreateForeignProduct(plan, cancellationToken);
+
         return await foreignCreateResult.Map(async foreignId =>
             await client.Instance.PatchPlan(new PatchPlanInput {
-                Id = plan.Id,
+                Id = Convert.ToInt32(plan.Metadata["planId"], CultureInfo.InvariantCulture),
                 ForeignServiceId = foreignId,
-                PriceTiers = [.. plan.PriceTiers.Select(tier => new PatchPlanPriceTierInput {
-                        Id = tier.Id,
-                        ForeignServiceId = tier.ForeignServiceId,
-                    })],
             }, cancellationToken), err => {
                 logger.LogPlanUpdateError(err.Exception?.Message ?? err.Message);
                 return err.Exception?.GetBaseException() ?? new GraphQLException(err.Message);
             });
     }
 
-    private async Task<Result<bool, Exception>> HandlePlanUpdated(string planNodeId, CancellationToken cancellationToken) {
-        using var client = new DisposableWrapper<INudgesClient>(nudgesClientFactory);
-        var planResult = await client.Instance.GetPlan(planNodeId, cancellationToken);
+    private Task<Result<bool, Exception>> HandlePlanUpdated(PlanUpdatedEvent data, CancellationToken cancellationToken) {
+        return Task.FromResult(Result.Success<bool, Exception>(true));
+        //using var client = new DisposableWrapper<INudgesClient>(nudgesClientFactory);
 
-        return await planResult.Map(async plan => {
-            if (string.IsNullOrEmpty(plan.ForeignServiceId)) {
-                return await CreateForeignProduct(plan, cancellationToken);
-            }
-            return await UpdateForeignProduct(plan, cancellationToken);
-        });
+        //    return await UpdateForeignProduct(data.Plan.ToForeignProduct(), cancellationToken);
     }
 
-    private async Task<Result<bool, Exception>> HandlePlanDeleted(string planForeignServiceId, CancellationToken cancellationToken) =>
-        await DeleteForeignProduct(planForeignServiceId, cancellationToken);
+    //private async Task<Result<bool, Exception>> HandlePlanDeleted(string planForeignServiceId, CancellationToken cancellationToken) =>
+    //    await DeleteForeignProduct(planForeignServiceId, cancellationToken);
 
-    private async Task<Result<bool, Exception>> DeleteForeignProduct(string id, CancellationToken cancellationToken) {
-        var foreignUpdateResult = await foreignProductService.DeleteForeignProduct(id, cancellationToken);
-        return foreignUpdateResult.Match(success => {
-            logger.LogPlanDeleted(id);
-            return true;
-        }, err => err.Exception?.GetBaseException() ?? new GraphQLException(err.Message));
-    }
+    //private async Task<Result<bool, Exception>> DeleteForeignProduct(string id, CancellationToken cancellationToken) {
+    //    var foreignUpdateResult = await foreignProductService.DeleteForeignProduct(id, cancellationToken);
+    //    return foreignUpdateResult.Match(success => {
+    //        logger.LogPlanDeleted(id);
+    //        return true;
+    //    }, err => err.Exception?.GetBaseException() ?? new GraphQLException(err.Message));
+    //}
 
     private async Task<Result<bool, Exception>> UpdateForeignProduct(IGetPlan_Plan plan, CancellationToken cancellationToken) {
         var foreignUpdateResult = await foreignProductService.UpdateForeignProduct(plan, cancellationToken);

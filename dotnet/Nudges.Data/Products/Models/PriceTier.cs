@@ -7,7 +7,7 @@ public partial class PriceTier
 {
     public int Id { get; set; }
 
-    public int? PlanId { get; set; }
+    public int PlanId { get; set; }
 
     public decimal Price { get; set; }
 
