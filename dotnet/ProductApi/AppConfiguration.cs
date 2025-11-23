@@ -8,5 +8,5 @@ internal static class AppConfiguration {
     [ConfigurationKey]
     public const string KafkaBrokerList = "KAFKA_BROKER_LIST";
     [ConfigurationKey]
-    public const string OltpEndpointUrl = "OLTP_ENDPOINT_URL";
+    public const string OtlpEndpointUrl = "OTLP_ENDPOINT_URL";
 }

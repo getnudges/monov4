@@ -5,9 +5,9 @@
     Modes:
       ./configure.ps1              # same as --docker (legacy default)
       ./configure.ps1 --docker     # generate .env.master + all .env.docker
-      ./configure.ps1 --oidc       # generate .env.<service> from Keycloak
+      ./configure.ps1 -Oidc       # generate .env.<service> from Keycloak
       ./configure.ps1 --local      # generate .env.<service>.local + .NET user-secrets
-      ./configure.ps1 --refresh    # full regeneration:
+      ./configure.ps1 -Refresh    # full regeneration:
                                       - docker envs
                                       - oidc secrets (forced)
                                       - local envs + user-secrets
@@ -43,9 +43,9 @@ $env:DOTNET_CLI_TELEMETRY_OPTOUT = "1"
 Write-Host "🔧 Nudges configuration generator starting..."
 
 if ($Docker) { Write-Host "   • Docker env generation enabled" }
-if ($Oidc)   { Write-Host "   • OIDC secret extraction enabled" }
-if ($Local)  { Write-Host "   • Local env + .NET user-secrets enabled" }
-if ($Refresh){ Write-Host "   • FULL REGENERATION mode" }
+if ($Oidc) { Write-Host "   • OIDC secret extraction enabled" }
+if ($Local) { Write-Host "   • Local env + .NET user-secrets enabled" }
+if ($Refresh) { Write-Host "   • FULL REGENERATION mode" }
 
 ###############################################################################
 # Utilities
@@ -137,9 +137,8 @@ function New-ConfigFromTemplate {
 
 $externalEnvPath = ".env.external"
 
-# Create file if missing
-if (-not (Test-Path $externalEnvPath)) {
-    @"
+# Default template contents
+$externalTemplate = @"
 # External provider credentials (not generated)
 
 STRIPE_API_KEY=<required: set manually>
@@ -148,10 +147,14 @@ STRIPE_WEBHOOKS_SECRET=<required: set manually>
 TWILIO_ACCOUNT_SID=<required: set manually>
 TWILIO_AUTH_TOKEN=<required: set manually>
 TWILIO_MESSAGE_SERVICE_SID=<required: set manually>
-"@ | Set-Content $externalEnvPath
+"@
+
+# Ensure file exists
+if (-not (Test-Path $externalEnvPath)) {
+    $externalTemplate | Set-Content $externalEnvPath
 }
 
-# Read current external values
+# Load raw values
 $externalEnv = @{}
 Get-Content $externalEnvPath | ForEach-Object {
     if ($_ -match '^\s*([^#][^=]+)=(.*)$') {
@@ -159,7 +162,7 @@ Get-Content $externalEnvPath | ForEach-Object {
     }
 }
 
-# Keys requiring real values
+# Required real-world keys
 $requiredExternalKeys = @(
     "STRIPE_API_KEY",
     "STRIPE_WEBHOOKS_SECRET",
@@ -168,34 +171,27 @@ $requiredExternalKeys = @(
     "TWILIO_MESSAGE_SERVICE_SID"
 )
 
-$updated = $false
-
+# Normalize missing keys to placeholder value BEFORE assignment into masterValues
 foreach ($key in $requiredExternalKeys) {
-    $val = $externalEnv[$key]
+    if (-not $externalEnv.ContainsKey($key) -or
+        -not $externalEnv[$key] -or
+        $externalEnv[$key] -match '<required:') {
 
-    if (-not $val -or $val -match '<required:') {
         Write-Host "`n🔐 $key is required and not set." -ForegroundColor Yellow
         $newVal = Read-Host "   Enter value for $key"
-        
-        # Save to .env.external
-        (Get-Content $externalEnvPath).Replace(
-            "$key=<required: set manually>",
-            "$key=$newVal"
-        ) | Set-Content $externalEnvPath
 
-        # Update local value map
+        # Append or replace in .env.external
+        $fileContent = Get-Content $externalEnvPath -Raw
+        if ($fileContent -match "$key=") {
+            $fileContent = $fileContent -replace "$key=.*", "$key=$newVal"
+        }
+        else {
+            $fileContent += "`n$key=$newVal"
+        }
+        $fileContent | Set-Content $externalEnvPath
+
         $externalEnv[$key] = $newVal
-        $updated = $true
     }
-}
-
-if ($updated) {
-    Write-Host "`n✅ External credentials saved to .env.external"
-}
-
-# Merge into masterValues (so placeholders inherit them)
-foreach ($key in $requiredExternalKeys) {
-    $masterValues[$key] = $externalEnv[$key]
 }
 
 ###############################################################################
@@ -212,43 +208,51 @@ if ($Docker -and $masterValues.Count -eq 0) {
     $adminPwd = New-RandomString -length 16
 
     $masterValues = @{
-        DB_PASSWORD            = $pwd
-        ADMIN_USERNAME         = 'admin'
-        ADMIN_PASSWORD         = $adminPwd
-        API_KEY                = New-RandomString -length 32
-        AUTH_API_KEY           = New-RandomString -length 32
-        MONITOR_API_KEY        = New-RandomString -length 32
-        AUTH_API_URL           = 'http://auth-api:5555'
-        GRAPHQL_API_URL        = 'http://host.docker.internal:5900/graphql'
-        STRIPE_API_KEY         = "sk_test_$(New-RandomString -length 32)"
-        STRIPE_WEBHOOKS_SECRET = "whsec_$(New-RandomString -length 32)"
-        STRIPE_API_URL         = 'http://payment-processor-proxy:4243'
-        TWILIO_ACCOUNT_SID     = "AC$(New-RandomString -length 32)"
-        TWILIO_AUTH_TOKEN      = New-RandomString -length 32
-        TWILIO_MESSAGE_SERVICE_SID = "MG$(New-RandomString -length 32)"
-        CACHE_SERVER_ADDRESS   = 'http://warp-cache:7777'
-        LOCALIZATION_API_URL   = 'http://localizer-api:8888'
-        KAFKA_BROKER_LIST      = 'kafka:29092'
-        OIDC_ADMIN_USERNAME    = 'admin'
-        OIDC_ADMIN_PASSWORD    = $adminPwd
-        Oidc__Realm            = 'nudges'
-        Oidc__ServerUrl        = 'https://keycloak:8443'
-        OIDC_SERVER_AUTH_URL   = 'https://keycloak.local:8443'
-        Oidc__AdminCredentials__AdminClientId = 'admin-cli'
-        Oidc__AdminCredentials__Username      = 'admin'
-        Oidc__AdminCredentials__Password      = $adminPwd
-        IGNORE_SSL_CERT_VALIDATION = 'true'
-        Authentication__Schemes__Bearer__RequireHttpsMetadata = 'true'
-        Authentication__Schemes__Bearer__Authority            = 'https://keycloak.local:8443/realms/nudges'
-        Authentication__Schemes__Bearer__TokenValidationParameters__ValidIssuer = 'https://keycloak.local:8443/realms/nudges'
+        DB_PASSWORD                                                                  = $pwd
+        ADMIN_USERNAME                                                               = 'admin'
+        ADMIN_PASSWORD                                                               = $adminPwd
+        API_KEY                                                                      = New-RandomString -length 32
+        AUTH_API_KEY                                                                 = New-RandomString -length 32
+        MONITOR_API_KEY                                                              = New-RandomString -length 32
+        AUTH_API_URL                                                                 = 'http://auth-api:5555'
+        GRAPHQL_API_URL                                                              = 'http://host.docker.internal:5900/graphql'
+        # STRIPE_API_KEY         = "sk_test_$(New-RandomString -length 32)"
+        # STRIPE_WEBHOOKS_SECRET = "whsec_$(New-RandomString -length 32)"
+        STRIPE_API_URL                                                               = 'http://payment-processor-proxy:4243'
+        # TWILIO_ACCOUNT_SID     = "AC$(New-RandomString -length 32)"
+        # TWILIO_AUTH_TOKEN      = New-RandomString -length 32
+        # TWILIO_MESSAGE_SERVICE_SID = "MG$(New-RandomString -length 32)"
+        CACHE_SERVER_ADDRESS                                                         = 'http://warp-cache:7777'
+        LOCALIZATION_API_URL                                                         = 'http://localizer-api:8888'
+        KAFKA_BROKER_LIST                                                            = 'kafka:29092'
+        OIDC_ADMIN_USERNAME                                                          = 'admin'
+        OIDC_ADMIN_PASSWORD                                                          = $adminPwd
+        Oidc__Realm                                                                  = 'nudges'
+        Oidc__ServerUrl                                                              = 'https://keycloak:8443'
+        OIDC_SERVER_AUTH_URL                                                         = 'https://keycloak.local:8443'
+        Oidc__AdminCredentials__AdminClientId                                        = 'admin-cli'
+        Oidc__AdminCredentials__Username                                             = 'admin'
+        Oidc__AdminCredentials__Password                                             = $adminPwd
+        IGNORE_SSL_CERT_VALIDATION                                                   = 'true'
+        Authentication__Schemes__Bearer__RequireHttpsMetadata                        = 'true'
+        Authentication__Schemes__Bearer__Authority                                   = 'https://keycloak.local:8443/realms/nudges'
+        Authentication__Schemes__Bearer__TokenValidationParameters__ValidIssuer      = 'https://keycloak.local:8443/realms/nudges'
         Authentication__Schemes__Bearer__TokenValidationParameters__ValidateAudience = 'false'
-        IdentityModel__Logging = 'true'
+        IdentityModel__Logging                                                       = 'true'
     }
 
     Write-EnvFile -path $masterPath -values $masterValues -headerComment "Nudges Master Environment Configuration"
-} elseif ($Docker) {
+}
+elseif ($Docker) {
     Write-Host "✔ Using existing .env.master"
 }
+
+foreach ($key in $requiredExternalKeys) {
+    $masterValues[$key] = $externalEnv[$key]
+}
+
+Write-Host "`n✅ External credentials loaded and merged." -ForegroundColor Green
+
 
 ###############################################################################
 # Placeholder resolution for Docker mode
@@ -282,13 +286,13 @@ function Get-TemplateDefaults {
 $templateDefaults = Get-TemplateDefaults
 
 $derived = @{
-    KC_DB_USERNAME               = 'keycloak'
-    KC_DB_PASSWORD               = $masterValues['DB_PASSWORD']
-    KC_BOOTSTRAP_ADMIN_USERNAME  = $masterValues['ADMIN_USERNAME']
-    KC_BOOTSTRAP_ADMIN_PASSWORD  = $masterValues['ADMIN_PASSWORD']
-    USERDB_PASSWORD              = $masterValues['DB_PASSWORD']
-    PRODUCTDB_PASSWORD           = $masterValues['DB_PASSWORD']
-    PAYMENTDB_PASSWORD           = $masterValues['DB_PASSWORD']
+    KC_DB_USERNAME              = 'keycloak'
+    KC_DB_PASSWORD              = $masterValues['DB_PASSWORD']
+    KC_BOOTSTRAP_ADMIN_USERNAME = $masterValues['ADMIN_USERNAME']
+    KC_BOOTSTRAP_ADMIN_PASSWORD = $masterValues['ADMIN_PASSWORD']
+    USERDB_PASSWORD             = $masterValues['DB_PASSWORD']
+    PRODUCTDB_PASSWORD          = $masterValues['DB_PASSWORD']
+    PAYMENTDB_PASSWORD          = $masterValues['DB_PASSWORD']
 }
 
 $placeholders = @{}
@@ -331,7 +335,7 @@ if ($Oidc) {
     #
 
     $keycloakEnvFile = Get-ChildItem -Recurse -Filter "./keycloak/.env.docker" |
-                       Select-Object -First 1
+    Select-Object -First 1
 
     if (-not $keycloakEnvFile) {
         Write-Host "⚠ Could not locate ./keycloak/.env.docker — skipping OIDC extraction."
@@ -343,10 +347,10 @@ if ($Oidc) {
 
         $envVars = Read-EnvFile -path $keycloakEnvFile.FullName
 
-        $keycloakUrl     = $envVars["KC_URL"]
-        $realm           = $envVars["KC_REALM"]
-        $adminUser       = $envVars["KEYCLOAK_ADMIN"]
-        $adminPassword   = $envVars["KEYCLOAK_ADMIN_PASSWORD"]
+        $keycloakUrl = $envVars["KC_URL"]
+        $realm = $envVars["KC_REALM"]
+        $adminUser = $envVars["KEYCLOAK_ADMIN"]
+        $adminPassword = $envVars["KEYCLOAK_ADMIN_PASSWORD"]
 
         if (-not $keycloakUrl -or -not $realm -or -not $adminUser -or -not $adminPassword) {
             Write-Host "⚠ Missing required Keycloak variables in ./keycloak/.env.docker"
@@ -369,11 +373,11 @@ if ($Oidc) {
                 -Uri "$keycloakUrl/realms/master/protocol/openid-connect/token" `
                 -ContentType "application/x-www-form-urlencoded" `
                 -Body @{
-                    client_id  = "admin-cli"
-                    username   = $adminUser
-                    password   = $adminPassword
-                    grant_type = "password"
-                }
+                client_id  = "admin-cli"
+                username   = $adminUser
+                password   = $adminPassword
+                grant_type = "password"
+            }
 
             $token = $tokenResponse.access_token
             Write-Host "   ✔ Successfully authenticated with Keycloak"
@@ -412,15 +416,16 @@ if ($Oidc) {
             Write-Host "❌ Could not locate realm definition at $realmFile"
             Write-Host "   Required to discover clients — aborting OIDC extraction."
             $Oidc = $false
-        } else {
+        }
+        else {
             $realmConfig = Get-Content -Path $realmFile -Raw | ConvertFrom-Json
 
             $services = $realmConfig.clients |
-                Where-Object {
-                    $_.clientAuthenticatorType -eq "client-secret" -and
-                    -not $_.name.Contains("$")
-                } |
-                Select-Object -ExpandProperty clientId
+            Where-Object {
+                $_.clientAuthenticatorType -eq "client-secret" -and
+                -not $_.name.Contains("$")
+            } |
+            Select-Object -ExpandProperty clientId
 
             Write-Host "   • Found $($services.Count) OIDC client(s) requiring secrets"
         }
@@ -438,12 +443,12 @@ if ($Oidc) {
 
             #
             # Option C behavior:
-            #   --oidc     → skip if exists
-            #   --refresh  → overwrite
+            #   -Oidc     → skip if exists
+            #   -Refresh  → overwrite
             #
 
             if (-not $Refresh -and (Test-Path $secretFilePath)) {
-                Write-Host "   • Secret for $service already exists — skipping (normal --oidc mode)"
+                Write-Host "   • Secret for $service already exists — skipping (normal -Oidc mode)"
                 continue
             }
 

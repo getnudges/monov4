@@ -20,9 +20,9 @@ internal static class AppConfig {
     [ConfigurationKey]
     public const string KafkaBrokerList = "KAFKA_BROKER_LIST";
     [ConfigurationKey]
-    public const string OltpEndpointUrl = "OTLP_ENDPOINT_URL";
+    public const string OtlpEndpointUrl = "OTLP_ENDPOINT_URL";
     [ConfigurationKey]
     public const string OidcServerAuthUrl = "OIDC_SERVER_AUTH_URL";
-    [ConfigurationKey(false)]
+    [ConfigurationKey(true)]
     public const string IgnoreSslCertValidation = "IGNORE_SSL_CERT_VALIDATION";
 }

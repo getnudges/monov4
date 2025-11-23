@@ -4,8 +4,6 @@ FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 
 WORKDIR /src
 
-COPY KafkaConsumer.Docker.sln ./
-
 COPY KafkaConsumer/KafkaConsumer.csproj ./KafkaConsumer/
 COPY Nudges.Kafka/Nudges.Kafka.csproj ./Nudges.Kafka/
 COPY Nudges.Kafka.Analyzers/Nudges.Kafka.Analyzers.csproj ./Nudges.Kafka.Analyzers/
@@ -27,7 +25,7 @@ COPY Nudges.Telemetry/Nudges.Telemetry.csproj ./Nudges.Telemetry/
 COPY Nudges.Contracts/Nudges.Contracts.csproj ./Nudges.Contracts/
 
 RUN --mount=type=cache,target=/root/.nuget/packages \
-    dotnet restore KafkaConsumer.Docker.sln
+    dotnet restore KafkaConsumer/KafkaConsumer.csproj
 
 COPY KafkaConsumer/ ./KafkaConsumer/
 COPY Nudges.Kafka/ ./Nudges.Kafka/

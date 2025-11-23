@@ -23,7 +23,7 @@ builder.Logging.AddSimpleConsole(static o => o.SingleLine = true);
 
 builder.Configuration.AddEnvironmentVariables().AddUserSecrets<Program>(optional: true);
 
-if (builder.Configuration.GetOltpEndpointUrl() is string url) {
+if (builder.Configuration.GetOtlpEndpointUrl() is string url) {
 
     builder.Services.AddOpenTelemetryConfiguration(
         url,

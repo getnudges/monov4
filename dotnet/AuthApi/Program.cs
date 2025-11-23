@@ -23,7 +23,7 @@ builder.Configuration.AddFlatFilesFromMap(
 
 builder.Services.Configure<OidcConfig>(builder.Configuration.GetSection("Oidc"));
 
-if (builder.Configuration.GetOltpEndpointUrl() is string url) {
+if (builder.Configuration.GetOtlpEndpointUrl() is string url) {
 
     builder.Services.AddOpenTelemetry()
         .ConfigureResource(resource =>
@@ -119,7 +119,7 @@ app.UseExceptionHandler();
 
 app.MapHealthChecks("/health");
 
-if (builder.Configuration.GetOltpEndpointUrl() is not null) {
+if (builder.Configuration.GetOtlpEndpointUrl() is not null) {
     app.MapPrometheusScrapingEndpoint();
 }
 

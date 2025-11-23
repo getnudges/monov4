@@ -17,7 +17,7 @@ using UserApi;
 
 var builder = WebApplication.CreateBuilder(args);
 
-if (builder.Configuration.GetOltpEndpointUrl() is string url) {
+if (builder.Configuration.GetOtlpEndpointUrl() is string url) {
 
     builder.Services.AddOpenTelemetry()
         .ConfigureResource(resource =>
@@ -128,7 +128,7 @@ var app = builder.Build();
 
 app.UseHealthChecks("/health");
 
-if (builder.Configuration.GetOltpEndpointUrl() is not null) {
+if (builder.Configuration.GetOtlpEndpointUrl() is not null) {
     app.MapPrometheusScrapingEndpoint();
 }
 

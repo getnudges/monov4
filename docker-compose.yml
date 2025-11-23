@@ -174,8 +174,6 @@ services:
       context: ./stripe
       dockerfile: cli.Dockerfile
     command: listen --forward-to host.docker.internal:7071/api/StripeWebhookHandler?code=test
-    env_file:
-      - ./dotnet/.env.docker
 
   warp-cache:
     hostname: warp-cache
@@ -288,8 +286,6 @@ services:
       - ./certs/aspnetapp.key:/etc/nginx/certs/aspnetapp.key:ro
     ports:
       - "5050:5050"
-    environment:
-      PORT: 5050
     # depends_on:
     #   - graphql-gateway
     #   - auth-api
@@ -334,7 +330,7 @@ services:
       Keycloak__resource: auth-api
       Logging__LogLevel__Default: Debug
     env_file:
-      - ./dotnet/.env.docker
+      - ./dotnet/UserApi/.env.docker
       - ./keycloak/.env.user-api
     # depends_on:
     #   - postgres
@@ -355,7 +351,7 @@ services:
       - ASPNETCORE_ENVIRONMENT=Development
       - Kestrel__Endpoints__gRPC__Url=http://*:8888
     env_file:
-      - ./dotnet/.env.docker
+      - ./dotnet/LocalizationApi/.env.docker
 
   notifications-listener:
     container_name: notifications-listener
@@ -372,7 +368,7 @@ services:
     ports:
       - "7100"
     env_file:
-      - ./dotnet/.env.docker
+      - ./dotnet/KafkaConsumer/.env.docker
       - ./keycloak/.env.kafka-consumer
     command: notifications
     # depends_on:
@@ -395,7 +391,7 @@ services:
     ports:
       - "7100"
     env_file:
-      - ./dotnet/.env.docker
+      - ./dotnet/KafkaConsumer/.env.docker
       - ./keycloak/.env.kafka-consumer
     command: payments
     # depends_on:
@@ -418,7 +414,7 @@ services:
     ports:
       - "7100"
     env_file:
-      - ./dotnet/.env.docker
+      - ./dotnet/KafkaConsumer/.env.docker
       - ./keycloak/.env.kafka-consumer
     command: plan-subscriptions
     # depends_on:
@@ -441,7 +437,7 @@ services:
     ports:
       - "7100"
     env_file:
-      - ./dotnet/.env.docker
+      - ./dotnet/KafkaConsumer/.env.docker
       - ./keycloak/.env.kafka-consumer
     command: plans
     # depends_on:
@@ -464,7 +460,7 @@ services:
     ports:
       - "7100"
     env_file:
-      - ./dotnet/.env.docker
+      - ./dotnet/KafkaConsumer/.env.docker
       - ./keycloak/.env.kafka-consumer
     command: price-tiers
     # depends_on:
@@ -487,7 +483,7 @@ services:
     ports:
       - "7100"
     env_file:
-      - ./dotnet/.env.docker
+      - ./dotnet/KafkaConsumer/.env.docker
       - ./keycloak/.env.kafka-consumer
     command: clients
     # depends_on:
@@ -509,7 +505,7 @@ services:
     ports:
       - "7100"
     env_file:
-      - ./dotnet/.env.docker
+      - ./dotnet/KafkaConsumer/.env.docker
       - ./keycloak/.env.kafka-consumer
     command: user-authentication
     # depends_on:
@@ -531,7 +527,7 @@ services:
     ports:
       - "7100"
     env_file:
-      - ./dotnet/.env.docker
+      - ./dotnet/KafkaConsumer/.env.docker
       - ./keycloak/.env.kafka-consumer
     command: foreign-products
     # depends_on:
@@ -557,7 +553,7 @@ services:
       ASPNETCORE_ENVIRONMENT: Development
       HTTP_PORTS: 5200
     env_file:
-      - ./dotnet/.env.docker
+      - ./dotnet/ProductApi/.env.docker
       - ./keycloak/.env.product-api
     # depends_on:
     #   - postgres
@@ -581,7 +577,7 @@ services:
       ASPNETCORE_ENVIRONMENT: Development
       HTTP_PORTS: 5400
     env_file:
-      - ./dotnet/.env.docker
+      - ./dotnet/PaymentApi/.env.docker
       - ./keycloak/.env.payment-api
     # depends_on:
     #   - postgres
@@ -614,7 +610,7 @@ services:
     volumes:
       - ./certs/aspnetapp.pfx:/https/aspnetapp.pfx:ro
     env_file:
-      - ./dotnet/.env.docker
+      - ./dotnet/GraphQLGateway/GraphQLGateway/.env.docker
     # depends_on:
     #   - warp-cache
 
@@ -629,7 +625,7 @@ services:
     ports:
       - "5555:443"
     env_file:
-      - ./dotnet/.env.docker
+      - ./dotnet/AuthApi/.env.docker
       - ./keycloak/.env.auth-api
     environment:
       ASPNETCORE_URLS: https://+:443
@@ -678,7 +674,7 @@ services:
       HTTP_PORTS: 7071
       Logging__LogLevel__System.Net.Http.HttpClient.NudgesClient.LogicalHandler: Warning
     env_file:
-      - ./dotnet/.env.docker
+      - ./dotnet/Nudges.Webhooks/.env.docker
       - ./keycloak/.env.webhooks
     # depends_on:
     #   - warp-cache
