@@ -94,7 +94,6 @@ internal class StripeService(IStripeClient stripeClient, ILogger<StripeService> 
         activity?.SetTag("planId", plan.Id);
         activity?.Start();
         try {
-            throw new HttpRequestException("Simulated Stripe outage");
             var product = await _productService.CreateAsync(plan, new RequestOptions {
                 IdempotencyKey = Activity.Current?.Id,
             }, cancellationToken);

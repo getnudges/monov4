@@ -101,14 +101,28 @@ function Render-Template {
     )
 
     $content = Get-Content $templatePath -Raw
+
+    #
+    # First remove docker_exclude placeholders entirely
+    #
+    $content = [regex]::Replace($content, '\{\{\s*docker_exclude:[^}]+\}\}', '')
+
+    #
+    # Then perform normal replacements
+    #
     foreach ($key in $values.Keys) {
+
+        # Normal placeholder pattern
         $pattern = '\{\{\s*' + [regex]::Escape($key) + '\s*\}\}'
         $replacement = $values[$key]
+
         $content = [regex]::Replace($content, $pattern, $replacement)
     }
+
     Set-Content -Path $outputPath -Value $content
     Write-Host "✔ Generated $outputPath"
 }
+
 
 function New-ConfigFromTemplate {
     param (
@@ -469,7 +483,7 @@ if ($Oidc) {
             #
 
             $clientIdEntry = "Oidc__ClientId=$service"
-            $secretEntry   = "Oidc__ClientSecret=$($secretResponse.value)"
+            $secretEntry = "Oidc__ClientSecret=$($secretResponse.value)"
 
             $content = "$clientIdEntry`n$secretEntry`n"
             Set-Content -Path $secretFilePath -Value $content
@@ -553,7 +567,15 @@ if ($Local) {
             if ($localOverrides) {
                 Write-Host "   • Applying local overrides"
                 foreach ($p in $localOverrides.PSObject.Properties) {
-                    $localEnv[$p.Name] = $p.Value
+                    $val = [string]$p.Value
+
+                    # Expand {{PLACEHOLDER}} tokens using $placeholders map
+                    foreach ($ph in $placeholders.Keys) {
+                        $pattern = '\{\{\s*' + [regex]::Escape($ph) + '\s*\}\}'
+                        $val = [regex]::Replace($val, $pattern, $placeholders[$ph])
+                    }
+
+                    $localEnv[$p.Name] = $val
                 }
             }
 

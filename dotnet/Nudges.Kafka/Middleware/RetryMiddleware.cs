@@ -22,7 +22,7 @@ public sealed class RetryMiddleware<TKey, TValue>(
             using var retryActivity = ActivitySource.StartActivity(
                 $"retry_attempt_{attempt}",
                 ActivityKind.Internal,
-                Activity.Current?.Context ?? default);
+                context.ConsumeResult.Message.GetActivityContext() ?? default);
 
             retryActivity?.SetTag("kafka.retry.attempt", attempt);
             retryActivity?.SetTag("kafka.retry.max", maxRetries);

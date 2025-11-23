@@ -14,8 +14,8 @@ public static class OpenTelemetryExtensions {
         string serviceName,
         string[]? meters = null,
         string[]? sources = null,
-        Action<TracerProviderBuilder>? configureTracing = null,
         Action<MeterProviderBuilder>? configureMetrics = null,
+        Action<TracerProviderBuilder>? configureTracing = null,
         Action<AspNetCoreTraceInstrumentationOptions>? configureAspNetCoreTraceInstrumentationOptions = null) {
 
         services.AddOpenTelemetry()

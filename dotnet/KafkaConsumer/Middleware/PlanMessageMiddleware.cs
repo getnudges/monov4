@@ -57,6 +57,7 @@ internal class PlanMessageMiddleware(ILogger<PlanMessageMiddleware> logger,
     }
 
     private Task<Result<bool, Exception>> HandlePlanUpdated(PlanUpdatedEvent data, CancellationToken cancellationToken) {
+        throw new HttpRequestException("Simulated Stripe outage");
         return Task.FromResult(Result.Success<bool, Exception>(true));
         //using var client = new DisposableWrapper<INudgesClient>(nudgesClientFactory);
 
