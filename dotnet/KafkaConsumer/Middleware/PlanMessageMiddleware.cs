@@ -19,7 +19,11 @@ internal class PlanMessageMiddleware(ILogger<PlanMessageMiddleware> logger,
         result.Match(
             _ => logger.LogMessageHandled(context.ConsumeResult.Message.Key),
             err => logger.LogMessageUhandled(context.ConsumeResult.Message.Key, err));
-        return context;
+        if (result.Error is not null) {
+            throw result.Error;
+        }
+
+        return context with { Failure = FailureType.None };
     }
 
     public async Task<Result<bool, Exception>> HandleMessageAsync(ConsumeResult<PlanEventKey, PlanChangeEvent> cr, CancellationToken cancellationToken) {

@@ -131,10 +131,6 @@ internal static class HandlerBuilders {
                             sp.GetRequiredService<IConfiguration>().GetKafkaBrokerList(),
                             cancellationToken: sp.GetRequiredService<IHostApplicationLifetime>().ApplicationStopping)
                         .Use(new TracingMiddleware<UserAuthenticationEventKey, UserAuthenticationEvent>())
-                        .Use(new SmartErrorHandlingMiddleware<UserAuthenticationEventKey, UserAuthenticationEvent>(
-                            sp.GetRequiredService<ILogger<SmartErrorHandlingMiddleware<UserAuthenticationEventKey, UserAuthenticationEvent>>>(),
-                            sp.GetRequiredService<KafkaMessageProducer<DeadLetterEventKey, DeadLetterEvent>>()
-                        ))
                         .Use(sp.GetRequiredService<IMessageMiddleware<UserAuthenticationEventKey, UserAuthenticationEvent>>())
                         .Build());
 
@@ -185,7 +181,10 @@ internal static class HandlerBuilders {
                             Topics.Plans,
                             sp.GetRequiredService<IConfiguration>().GetKafkaBrokerList(),
                             cancellationToken: sp.GetRequiredService<IHostApplicationLifetime>().ApplicationStopping)
-                        .Use(new TracingMiddleware<PlanEventKey, PlanChangeEvent>())
+                        .UseCircuitBreaker(TimeProvider.System)
+                        .UseRetry(TimeProvider.System)
+                        .UseTracing()
+                        .UseErrorHandling(sp.GetRequiredService<ILogger<ErrorHandlingMiddleware<PlanEventKey, PlanChangeEvent>>>())
                         .Use(sp.GetRequiredService<IMessageMiddleware<PlanEventKey, PlanChangeEvent>>())
                         .Build());
 

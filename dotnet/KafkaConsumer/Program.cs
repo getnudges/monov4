@@ -74,10 +74,13 @@ static IHostBuilder CreateBaseHost(string[] args, string name) =>
                                 "Microsoft.AspNetCore.Hosting",
                                 "Microsoft.AspNetCore.Server.Kestrel",
                                 "System.Net.Http",
-                                $"{typeof(TracingMiddleware<,>).FullName}",
+                                $"{typeof(TracingMiddleware<,>).Namespace}.TracingMiddleware",
                             ], [
                                 $"{typeof(TracingMiddleware<,>).Namespace}.TracingMiddleware",
-                                $"{typeof(StripeService).FullName}"
+                                $"{typeof(StripeService).Namespace}.StripeService",
+                                $"{typeof(TracingMiddleware<,>).Namespace}.TracingMiddleware",
+                                $"{typeof(RetryMiddleware<,>).Namespace}.RetryMiddleware",
+                                $"{typeof(CircuitBreakerMiddleware<,>).Namespace}.CircuitBreaker",
                             ], null, null, o => o.Filter = ctx => ctx.Request.Method == "POST");
                     }
 

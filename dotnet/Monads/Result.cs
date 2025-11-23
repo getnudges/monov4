@@ -48,7 +48,7 @@ public class Result<T, TError> {
     /// Gets the error of the result if <see cref="IsSuccess"/> is false.
     /// </summary>
     [MaybeNull]
-    internal TError Error { get; }
+    public TError Error { get; }
 
     private Result() { }
 
