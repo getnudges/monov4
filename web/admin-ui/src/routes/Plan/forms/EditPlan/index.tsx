@@ -2,10 +2,7 @@ import { FormProvider } from "react-hook-form";
 import { useLocation } from "wouter";
 import { useState } from "react";
 import { useFragment, useMutation } from "react-relay";
-import type {
-  PlanEditor_plan$data,
-  PlanEditor_plan$key,
-} from "@/fragments/__generated__/PlanEditor_plan.graphql";
+import type { PlanEditor_plan$key } from "@/fragments/__generated__/PlanEditor_plan.graphql";
 import PlanEditorUpdatePlan from "@/mutations/PlanEditorUpdatePlan";
 import type {
   PlanEditorUpdatePlanMutation,
@@ -15,7 +12,6 @@ import Alert from "@/components/AlertDialog";
 import { usePlanUpdatedSubscription } from "@/subscriptions/PlanUpdated";
 import EditPlanForm from "./EditPlanForm";
 import { useToaster } from "@/components/Toaster";
-import type { GraphQLSubscriptionError } from "@/types";
 import type {
   PlanEditorDeletePlanMutation,
   PlanEditorDeletePlanMutation$variables,
@@ -33,10 +29,20 @@ export default function PlanEditor({ plan }: PlanEditorProps) {
   const { notify } = useToaster();
 
   const data = useFragment(PlanEditor_plan, plan);
-  const [planUpdatedErrors, setPlanUpdatedErrors] = useState<
-    GraphQLSubscriptionError[]
-  >([]);
-  usePlanUpdatedSubscription(data.id, (e) => setPlanUpdatedErrors(e));
+  usePlanUpdatedSubscription(
+    data.id,
+    () => {
+      notify("This plan has been updated externally.", "Plan Updated", 1500);
+    },
+    (e) => {
+      notify(
+        "Error receiving plan updates: " +
+          e.map((err) => err.message).join(", "),
+        "Subscription Error",
+        5000
+      );
+    }
+  );
 
   const form = usePlanForm(data);
 

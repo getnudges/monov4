@@ -1,13 +1,17 @@
 import { graphql } from "relay-runtime";
 
 import type { GraphQLSubscriptionConfig } from "relay-runtime";
-import type { PlanUpdatedSubscription } from "./__generated__/PlanUpdatedSubscription.graphql";
+import type {
+  PlanUpdatedSubscription,
+  PlanUpdatedSubscription$data,
+} from "./__generated__/PlanUpdatedSubscription.graphql";
 import { useSubscription } from "react-relay";
 import { useMemo } from "react";
 import type { GraphQLSubscriptionError } from "@/types";
 
 export function usePlanUpdatedSubscription(
   id: string,
+  onNext?: (response: PlanUpdatedSubscription$data) => void,
   onError?: (error: GraphQLSubscriptionError[]) => void
 ) {
   return useSubscription<PlanUpdatedSubscription>(
@@ -28,7 +32,9 @@ export function usePlanUpdatedSubscription(
             }
           },
           onNext: (response) => {
-            console.log("Plan updated via PlanUpdatedSubscription", response);
+            if (onNext && response) {
+              onNext(response);
+            }
           },
         } satisfies GraphQLSubscriptionConfig<PlanUpdatedSubscription>),
       [id, onError]
