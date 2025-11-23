@@ -1,14 +1,14 @@
-import { type UseFormReturn } from "react-hook-form";
-import { type PlanFormValues } from "./PlanEditor";
+import { useFormContext } from "react-hook-form";
+import { type PlanFormValues } from "../../PlanForms";
 import TextInput from "@/components/TextInput";
 import { Form } from "radix-ui";
 
-export type PlanFormProps = {
-  form: UseFormReturn<PlanFormValues>;
+export type CreatePlanFormProps = {
   onSubmit: (data: PlanFormValues) => void;
 };
 
-const PlanForm = ({ form, onSubmit }: PlanFormProps) => {
+const CreatePlanForm = ({ onSubmit }: CreatePlanFormProps) => {
+  const form = useFormContext<PlanFormValues>();
   return (
     <>
       <Form.Root onSubmit={form.handleSubmit(onSubmit)} autoComplete="off">
@@ -20,9 +20,10 @@ const PlanForm = ({ form, onSubmit }: PlanFormProps) => {
           label="Description"
           placeholder="Enter plan description"
         />
+        <input type="submit" value="Create Plan" />
       </Form.Root>
     </>
   );
 };
 
-export default PlanForm;
+export default CreatePlanForm;
