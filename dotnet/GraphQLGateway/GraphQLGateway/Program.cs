@@ -214,8 +214,9 @@ app.Use(async (context, next) => {
     var (activityName, operationType) = await GetTraceActivity(context.Request, context.RequestAborted);
 
     // Stash for the ASP.NET Core + HotChocolate enrichers
-    context.Items["OperationName"] = activityName;
+    // I only care if we found a proper operation name
     if (!string.IsNullOrWhiteSpace(operationType)) {
+        context.Items["OperationName"] = activityName;
         context.Items["GraphQLOperationType"] = operationType;
     }
 
@@ -260,8 +261,8 @@ static async Task<(string Name, string? OperationType)> GetTraceActivity(HttpReq
         }
 
         return ("GraphQLRequest(Unknown)", null);
-    } catch {
-        return ("GraphQLRequest(Err)", null);
+    } catch (Exception e) {
+        return ($"GraphQLRequestError({e.GetType().Name})", null);
     }
 }
 
