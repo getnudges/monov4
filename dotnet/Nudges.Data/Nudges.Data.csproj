@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
         <TargetFramework>net10.0</TargetFramework>
@@ -10,7 +10,14 @@
       <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.0" />
     </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\Nudges.Security\Nudges.Security.csproj" />
+  </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Products\Migrations\" />
+    <Folder Include="Users\Migrations\" />
+  </ItemGroup>
 
 </Project>
 

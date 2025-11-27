@@ -4,11 +4,6 @@ namespace DbSeeder;
 
 internal static class AppConfiguration {
 
-    public static class ConnectionStrings {
-        public const string UserDb = "UserDb";
-        public const string PaymentDb = nameof(PaymentDb);
-    }
-
     public static class Keys {
         public const string RedisUrl = "REDIS_URL";
         public const string StripeApiKey = "STRIPE_API_KEY";

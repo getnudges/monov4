@@ -1,11 +1,7 @@
-using System;
-using System.Collections.Generic;
-
 namespace Nudges.Data.Users.Models;
 
-public partial class Admin
-{
+public partial class Admin {
     public Guid Id { get; set; }
 
-    public virtual Client IdNavigation { get; set; } = null!;
+    public virtual User IdNavigation { get; set; } = null!;
 }

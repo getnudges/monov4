@@ -1,13 +1,17 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 17
-VisualStudioVersion = 17.5.002.0
+# Visual Studio Version 18
+VisualStudioVersion = 18.0.11222.15
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DbSeeder", "tools\DbSeeder\DbSeeder.csproj", "{24797C53-EBF3-4C27-82A4-ECFD8C6D3152}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Nudges.Data", "Nudges.Data\Nudges.Data.csproj", "{EBEE5948-7BA1-48F0-922B-8BC6364BC1B5}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Nudges.Redis", "Nudges.Redis\Nudges.Redis.csproj", "{90EA9419-4646-4099-83D2-680F42ADB590}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Nudges.Security", "Nudges.Security\Nudges.Security.csproj", "{591185A6-9807-01CE-3B21-62155E25C0A6}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Nudges.Data.Security", "Nudges.Data.Security\Nudges.Data.Security.csproj", "{6022C8CB-E8A9-16D4-3A6A-A1F532156149}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -27,6 +31,14 @@ Global
 		{90EA9419-4646-4099-83D2-680F42ADB590}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{90EA9419-4646-4099-83D2-680F42ADB590}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{90EA9419-4646-4099-83D2-680F42ADB590}.Release|Any CPU.Build.0 = Release|Any CPU
+		{591185A6-9807-01CE-3B21-62155E25C0A6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{591185A6-9807-01CE-3B21-62155E25C0A6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{591185A6-9807-01CE-3B21-62155E25C0A6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{591185A6-9807-01CE-3B21-62155E25C0A6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6022C8CB-E8A9-16D4-3A6A-A1F532156149}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6022C8CB-E8A9-16D4-3A6A-A1F532156149}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6022C8CB-E8A9-16D4-3A6A-A1F532156149}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6022C8CB-E8A9-16D4-3A6A-A1F532156149}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -10,7 +10,10 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Nudges.Configuration\Nudges.Configuration.csproj" />
+    <ProjectReference Include="..\Nudges.Data.Security\Nudges.Data.Security.csproj" />
     <ProjectReference Include="..\Nudges.Kafka.Events\Nudges.Kafka.Events.csproj" />
+    <ProjectReference Include="..\Nudges.Security\Nudges.Security.csproj" />
+    <ProjectReference Include="..\Nudges.Telemetry\Nudges.Telemetry.csproj" />
     <ProjectReference Include="..\Precision.WarpCache\Precision.WarpCache.Grpc.Client\Precision.WarpCache.Grpc.Client.csproj" />
     <ProjectReference Include="..\Nudges.Auth.Web\Nudges.Auth.Web.csproj" />
     <ProjectReference Include="..\Nudges.Auth\Nudges.Auth.csproj" />
@@ -21,6 +24,7 @@
 
   <ItemGroup>
     <PackageReference Include="Confluent.Kafka" Version="2.12.0" />
+    <PackageReference Include="HotChocolate.Diagnostics" Version="15.1.11" />
     <PackageReference Include="HotChocolate.Subscriptions.Redis" Version="15.1.11" />
     <PackageReference Include="HotChocolate.Types.Analyzers" Version="15.1.11" />
     <PackageReference Include="Keycloak.AuthServices.Authentication" Version="2.7.0" />

@@ -6,6 +6,8 @@ COPY Nudges.AuthInit/*.csproj ./Nudges.AuthInit/
 COPY Nudges.Auth.Keycloak/*.csproj ./Nudges.Auth.Keycloak/
 COPY Nudges.Auth/*.csproj ./Nudges.Auth/
 COPY Nudges.Data/*.csproj ./Nudges.Data/
+COPY Nudges.Data.Security/*.csproj ./Nudges.Data.Security/
+COPY Nudges.Security/*.csproj ./Nudges.Security/
 COPY Monads/*.csproj ./Monads/
 COPY Precision.WarpCache/Precision.WarpCache/*.csproj ./Precision.WarpCache/Precision.WarpCache/
 COPY Nudges.Configuration.Analyzers/*.csproj ./Nudges.Configuration.Analyzers/
@@ -16,7 +18,9 @@ COPY Nudges.AuthInit/ ./Nudges.AuthInit/
 COPY Nudges.Auth.Keycloak/ ./Nudges.Auth.Keycloak/
 COPY Nudges.Auth/ ./Nudges.Auth/
 COPY Nudges.Data/ ./Nudges.Data/
+COPY Nudges.Data.Security/ ./Nudges.Data.Security/
 COPY Monads/ ./Monads/
+COPY Nudges.Security/ ./Nudges.Security/
 COPY Precision.WarpCache/Precision.WarpCache/ ./Precision.WarpCache/Precision.WarpCache/
 COPY Nudges.Configuration.Analyzers/ ./Nudges.Configuration.Analyzers/
 

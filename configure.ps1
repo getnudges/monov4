@@ -116,6 +116,10 @@ function Render-Template {
         $pattern = '\{\{\s*' + [regex]::Escape($key) + '\s*\}\}'
         $replacement = $values[$key]
 
+        if ($null -eq $replacement || $replacement -eq '') {
+            throw "Value for placeholder '$key' is null"
+        }
+
         $content = [regex]::Replace($content, $pattern, $replacement)
     }
 
@@ -248,6 +252,8 @@ if ($Docker -and $masterValues.Count -eq 0) {
         Authentication__Schemes__Bearer__TokenValidationParameters__ValidIssuer      = 'https://keycloak.local:8443/realms/nudges'
         Authentication__Schemes__Bearer__TokenValidationParameters__ValidateAudience = 'false'
         IdentityModel__Logging                                                       = 'true'
+        HashSettings__HashKeyBase64                                                  = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes((New-RandomString -length 32)))
+        EncryptionSettings__Key                                                      = [Convert]::ToBase64String([System.Security.Cryptography.RandomNumberGenerator]::GetBytes(32))
         ConnectionStrings__ProductDb                                                 = "Host=postgres;Port=5432;Database=productdb;Username=productdb;Password=$pwd;"
         ConnectionStrings__PaymentDb                                                 = "Host=postgres;Port=5432;Database=paymentdb;Username=paymentdb;Password=$pwd;"
         ConnectionStrings__UserDb                                                    = "Host=postgres;Port=5432;Database=userdb;Username=userdb;Password=$pwd;"
@@ -593,7 +599,8 @@ if ($Local) {
                         $requiredKeys += $matches[1].Trim()
                     }
                 }
-            } else {
+            }
+            else {
                 Write-Host "   • No .env.template found — using full environment set"
                 $requiredKeys = $localEnv.Keys
             }
@@ -678,6 +685,10 @@ if ($Local) {
             # Apply filtered + mapped secrets
             foreach ($entry in $secretValues.GetEnumerator()) {
                 $key = $entry.Key
+                # Translate double-underscore to colon notation for nested config keys
+                if ($key -like "*__*") {
+                    $key = $key -replace "__", ":"
+                }
                 $value = [string]$entry.Value
                 $null = & dotnet @($dotnetArgsBase + @("set", $key, $value))
             }

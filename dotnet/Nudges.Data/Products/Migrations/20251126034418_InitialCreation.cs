@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -7,7 +7,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Nudges.Data.Products.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialCreate : Migration
+    public partial class InitialCreation : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -25,11 +25,32 @@ namespace Nudges.Data.Products.Migrations
                     description = table.Column<string>(type: "text", nullable: true),
                     icon_url = table.Column<string>(type: "character varying(1000)", maxLength: 1000, nullable: true),
                     is_active = table.Column<bool>(type: "boolean", nullable: true, defaultValue: true),
-                    created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: true, defaultValueSql: "now()")
+                    created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: true, defaultValueSql: "now()"),
+                    foreign_service_id = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("plan_pkey", x => x.id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "plan_features",
+                columns: table => new
+                {
+                    plan_id = table.Column<int>(type: "integer", nullable: false),
+                    max_messages = table.Column<int>(type: "integer", nullable: true),
+                    support_tier = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
+                    ai_support = table.Column<bool>(type: "boolean", nullable: true, defaultValue: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("plan_features_pkey", x => x.plan_id);
+                    table.ForeignKey(
+                        name: "plan_features_plan_id_fkey",
+                        column: x => x.plan_id,
+                        principalTable: "plan",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -38,13 +59,15 @@ namespace Nudges.Data.Products.Migrations
                 {
                     id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    plan_id = table.Column<int>(type: "integer", nullable: true),
+                    plan_id = table.Column<int>(type: "integer", nullable: false),
                     price = table.Column<decimal>(type: "numeric(10,2)", precision: 10, scale: 2, nullable: false),
                     duration = table.Column<TimeSpan>(type: "interval", nullable: false),
                     name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
                     description = table.Column<string>(type: "text", nullable: true),
                     icon_url = table.Column<string>(type: "character varying(1000)", maxLength: 1000, nullable: true),
-                    created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: true, defaultValueSql: "now()")
+                    created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: true, defaultValueSql: "now()"),
+                    foreign_service_id = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
+                    status = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false, defaultValueSql: "'ACTIVE'::character varying")
                 },
                 constraints: table =>
                 {
@@ -101,28 +124,6 @@ namespace Nudges.Data.Products.Migrations
                     table.PrimaryKey("plan_subscription_pkey", x => x.id);
                     table.ForeignKey(
                         name: "plan_subscription_price_tier_id_fkey",
-                        column: x => x.price_tier_id,
-                        principalTable: "price_tier",
-                        principalColumn: "id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "price_tier_features",
-                columns: table => new
-                {
-                    id = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    price_tier_id = table.Column<int>(type: "integer", nullable: true),
-                    max_messages = table.Column<int>(type: "integer", nullable: true),
-                    support_tier = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
-                    ai_support = table.Column<bool>(type: "boolean", nullable: true, defaultValue: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("price_tier_features_pkey", x => x.id);
-                    table.ForeignKey(
-                        name: "price_tier_features_price_tier_id_fkey",
                         column: x => x.price_tier_id,
                         principalTable: "price_tier",
                         principalColumn: "id",
@@ -233,11 +234,6 @@ namespace Nudges.Data.Products.Migrations
                 column: "plan_id");
 
             migrationBuilder.CreateIndex(
-                name: "IX_price_tier_features_price_tier_id",
-                table: "price_tier_features",
-                column: "price_tier_id");
-
-            migrationBuilder.CreateIndex(
                 name: "IX_trial_plan_subscription_id",
                 table: "trial",
                 column: "plan_subscription_id");
@@ -260,7 +256,7 @@ namespace Nudges.Data.Products.Migrations
                 name: "discount");
 
             migrationBuilder.DropTable(
-                name: "price_tier_features");
+                name: "plan_features");
 
             migrationBuilder.DropTable(
                 name: "trial");

@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Nudges.Auth;
 using Nudges.Data.Users;
 using Nudges.Data.Users.Models;
+using Nudges.Security;
 using UserApi.Models;
 
 namespace UserApi;
@@ -14,15 +15,21 @@ public class Query {
     public async Task<Client?> GetClient([ID<Client>] Guid id, UserDbContext context) => await context.Clients.FindAsync(id);
 
     [Authorize(PolicyNames.Admin)]
-    public async Task<Client?> GetClientByPhoneNumber(string phoneNumber, UserDbContext context, CancellationToken cancellationToken) =>
-        await context.Clients.FirstOrDefaultAsync(c => c.PhoneNumber == phoneNumber, cancellationToken);
+    public async Task<Client?> GetClientByPhoneNumber(string phoneNumber, UserDbContext context, HashService hashService, CancellationToken cancellationToken) {
+        var normalized = ValidationHelpers.NormalizePhoneNumber(phoneNumber);
+        var phoneHash = hashService.ComputeHash(normalized);
+        var user = await context.Users.Include(u => u.Client).SingleOrDefaultAsync(c => c.PhoneNumberHash == phoneHash, cancellationToken);
+        return user?.Client;
+    }
 
     public async Task<Client?> GetClientBySlug(string slug, UserDbContext context, CancellationToken cancellationToken) =>
         await context.Clients.FirstOrDefaultAsync(c => c.Slug == slug, cancellationToken);
 
     [Authorize(PolicyNames.Admin)]
-    public async Task<Subscriber?> GetSubscriberByPhoneNumber(string phoneNumber, UserDbContext context, CancellationToken cancellationToken) =>
-        await context.Subscribers.FirstOrDefaultAsync(c => c.PhoneNumber == phoneNumber, cancellationToken);
+    public async Task<Subscriber?> GetSubscriberByPhoneNumber(string phoneNumber, UserDbContext context, CancellationToken cancellationToken) {
+        var user = await context.Users.Include(u => u.Subscriber).SingleOrDefaultAsync(c => c.PhoneNumber == phoneNumber, cancellationToken);
+        return user?.Subscriber;
+    }
 
     [Authorize(PolicyNames.Admin)]
     public async Task<Client?> GetClientByCustomerId(string customerId, UserDbContext context, CancellationToken cancellationToken) =>
@@ -43,38 +50,21 @@ public class Query {
     public Task<int> TotalClients(UserDbContext context, CancellationToken cancellationToken) => context.Clients.CountAsync(cancellationToken);
 
     [Authorize(Roles = [ClaimValues.Roles.Admin, ClaimValues.Roles.Client])]
-    public async Task<Subscriber?> GetSubscriber(UserDbContext context, string subPhone, IResolverContext resolverContext, CancellationToken cancellationToken) {
-        if (resolverContext.GetUser() is { } user) {
-            if (user?.FindFirst(WellKnownClaims.Role)?.Value is ClaimValues.Roles.Client && user?.FindFirst(WellKnownClaims.Username)?.Value is string clientPhone) {
-                // the user is a client and the subscriber is one of their subscribers
-                return await context.Clients
-                    .Where(c => c.PhoneNumber == clientPhone && c.SubscriberPhoneNumbers.Any(s => s.PhoneNumber == subPhone))
-                    .SelectMany(c => c.SubscriberPhoneNumbers)
-                    .FirstOrDefaultAsync(cancellationToken);
-            }
-            if (user?.FindFirst(WellKnownClaims.Role)?.Value is ClaimValues.Roles.Subscriber && user?.FindFirst(WellKnownClaims.Username)?.Value is string phone) {
-                // the user is a subscriber and the subscriber is their selves
-                return await context.Subscribers.FirstOrDefaultAsync(s => s.PhoneNumber == phone, cancellationToken);
-            }
-            if (user?.FindFirst(WellKnownClaims.Role)?.Value is ClaimValues.Roles.Admin) {
-                // the user is an admin
-                return await context.Subscribers.FindAsync([subPhone], cancellationToken);
-            }
-        }
-        return null;
-    }
-
-    [Authorize(Roles = [ClaimValues.Roles.Admin, ClaimValues.Roles.Client])]
     [UsePaging]
     [UseProjection]
     [UseFiltering]
     [UseSorting]
-    public IQueryable<Subscriber> GetSubscribers(UserDbContext context, IResolverContext resolverContext) {
+    public IQueryable<Subscriber> GetSubscribers(UserDbContext context, HashService hashService, IResolverContext resolverContext) {
         if (resolverContext.GetUser() is { } user) {
             if (user?.FindFirst(WellKnownClaims.Role)?.Value is ClaimValues.Roles.Client && user?.FindFirst(WellKnownClaims.Username)?.Value is string phoneNumber) {
-                return context.Clients
-                    .Where(c => c.PhoneNumber == phoneNumber)
-                    .SelectMany(c => c.SubscriberPhoneNumbers);
+                var hashedPhone = hashService.ComputeHash(ValidationHelpers.NormalizePhoneNumber(phoneNumber));
+                var list = context.Users
+                    .Include(u => u.Client)
+                    .ThenInclude(c => c!.Subscribers)
+                    .Where(c => c.PhoneNumberHash == hashedPhone)
+                    .SelectMany(c => c.Client!.Subscribers);
+                return list;
+
             }
             if (user?.FindFirst(WellKnownClaims.Role)?.Value is ClaimValues.Roles.Admin) {
                 return context.Subscribers;
@@ -89,7 +79,8 @@ public class Query {
 
 public class AdminType : ObjectType<Admin> {
 
-    protected override void Configure(IObjectTypeDescriptor<Admin> descriptor) =>
+    protected override void Configure(IObjectTypeDescriptor<Admin> descriptor) {
+        descriptor.Ignore(f => f.IdNavigation);
         descriptor
             .ImplementsNode()
             .IdField(f => f.Id)
@@ -99,6 +90,7 @@ public class AdminType : ObjectType<Admin> {
                 var result = await dbContext.Admins.FindAsync(id);
                 return result;
             });
+    }
 }
 
 public sealed class QueryObjectType : ObjectType<Query> {
@@ -113,16 +105,14 @@ public sealed class QueryObjectType : ObjectType<Query> {
         descriptor.Field(f => f.GetClients(default!, default!))
             .Type<ClientType>();
 
-        descriptor.Field(f => f.GetSubscriber(default!, default!, default!, default!))
-            .Type<SubscriberType>();
-
-        descriptor.Field(f => f.GetSubscribers(default!, default!))
+        descriptor.Field(f => f.GetSubscribers(default!, default!, default!))
             .Type<SubscriberType>();
 
         descriptor.Field("viewer")
             .Type<UserType>()
             .Resolve(async context => {
                 var user = context.GetUser();
+                var hashService = context.Services.GetRequiredService<HashService>();
 
                 if (user?.FindAll(ClaimTypes.Role).Select(c => c.Value).ToList() is not { } roles) {
                     return null;
@@ -130,25 +120,22 @@ public sealed class QueryObjectType : ObjectType<Query> {
 
                 using var dbContext = await context.Services.GetRequiredService<IDbContextFactory<UserDbContext>>().CreateDbContextAsync();
 
-                if (roles?.Any(r => r == ClaimValues.Roles.Subscriber) == true && user?.FindFirst(WellKnownClaims.PhoneNumber)?.Value is string subPhone) {
-                    return await dbContext.Subscribers.FirstOrDefaultAsync(s => s.PhoneNumber == subPhone);
+                if (roles.Any(r => r == ClaimValues.Roles.Admin) && user?.FindFirst(ClaimTypes.NameIdentifier)?.Value is string adminSub) {
+                    var clientUser = await dbContext.Users.Include(u => u.Admin).SingleOrDefaultAsync(s => s.Subject == adminSub);
+                    return clientUser?.Admin;
                 }
 
-                if (roles?.Any(r => r == ClaimValues.Roles.Client) == true && user?.FindFirst(ClaimTypes.NameIdentifier)?.Value is string clientSub) {
-                    return await dbContext.Clients.FirstOrDefaultAsync(s => s.Subject == clientSub);
+                if (roles.Any(r => r == ClaimValues.Roles.Client) && user?.FindFirst(ClaimTypes.NameIdentifier)?.Value is string clientSub) {
+                    var clientUser = await dbContext.Users.Include(u => u.Client).SingleOrDefaultAsync(s => s.Subject == clientSub);
+                    return clientUser?.Client;
                 }
 
-                if (user?.FindFirst(WellKnownClaims.Sub)?.Value is string userSub) {
-                    var client = await dbContext.Clients.FirstOrDefaultAsync(s => s.Subject == userSub);
-                    if (client is null) {
-                        return null;
-                    }
-                    var admin = await dbContext.Admins.FirstOrDefaultAsync(a => a.Id == client.Id);
-                    if (admin is null) {
-                        return null;
-                    }
-                    return admin;
+                if (roles.Any(r => r == ClaimValues.Roles.Subscriber) && user?.FindFirst(WellKnownClaims.PhoneNumber)?.Value is string subPhone) {
+                    var hashedSubPhone = hashService.ComputeHash(ValidationHelpers.NormalizePhoneNumber(subPhone));
+                    var subUser = await dbContext.Users.Include(u => u.Subscriber).SingleOrDefaultAsync(s => s.PhoneNumberHash == hashedSubPhone);
+                    return subUser?.Subscriber;
                 }
+
                 return null;
             });
     }

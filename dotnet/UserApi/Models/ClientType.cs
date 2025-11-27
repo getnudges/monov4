@@ -7,10 +7,10 @@ namespace UserApi.Models;
 public class ClientResolvers {
 
     public async Task<int> GetSubscriberCount([Parent] Client client, UserDbContext dbContext) =>
-        await dbContext.Entry(client).Collection(c => c.SubscriberPhoneNumbers).Query().CountAsync();
+        await dbContext.Entry(client).Collection(c => c.Subscribers).Query().CountAsync();
 
     public async Task<IQueryable<Subscriber>> GetSubscribers([Parent] Client client, UserDbContext dbContext) {
-        var collection = dbContext.Entry(client).Collection(c => c.SubscriberPhoneNumbers);
+        var collection = dbContext.Entry(client).Collection(c => c.Subscribers);
         await collection.LoadAsync();
         return collection.Query();
     }
@@ -27,13 +27,10 @@ public class ClientType : ObjectType<Client> {
                 var result = await dbContext.Clients.FindAsync([id], context.RequestAborted);
                 return result;
             });
-        descriptor.Field("clientId")
-            .Deprecated("Use `id` field instead.")
-            .Type<NonNullType<StringType>>()
-            .Resolve(descriptor => descriptor.Parent<Client>().Id.ToString());
+        descriptor.Ignore(f => f.IdNavigation);
         descriptor.Field("subscriberCount")
             .ResolveWith<ClientResolvers>(r => r.GetSubscriberCount(default!, default!));
-        descriptor.Field(f => f.SubscriberPhoneNumbers).Ignore();
+        descriptor.Field(f => f.Subscribers).Ignore();
         descriptor.Field("subscribers")
             .ResolveWith<ClientResolvers>(r => r.GetSubscribers(default!, default!))
             .UsePaging()

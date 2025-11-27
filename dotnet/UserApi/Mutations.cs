@@ -1,9 +1,11 @@
+using System.Buffers.Text;
 using System.Globalization;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
 using HotChocolate.Authorization;
 using HotChocolate.Subscriptions;
+using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.JsonWebTokens;
@@ -12,6 +14,8 @@ using Nudges.Data.Users;
 using Nudges.Data.Users.Models;
 using Nudges.Kafka;
 using Nudges.Kafka.Events;
+using Nudges.Security;
+using StackExchange.Redis;
 
 namespace UserApi;
 
@@ -26,22 +30,15 @@ public class Mutation(ILogger<Mutation> logger) {
         return client;
     }
 
-    public static string GenerateSlug(string phoneNumber) {
+    public static string GenerateSlug(string input) {
         // Convert phone number to bytes
-        var phoneBytes = Encoding.UTF8.GetBytes(phoneNumber);
+        var bytes = Encoding.UTF8.GetBytes(input);
 
         // Generate SHA-256 hash
-        var hashBytes = SHA256.HashData(phoneBytes);
+        var hashBytes = SHA256.HashData(bytes);
 
-        // Take the first 12 characters of the hashs
-        var hashHex = Convert.ToHexString(hashBytes)[..12];
-
-        // Encode the hash to base64
-        var slugBytes = new byte[hashHex.Length / 2];
-        for (var i = 0; i < slugBytes.Length; i++) {
-            slugBytes[i] = Convert.ToByte(hashHex.Substring(i * 2, 2), 16);
-        }
-        var slug = Convert.ToBase64String(slugBytes).TrimEnd('=').Replace('+', '-').Replace('/', '_');
+        // we want them to be short
+        var slug = Base64Url.EncodeToString(hashBytes)[..12];
 
         return slug;
     }
@@ -52,35 +49,45 @@ public class Mutation(ILogger<Mutation> logger) {
                                            ClaimsPrincipal claimsPrincipal,
                                            CreateClientInput input,
                                            KafkaMessageProducer<ClientKey, ClientEvent> clientEventProducer,
-                                           INodeIdSerializer idSerializer,
+                                           HashService hashService,
                                            HttpContext httpContext,
                                            CancellationToken cancellationToken) {
 
-        var phoneNumber = claimsPrincipal.FindFirstValue(WellKnownClaims.PhoneNumber)!;
-        var userSub = httpContext.User.FindFirstValue(WellKnownClaims.Sub);
-        var userLocale = httpContext.User.FindFirstValue(WellKnownClaims.Locale);
-        var existingClient = await context.Clients.FirstOrDefaultAsync(c => c.PhoneNumber == phoneNumber, cancellationToken);
-        if (existingClient is not null) {
-            throw new ClientCreateException("Client already exists");
+        var phoneNumber = claimsPrincipal.FindFirstValue(WellKnownClaims.PhoneNumber)
+                          ?? throw new ClientCreateException("Phone number claim is missing from token.");
+
+        var userSub = claimsPrincipal.FindFirstValue(WellKnownClaims.Sub)
+                     ?? throw new ClientCreateException("Missing 'sub' claim.");
+
+        var userLocale = claimsPrincipal.FindFirstValue(WellKnownClaims.Locale)
+            ?? input.Locale
+            ?? httpContext.Features.Get<IRequestCultureFeature>()?.RequestCulture.Culture.Name
+            ?? "en-US";
+
+        var phoneNumberHash = hashService.ComputeHash(ValidationHelpers.NormalizePhoneNumber(phoneNumber));
+        var user = await context.Users
+            .Include(u => u.Client)
+            .SingleOrDefaultAsync(s => s.PhoneNumberHash == phoneNumberHash, cancellationToken);
+        if (user?.Client is not null) {
+            throw new ClientCreateException("Client already exists.");
         }
-        var requestLocale = httpContext.Request.HttpContext.Features.Get<IRequestCultureFeature>()?.RequestCulture.Culture.Name;
-        var newRecord = context.Add(new Client {
+
+        var newUser = context.Users.Add(new User {
             PhoneNumber = phoneNumber,
-            Name = input.Name,
-            Locale = input.Locale ?? requestLocale ?? userLocale ?? CultureInfo.CurrentCulture.Name,
-            Slug = GenerateSlug(phoneNumber),
+            Locale = userLocale,
             Subject = userSub,
         });
+        await context.SaveChangesAsync(cancellationToken);
+        var newClient = context.Clients.Add(new Client {
+            Id = newUser.Entity.Id,
+            Name = input.Name,
+            Slug = GenerateSlug(newUser.Entity.Id.ToString())
+        });
+        await context.SaveChangesAsync(cancellationToken);
 
-        try {
-            await context.SaveChangesAsync(cancellationToken);
-            var clientNodeId = idSerializer.Format(nameof(Client), newRecord.Entity.Id);
-            await clientEventProducer.Produce(ClientKey.ClientCreated(clientNodeId), new ClientEvent(), cancellationToken);
-            return newRecord.Entity;
-        } catch (Exception ex) {
-            throw new ClientCreateException(ex.GetBaseException().Message);
-        }
+        return newClient.Entity;
     }
+
 
     [Authorize(Roles = [ClaimValues.Roles.Admin, ClaimValues.Roles.Client])]
     [Error<ClientCreateException>]
@@ -93,9 +100,8 @@ public class Mutation(ILogger<Mutation> logger) {
 
         var client = await context.Clients.FindAsync([input.Id], cancellationToken) ?? throw new ClientNotFoundException(input.Id);
         client.Name = input.Name ?? client.Name;
-        client.Locale = input.Locale ?? client.Locale;
         client.CustomerId = input.CustomerId ?? client.CustomerId;
-        client.SubscriptionId = input.SubscriptionId.ToString() ?? client.SubscriptionId;
+        client.SubscriptionId = input.SubscriptionId ?? client.SubscriptionId;
         context.Attach(client).State = EntityState.Modified;
 
         try {
@@ -109,61 +115,78 @@ public class Mutation(ILogger<Mutation> logger) {
         }
 
     }
-
-    private static async Task<Subscriber> GetOrCreateSubscriber(UserDbContext context, string phoneNumber, string locale, CancellationToken cancellationToken) {
-        var subscriber = await context.Subscribers.FirstOrDefaultAsync(s => s.PhoneNumber == phoneNumber, cancellationToken);
-        if (subscriber is null) {
-            var newSub = context.Subscribers.Add(new Subscriber {
-                PhoneNumber = phoneNumber,
-                Locale = locale
-            });
-            await context.SaveChangesAsync(cancellationToken);
-            return newSub.Entity;
+    private static async Task<Subscriber> GetOrCreateSubscriber(string phoneNumber, string locale, string subject, UserDbContext context, HashService hashService, CancellationToken cancellationToken) {
+        var phoneNumberHash = hashService.ComputeHash(ValidationHelpers.NormalizePhoneNumber(phoneNumber));
+        var user = await context.Users
+            .Include(u => u.Subscriber)
+            .SingleOrDefaultAsync(s => s.PhoneNumberHash == phoneNumberHash, cancellationToken);
+        if (user?.Client is not null) {
+            throw new ClientCreateException("Client already exists.");
         }
-        return subscriber;
+
+        var newUser = context.Users.Add(new User {
+            PhoneNumber = phoneNumber,
+            Locale = locale,
+            Subject = subject,
+        });
+        await context.SaveChangesAsync(cancellationToken);
+        var newSub = context.Subscribers.Add(new Subscriber {
+            Id = newUser.Entity.Id,
+        });
+        await context.SaveChangesAsync(cancellationToken);
+
+        return newSub.Entity;
     }
 
     [Authorize(PolicyNames.Subscriber)]
     [Error<AlreadySubscribedException>]
     public async Task<Client> SubscribeToClient([ID<Client>] Guid clientId,
-                                                UserDbContext context,
+                                                UserDbContext dbContext,
+                                                HashService hashService,
                                                 HttpContext httpContext,
                                                 KafkaMessageProducer<NotificationKey, NotificationEvent> notificationProducer,
                                                 CancellationToken cancellationToken) {
 
-        var phoneNumber = httpContext.User.FindFirstValue(JwtRegisteredClaimNames.PhoneNumber)!;
+        var phoneNumber = httpContext.User.FindFirstValue(JwtRegisteredClaimNames.PhoneNumber)
+            ?? throw new Exception("Phone number claim is missing");
+
+        var phoneNumberHash = hashService.ComputeHash(ValidationHelpers.NormalizePhoneNumber(phoneNumber));
         var userLocale = httpContext.User.FindFirstValue(JwtRegisteredClaimNames.Locale);
         var locale = userLocale
             ?? httpContext.Request.HttpContext.Features.Get<IRequestCultureFeature>()?.RequestCulture.Culture.Name
             ?? CultureInfo.CurrentCulture.Name;
-        var client = context.Clients.Find(clientId) ?? throw new ClientNotFoundException(clientId);
-        if (client.PhoneNumber == phoneNumber) {
-            throw new AlreadySubscribedException(phoneNumber); // TODO: should be custom
+
+        var sub = httpContext.User.FindFirstValue(WellKnownClaims.Sub)
+                     ?? throw new ClientCreateException("Missing 'sub' claim.");
+        var user = await dbContext.Users.Include(u => u.Client).SingleOrDefaultAsync(u => u.Id == clientId, cancellationToken)
+            ?? throw new ClientNotFoundException(clientId);
+        if (user?.PhoneNumberHash != phoneNumberHash || user?.Client is not { } client) {
+            throw new AlreadySubscribedException(phoneNumber);
         }
-        var subscriber = await GetOrCreateSubscriber(context, phoneNumber, locale, cancellationToken);
+        var subscriber = await GetOrCreateSubscriber(phoneNumber, locale, sub, dbContext, hashService, cancellationToken);
 
-        if (subscriber.Clients.Contains(client)) {
-            throw new AlreadySubscribedException(subscriber.PhoneNumber);
+        if (subscriber.Clients.Any(c => c.IdNavigation.PhoneNumberHash == phoneNumberHash)) {
+            throw new AlreadySubscribedException(subscriber.IdNavigation.PhoneNumberHash);
         }
 
-        client.SubscriberPhoneNumbers.Add(subscriber);
+        client.Subscribers.Add(subscriber);
 
-        await context.SaveChangesAsync(cancellationToken);
+        await dbContext.SaveChangesAsync(cancellationToken);
 
-        try {
-            await notificationProducer.Produce(
-                NotificationKey.SendSms(phoneNumber),
-                NotificationEvent.SendSms("NewSubscriberWelcome", locale, new Dictionary<string, string> {
-                    { "name", client.Name }
-                }), cancellationToken);
-            await notificationProducer.Produce(
-                NotificationKey.SendSms(client.PhoneNumber),
-                NotificationEvent.SendSms("ClientNewSubscriber", client.Locale, new Dictionary<string, string> {
-                    { "count", client.SubscriberPhoneNumbers.Count.ToString(CultureInfo.GetCultureInfo(client.Locale)) }
-                }), cancellationToken);
-        } catch (Exception ex) {
-            logger.LogException(ex);
-        }
+        //try {
+        //    await notificationProducer.Produce(
+        //        NotificationKey.SendSms(phoneNumber),
+        //        NotificationEvent.SendSms("NewSubscriberWelcome", locale, new Dictionary<string, string> {
+        //            { "name", user.Name }
+        //        }), cancellationToken);
+        //    await notificationProducer.Produce(
+        //        NotificationKey.SendSms(user.PhoneNumber),
+        //        NotificationEvent.SendSms("ClientNewSubscriber", user.Locale, new Dictionary<string, string> {
+        //            { "count", user.Subscribers.Count.ToString(CultureInfo.GetCultureInfo(user.Locale)) }
+        //        }), cancellationToken);
+        //} catch (Exception ex) {
+        //    logger.LogException(ex);
+        //}
 
         return client;
     }
@@ -171,15 +194,17 @@ public class Mutation(ILogger<Mutation> logger) {
     [Authorize(PolicyNames.Subscriber)]
     [Error<NotSubscribedException>]
     [Error<ClientNotFoundException>]
-    public async Task<Client> UnsubscribeFromClient([ID<Client>] Guid clientId, HttpContext httpContext, UserDbContext context, ITopicEventSender sender, CancellationToken cancellationToken) {
+    public async Task<Client> UnsubscribeFromClient([ID<Client>] Guid clientId, HttpContext httpContext, UserDbContext context, HashService hashService, ITopicEventSender sender, CancellationToken cancellationToken) {
         var phoneNumber = httpContext.User.FindFirstValue(JwtRegisteredClaimNames.PhoneNumber)!;
+        var phoneNumberHash = hashService.ComputeHash(ValidationHelpers.NormalizePhoneNumber(phoneNumber));
         var client = await context.Clients.FindAsync([clientId], cancellationToken)
             ?? throw new ClientNotFoundException(clientId);
-        context.Entry(client).Collection(c => c.SubscriberPhoneNumbers).Load();
-        var subscriber = client.SubscriberPhoneNumbers.FirstOrDefault(s => s.PhoneNumber == phoneNumber)
+
+        context.Entry(client).Collection(c => c.Subscribers).Load();
+        var subscriber = client.Subscribers.FirstOrDefault(s => s.IdNavigation.PhoneNumberHash == phoneNumberHash)
             ?? throw new NotSubscribedException(phoneNumber);
 
-        client.SubscriberPhoneNumbers.Remove(subscriber);
+        client.Subscribers.Remove(subscriber);
         await context.SaveChangesAsync(cancellationToken);
 
         await sender.SendAsync(Subscription.Events.SubscriberUnsubscribed, subscriber, cancellationToken);
@@ -195,27 +220,10 @@ public class Mutation(ILogger<Mutation> logger) {
         await context.SaveChangesAsync(cancellationToken);
         return subscriber;
     }
-
-    [Authorize(PolicyNames.Client)]
-    [Error<SubscriberExistsException>]
-    public async Task<Subscriber> AddSubscriber(UserDbContext context, AddSubscriberInput input, ITopicEventSender sender, CancellationToken cancellationToken) {
-        var existing = await context.Subscribers.FindAsync([input.PhoneNumber], cancellationToken);
-        if (existing is not null) {
-            throw new SubscriberExistsException(input.PhoneNumber);
-        }
-
-        var newRecord = context.Subscribers.Add(new Subscriber {
-            PhoneNumber = input.PhoneNumber,
-            Locale = input.Locale
-        });
-        await context.SaveChangesAsync(cancellationToken);
-        await sender.SendAsync(Subscription.Events.SubscriberSubscribed, newRecord.Entity, cancellationToken);
-        return newRecord.Entity;
-    }
 }
 
 public record CreateClientInput(string Name, string? Locale);
-public record UpdateClientInput(Guid Id, string? Name, string? Locale, string? CustomerId, Guid? SubscriptionId);
+public record UpdateClientInput(Guid Id, string? Name, string? CustomerId, string? SubscriptionId);
 
 public class UpdateClientInputType : InputObjectType<UpdateClientInput> {
     protected override void Configure(IInputObjectTypeDescriptor<UpdateClientInput> descriptor) =>

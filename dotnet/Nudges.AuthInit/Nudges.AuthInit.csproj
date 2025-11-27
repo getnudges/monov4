@@ -10,6 +10,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Nudges.Auth.Keycloak\Nudges.Auth.Keycloak.csproj" />
+    <ProjectReference Include="..\Nudges.Data.Security\Nudges.Data.Security.csproj" />
     <ProjectReference Include="..\Nudges.Data\Nudges.Data.csproj" />
   </ItemGroup>
 

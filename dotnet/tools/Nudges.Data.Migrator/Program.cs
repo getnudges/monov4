@@ -14,11 +14,11 @@ public class Program {
         .ConfigureAppConfiguration(c => c.AddEnvironmentVariables())
         .ConfigureServices((context, services) => {
             services.AddDbContext<Users.UserDbContext>(o =>
-                o.UseNpgsql(context.Configuration.GetConnectionString("UserDb")));
+                o.UseNpgsql(context.Configuration.GetConnectionString(DbConstants.UserDb)));
             services.AddDbContext<Products.ProductDbContext>(o =>
-                o.UseNpgsql(context.Configuration.GetConnectionString("ProductDb")));
+                o.UseNpgsql(context.Configuration.GetConnectionString(DbConstants.ProductDb)));
             services.AddDbContext<Payments.PaymentDbContext>(o =>
-                o.UseNpgsql(context.Configuration.GetConnectionString("PaymentDb")));
+                o.UseNpgsql(context.Configuration.GetConnectionString(DbConstants.PaymentDb)));
         });
 }
 

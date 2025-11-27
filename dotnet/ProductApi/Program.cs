@@ -36,9 +36,9 @@ if (builder.Configuration.GetOtlpEndpointUrl() is string url) {
         ], [
             $"{typeof(KafkaMessageProducer<,>).Namespace}.KafkaMessageProducer",
             $"{typeof(Mutation).FullName}"
-        ], o => {
+        ], null, o => {
             o.AddHotChocolateInstrumentation();
-        }, null, options => {
+        }, options => {
             options.RecordException = true;
             options.Filter = ctx => ctx.Request.Method == "POST";
 

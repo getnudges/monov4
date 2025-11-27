@@ -3,14 +3,16 @@ using Keycloak.AuthServices.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization.Infrastructure;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using Nudges.Auth;
 using Nudges.Configuration.Extensions;
+using Nudges.Data;
+using Nudges.Data.Security;
 using Nudges.Data.Users;
 using Nudges.Kafka;
 using Nudges.Kafka.Events;
-using OpenTelemetry.Logs;
-using OpenTelemetry.Metrics;
-using OpenTelemetry.Resources;
+using Nudges.Security;
+using Nudges.Telemetry;
 using OpenTelemetry.Trace;
 using StackExchange.Redis;
 using UserApi;
@@ -19,38 +21,86 @@ var builder = WebApplication.CreateBuilder(args);
 
 if (builder.Configuration.GetOtlpEndpointUrl() is string url) {
 
-    builder.Services.AddOpenTelemetry()
-        .ConfigureResource(resource =>
-            resource.AddService(builder.Environment.ApplicationName))
-        .WithMetrics(o =>
-            o.AddRuntimeInstrumentation()
-                .AddMeter([
-                    "Microsoft.AspNetCore.Hosting",
-                    "Microsoft.AspNetCore.Server.Kestrel",
-                    "System.Net.Http",
-                    //"Microsoft.EntityFrameworkCore",
-                ]).AddPrometheusExporter())
-        .WithTracing(traceBuilder =>
-            traceBuilder
-                .SetSampler<AlwaysOnSampler>()
-                //.AddEntityFrameworkCoreInstrumentation()
-                .AddSource([
-                    $"{typeof(KafkaMessageProducer<,>).Namespace}.KafkaMessageProducer"
-                ]))
-        .WithLogging();
+    builder.Services.AddOpenTelemetryConfiguration(
+        url,
+        builder.Environment.ApplicationName, [
+            "Microsoft.AspNetCore.Hosting",
+            "Microsoft.AspNetCore.Server.Kestrel",
+            "System.Net.Http",
+            "Microsoft.EntityFrameworkCore",
+            $"{typeof(Mutation).FullName}"
+        ], [
+            $"{typeof(KafkaMessageProducer<,>).Namespace}.KafkaMessageProducer",
+            $"{typeof(Mutation).FullName}"
+        ], null, o => {
+            o.AddHotChocolateInstrumentation();
+        }, options => {
+            options.RecordException = true;
+            options.Filter = ctx => ctx.Request.Method == "POST";
 
-    builder.Services.ConfigureOpenTelemetryTracerProvider(o =>
-        o.AddOtlpExporter(o => o.Endpoint = new Uri(url)));
+            options.EnrichWithHttpResponse = (activity, response) => {
+                if (response.HttpContext.Items.TryGetValue("OperationName", out var opNameObj) &&
+                    opNameObj is string opName &&
+                    !string.IsNullOrWhiteSpace(opName)) {
+                    activity.DisplayName = opName;
+                    activity.SetTag("graphql.operation.name", opName);
+                }
 
-    builder.Services.ConfigureOpenTelemetryLoggerProvider(o =>
-        o.AddOtlpExporter(o => o.Endpoint = new Uri(url)));
+                if (response.HttpContext.Items.TryGetValue("GraphQLOperationType", out var opTypeObj) &&
+                    opTypeObj is string opType) {
+                    activity.SetTag("graphql.operation.type", opType);
+                }
+
+                activity.SetTag("graphql.transport", "http");
+            };
+        });
 }
 
 builder.Services.AddTransient<IConnectionMultiplexer>(c =>
     ConnectionMultiplexer.Connect(c.GetRequiredService<IConfiguration>().GetRedisUrl()));
 
-builder.Services.AddPooledDbContextFactory<UserDbContext>((s, o) =>
-    o.UseNpgsql(s.GetRequiredService<IConfiguration>().GetConnectionString(Nudges.Data.DbConstants.UserDb)));
+builder.Services.Configure<OidcConfig>(builder.Configuration.GetSection("Oidc"));
+builder.Services.Configure<HashSettings>(builder.Configuration.GetSection("HashSettings"));
+builder.Services.AddOptions<HashSettings>(nameof(HashSettings));
+builder.Services.Configure<EncryptionSettings>(builder.Configuration.GetSection("EncryptionSettings"));
+builder.Services.AddOptions<EncryptionSettings>(nameof(EncryptionSettings));
+builder.Services.AddSingleton(static sp => {
+    var config = sp.GetRequiredService<IConfiguration>();
+    var base64 = config["HashSettings:HashKeyBase64"]
+        ?? throw new InvalidOperationException("Missing HashSettings:HashKeyBase64");
+
+    var keyBytes = Convert.FromBase64String(base64);
+    return new HashService(
+        Options.Create(new HashSettings { HashKey = keyBytes })
+    );
+});
+builder.Services.AddSingleton<IEncryptionService>(static sp => {
+    var config = sp.GetRequiredService<IConfiguration>();
+    var base64 = config["EncryptionSettings:Key"]
+        ?? throw new InvalidOperationException("Missing EncryptionSettings:Key");
+
+    var keyBytes = Convert.FromBase64String(base64);
+    return new AesGcmEncryptionService(
+        Options.Create(new EncryptionSettings { Key = keyBytes })
+    );
+});
+builder.Services.AddSingleton<HashingSaveChangesInterceptor>();
+builder.Services.AddSingleton<EncryptionSaveChangesInterceptor>();
+builder.Services.AddSingleton<EncryptionMaterializationInterceptor>();
+
+builder.Services.AddDbContextFactory<UserDbContext>(static (sp, o) => {
+    o.UseNpgsql(sp.GetRequiredService<IConfiguration>().GetConnectionString(DbConstants.UserDb), static pg => {
+        pg.EnableRetryOnFailure(3);
+        pg.CommandTimeout(30);
+    });
+    o.EnableDetailedErrors();
+
+    o.AddInterceptors(
+        sp.GetRequiredService<EncryptionSaveChangesInterceptor>(),
+        sp.GetRequiredService<EncryptionMaterializationInterceptor>(),
+        sp.GetRequiredService<HashingSaveChangesInterceptor>()
+    );
+});
 
 builder.Services
     .AddSingleton<KafkaMessageProducer<NotificationKey, NotificationEvent>>(sp =>
@@ -140,8 +190,3 @@ app.UseWebSockets();
 app.MapGraphQL();
 
 app.RunWithGraphQLCommands(args);
-
-public partial class Program { }
-
-
-

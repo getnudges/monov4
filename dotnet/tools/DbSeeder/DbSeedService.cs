@@ -1,15 +1,15 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using Nudges.Data.Payments;
 using Nudges.Data.Users;
 using Nudges.Data.Users.Models;
+using Nudges.Security;
 
 namespace DbSeeder;
 
 internal sealed class DbSeedService(ILogger<DbSeedService> logger,
                              IDbContextFactory<UserDbContext> userDbContextFactory,
-                             IDbContextFactory<PaymentDbContext> paymentDbContextFactory,
+                             HashService hashService,
                              IHostApplicationLifetime appLifetime) : IHostedService {
 
     private const string DefaultClientPhone = "+15555555555";
@@ -18,56 +18,46 @@ internal sealed class DbSeedService(ILogger<DbSeedService> logger,
         logger.LogServiceStarting();
 
         await StoreDefaultClient(cancellationToken);
-        await StoreDefaultAdmin(cancellationToken);
-        await StoreMerchantServicesClient("Debug", -1, cancellationToken);
-        await StoreMerchantServicesClient("Stripe", 1, cancellationToken);
+        //await StoreMerchantServicesClient("Debug", -1, cancellationToken);
+        //await StoreMerchantServicesClient("Stripe", 1, cancellationToken);
 
         appLifetime.StopApplication();
     }
 
+    //private async Task StoreMerchantServicesClient(string name, int id, CancellationToken cancellationToken) {
+    //    await using var context = await paymentDbContextFactory.CreateDbContextAsync(cancellationToken);
+    //    var defaultClient = context.MerchantServices.Where(c => c.Id == id).FirstOrDefault();
+    //    if (defaultClient is null) {
+    //        var newClient = context.MerchantServices.Add(new Nudges.Data.Payments.Models.MerchantService {
+    //            Id = id,
+    //            Name = name
+    //        });
+    //        await context.SaveChangesAsync(cancellationToken);
+
+    //        logger.LogStoredMerchantService(newClient.Entity.Id);
+    //    }
+    //}
+
     private async Task StoreDefaultClient(CancellationToken cancellationToken) {
         await using var context = await userDbContextFactory.CreateDbContextAsync(cancellationToken);
-        var defaultClient = context.Clients.Where(c => c.PhoneNumber == DefaultClientPhone).FirstOrDefault();
-        if (defaultClient is null) {
-            var newClient = context.Clients.Add(new Client {
-                Locale = "en-US",
-                Name = "Nudges",
-                PhoneNumber = DefaultClientPhone,
-                Slug = "test"
-            });
-            await context.SaveChangesAsync(cancellationToken);
-            logger.LogStoredDefaultClient(newClient.Entity.Id);
-        }
-    }
-
-    private async Task StoreMerchantServicesClient(string name, int id, CancellationToken cancellationToken) {
-        await using var context = await paymentDbContextFactory.CreateDbContextAsync(cancellationToken);
-        var defaultClient = context.MerchantServices.Where(c => c.Id == id).FirstOrDefault();
-        if (defaultClient is null) {
-            var newClient = context.MerchantServices.Add(new Nudges.Data.Payments.Models.MerchantService {
-                Id = id,
-                Name = name
-            });
-            await context.SaveChangesAsync(cancellationToken);
-
-            logger.LogStoredMerchantService(newClient.Entity.Id);
-        }
-    }
-
-    private async Task StoreDefaultAdmin(CancellationToken cancellationToken) {
-        await using var context = await userDbContextFactory.CreateDbContextAsync(cancellationToken);
-        var defaultClient = context.Clients.Where(c => c.PhoneNumber == DefaultClientPhone).FirstOrDefault();
-        if (defaultClient is null) {
+        var phoneNumberHash = hashService.ComputeHash(ValidationHelpers.NormalizePhoneNumber(DefaultClientPhone));
+        var defaultUser = await context.Users.Include(u => u.Client)
+            .SingleOrDefaultAsync(c => c.PhoneNumberHash == phoneNumberHash, cancellationToken);
+        if (defaultUser is not { } user) {
             logger.LogDefaultClientNotFound(DefaultClientPhone);
             return;
         }
-        var defaultAdmin = context.Admins.Where(c => c.Id == defaultClient.Id).FirstOrDefault();
-        if (defaultAdmin is null) {
-            var newAdmin = context.Admins.Add(new Admin {
-                Id = defaultClient.Id,
-            });
-            await context.SaveChangesAsync(cancellationToken);
-            logger.LogStoredDefaultAdmin(newAdmin.Entity.Id);
+        if (defaultUser?.Client is not { } client) {
+            var defaultClient = context.Clients.Where(c => c.Id == user.Id).FirstOrDefault();
+            if (defaultClient is null) {
+                var newClient = context.Clients.Add(new Client {
+                    Id = user.Id,
+                    Slug = "nudges",
+                    Name = "Nudges"
+                });
+                await context.SaveChangesAsync(cancellationToken);
+                logger.LogStoredDefaultAdmin(newClient.Entity.Id);
+            }
         }
     }
 
@@ -106,6 +96,6 @@ internal static partial class DbSeedServiceLogs {
     [LoggerMessage(Level = LogLevel.Information, Message = "Shopify merchant service stored with Id {Id}")]
     public static partial void LogStoredShopifyMerchantService(this ILogger<DbSeedService> logger, int id);
 
-    [LoggerMessage(Level = LogLevel.Error, Message = "Could not find client with phone number {PhoneNumber}")]
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Could not find admin with phone number {PhoneNumber}")]
     public static partial void LogDefaultClientNotFound(this ILogger<DbSeedService> logger, string phoneNumber);
 }

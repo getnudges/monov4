@@ -22,7 +22,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\Nudges.Data.Security\Nudges.Data.Security.csproj" />
     <ProjectReference Include="..\..\Nudges.Data\Nudges.Data.csproj" />
     <ProjectReference Include="..\..\Nudges.Redis\Nudges.Redis.csproj" />
+    <ProjectReference Include="..\..\Nudges.Security\Nudges.Security.csproj" />
   </ItemGroup>
 </Project>

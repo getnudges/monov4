@@ -85,7 +85,7 @@ public sealed class KeycloakOidcClient(HttpClient client, IOptions<OidcConfig> c
     private async Task<Result<TokenResponse, OidcException>> GetAdminToken(CancellationToken cancellationToken) {
         var request = new HttpRequestMessage(HttpMethod.Post, $"/realms/master/protocol/openid-connect/token") {
             Content = new FormUrlEncodedContent(new Dictionary<string, string> {
-                { "client_id", _config.AdminCredentials.AdminClientId },
+                { "client_id", "admin-cli" },
                 { "username", _config.AdminCredentials.Username },
                 { "password", _config.AdminCredentials.Password },
                 { "grant_type", "password" },
