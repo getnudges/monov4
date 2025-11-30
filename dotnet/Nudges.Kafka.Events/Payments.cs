@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace Nudges.Kafka.Events;
 
 public partial record PaymentKey(string EventType, string EventKey) {
@@ -7,4 +9,8 @@ public partial record PaymentKey(string EventType, string EventKey) {
 }
 
 [EventModel(typeof(PaymentKey))]
-public partial record PaymentEvent(Guid ClientId, string PriceForeignServiceId, Guid PaymentConfirmationId);
+[JsonPolymorphic(TypeDiscriminatorPropertyName = "$type")]
+[JsonDerivedType(typeof(PaymentCompletedEvent), "payment.completed")]
+public abstract partial record PaymentEvent;
+
+public partial record PaymentCompletedEvent(Guid ClientId, string PriceForeignServiceId, Guid PaymentConfirmationId) : PaymentEvent;

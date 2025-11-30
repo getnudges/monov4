@@ -20,14 +20,14 @@ internal class UserAuthenticationMessageMiddleware(ILogger<UserAuthenticationMes
 
     public async Task<Result<bool, Exception>> HandleMessageAsync(ConsumeResult<UserAuthenticationEventKey, UserAuthenticationEvent> cr, CancellationToken cancellationToken) {
         logger.LogAction($"Received message {cr.Message.Key}");
-        return await (cr switch {
-            { Message.Key.EventKey.Type: nameof(UserAuthenticationEventKey.UserLoggedIn), Message.Value: var data } =>
-                HandleUserLoggedIn(data, cancellationToken),
+        return await (cr.Message.Value switch {
+            UserLoggedInEvent loggedIn => HandleUserLoggedIn(loggedIn, cancellationToken),
+            UserLoggedOutEvent loggedOut => Result.SuccessTask<bool, Exception>(true), // No-op for now
             _ => Result.ExceptionTask(new UnhandledMessageException($"No handler registered for event {cr.Message.Key}.")),
         });
     }
 
-    private async Task<Result<bool, Exception>> HandleUserLoggedIn(UserAuthenticationEvent userData, CancellationToken cancellationToken) {
+    private async Task<Result<bool, Exception>> HandleUserLoggedIn(UserLoggedInEvent userData, CancellationToken cancellationToken) {
         try {
             var result = await notificationProducer.ProduceSendSms(userData.PhoneNumber, "UserLoggedIn", userData.Locale, [], cancellationToken);
             return true;

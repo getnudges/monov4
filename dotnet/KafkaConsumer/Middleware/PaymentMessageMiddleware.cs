@@ -22,14 +22,13 @@ internal class PaymentMessageMiddleware(ILogger<PaymentMessageMiddleware> logger
 
     public async Task<Result<bool, Exception>> HandleMessageAsync(ConsumeResult<PaymentKey, PaymentEvent> cr, CancellationToken cancellationToken) {
         logger.LogAction($"Received message {cr.Message.Key}");
-        return await (cr switch {
-            { Message.Key.EventType: nameof(PaymentKey.PaymentCompleted), Message.Value: var paymentEvent } =>
-                HandlePaymentComplete(paymentEvent, cancellationToken),
+        return await (cr.Message.Value switch {
+            PaymentCompletedEvent completed => HandlePaymentComplete(completed, cancellationToken),
             _ => Result.ExceptionTask(new UnhandledMessageException($"No handler registered for event {cr.Message.Key}.")),
         });
     }
 
-    private async Task<Result<bool, Exception>> HandlePaymentComplete(PaymentEvent paymentEvent, CancellationToken cancellationToken) {
+    private async Task<Result<bool, Exception>> HandlePaymentComplete(PaymentCompletedEvent paymentEvent, CancellationToken cancellationToken) {
         /*
          * NOTE: this is only fired and used in local debugging.
          * The CreatePlanSubscription mutation is called by the Stripe webhook handler in production.
