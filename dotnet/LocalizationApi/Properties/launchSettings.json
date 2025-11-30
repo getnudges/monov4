@@ -5,7 +5,7 @@
       "commandName": "Project",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development",
-        "OTLP_ENDPOINT_URL": "http://localhost:4317"
+        "Otlp__Endpoint": "http://localhost:4317"
       }
     }
   }

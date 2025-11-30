@@ -6,7 +6,7 @@
       "environmentVariables": {
         "DOTNET_ENVIRONMENT": "Development",
         "ASPNETCORE_ENVIRONMENT": "Development",
-        "OTLP_ENDPOINT_URL": "http://localhost:4317",
+        "Otlp__Endpoint": "http://localhost:4317",
         "HTTP_PORTS": "7100"
       }
     },
@@ -16,7 +16,7 @@
       "environmentVariables": {
         "DOTNET_ENVIRONMENT": "Development",
         "ASPNETCORE_ENVIRONMENT": "Development",
-        "OTLP_ENDPOINT_URL": "http://localhost:4317",
+        "Otlp__Endpoint": "http://localhost:4317",
         "HTTP_PORTS": "7100"
       }
     },
@@ -26,7 +26,7 @@
       "environmentVariables": {
         "DOTNET_ENVIRONMENT": "Development",
         "ASPNETCORE_ENVIRONMENT": "Development",
-        "OTLP_ENDPOINT_URL": "http://localhost:4317",
+        "Otlp__Endpoint": "http://localhost:4317",
         "HTTP_PORTS": "7100"
       }
     },
@@ -36,7 +36,7 @@
       "environmentVariables": {
         "DOTNET_ENVIRONMENT": "Development",
         "ASPNETCORE_ENVIRONMENT": "Development",
-        "OTLP_ENDPOINT_URL": "http://localhost:4317",
+        "Otlp__Endpoint": "http://localhost:4317",
         "HTTP_PORTS": "7100"
       }
     },
@@ -46,7 +46,7 @@
       "environmentVariables": {
         "DOTNET_ENVIRONMENT": "Development",
         "ASPNETCORE_ENVIRONMENT": "Development",
-        "OTLP_ENDPOINT_URL": "http://localhost:4317",
+        "Otlp__Endpoint": "http://localhost:4317",
         "HTTP_PORTS": "7100"
       }
     },
@@ -56,7 +56,7 @@
       "environmentVariables": {
         "DOTNET_ENVIRONMENT": "Development",
         "ASPNETCORE_ENVIRONMENT": "Development",
-        "OTLP_ENDPOINT_URL": "http://localhost:4317",
+        "Otlp__Endpoint": "http://localhost:4317",
         "HTTP_PORTS": "7100"
       }
     },
@@ -66,7 +66,7 @@
       "environmentVariables": {
         "DOTNET_ENVIRONMENT": "Development",
         "ASPNETCORE_ENVIRONMENT": "Development",
-        "OTLP_ENDPOINT_URL": "http://localhost:4317",
+        "Otlp__Endpoint": "http://localhost:4317",
         "HTTP_PORTS": "7100"
       }
     },
@@ -76,7 +76,7 @@
       "environmentVariables": {
         "DOTNET_ENVIRONMENT": "Development",
         "ASPNETCORE_ENVIRONMENT": "Development",
-        "OTLP_ENDPOINT_URL": "http://localhost:4317",
+        "Otlp__Endpoint": "http://localhost:4317",
         "HTTP_PORTS": "7100"
     }
   }

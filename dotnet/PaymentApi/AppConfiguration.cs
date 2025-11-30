@@ -8,7 +8,7 @@ internal static class AppConfiguration {
     [ConfigurationKey]
     public const string ServerAuthSigningKey = "Authentication:Schemes:Server:IssuerSigningKey";
     [ConfigurationKey]
-    public const string KafkaBrokerList = "KAFKA_BROKER_LIST";
+    public const string KafkaBrokerList = "Kafka__BrokerList";
     [ConfigurationKey]
     public const string RedisUrl = "REDIS_URL";
     [ConfigurationKey]

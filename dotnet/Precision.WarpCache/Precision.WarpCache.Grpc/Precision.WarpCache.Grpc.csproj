@@ -8,6 +8,7 @@
     <PublishAot>true</PublishAot>
     <InvariantGlobalization>true</InvariantGlobalization>
     <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+    <UserSecretsId>692e44bc-03d2-49ca-936f-aab25ad0fc53</UserSecretsId>
   </PropertyGroup>
 
 
@@ -21,11 +22,15 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
+    <PackageReference Include="Microsoft.Extensions.Configuration.UserSecrets" Version="6.0.1" />
     <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.22.1" />
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\Nudges.Configuration\Nudges.Configuration.csproj" />
+    <ProjectReference Include="..\..\Nudges.Telemetry\Nudges.Telemetry.csproj" />
     <ProjectReference Include="..\Precision.WarpCache.MemoryCache\Precision.WarpCache.MemoryCache.csproj" />
+    <ProjectReference Include="..\Precision.WarpCache.Redis\Precision.WarpCache.Redis.csproj" />
     <ProjectReference Include="..\Precision.WarpCache\Precision.WarpCache.csproj" />
   </ItemGroup>
 

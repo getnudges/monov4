@@ -21,7 +21,8 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddHttpContextAccessor();
 
-if (builder.Configuration.GetValue<string>("OTLP_ENDPOINT_URL") is string url) {
+if (builder.Configuration.GetValue<string>("Otlp__Endpoint") is string url)
+{
 
     builder.Services.AddOpenTelemetry()
         .ConfigureResource(resource =>
@@ -148,7 +149,8 @@ var app = builder.Build();
 
 app.UseHealthChecks("/health");
 
-if (builder.Configuration.GetValue<string>("OTLP_ENDPOINT_URL") is not null) {
+if (builder.Configuration.GetValue<string>("Otlp__Endpoint") is not null)
+{
     app.MapPrometheusScrapingEndpoint();
 }
 

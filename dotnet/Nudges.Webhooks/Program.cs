@@ -39,7 +39,8 @@ builder.Logging.AddSimpleConsole(o => {
 
 
 // configure OpenTelemetry
-if (builder.Configuration.GetValue<string>("OTLP_ENDPOINT_URL") is string url) {
+if (builder.Configuration.GetValue<string>("Otlp__Endpoint") is string url)
+{
     builder.Services.AddOpenTelemetryConfiguration(
         url,
         builder.Environment.ApplicationName, [
@@ -167,7 +168,8 @@ var app = builder.Build();
 
 app.MapHealthChecks("/health");
 
-if (builder.Configuration.GetValue<string>("OTLP_ENDPOINT_URL") is not null) {
+if (builder.Configuration.GetValue<string>("Otlp__Endpoint") is not null)
+{
     app.MapPrometheusScrapingEndpoint();
 }
 

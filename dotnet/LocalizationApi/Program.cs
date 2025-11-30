@@ -1,44 +1,38 @@
 using System.Globalization;
+using LocalizationApi;
 using LocalizationApi.Services;
 using Microsoft.AspNetCore.Localization;
-using OpenTelemetry.Logs;
-using OpenTelemetry.Metrics;
-using OpenTelemetry.Resources;
-using OpenTelemetry.Trace;
+using Nudges.Telemetry;
 
 var builder = WebApplication.CreateBuilder(args);
 
+var settings = new Settings();
+builder.Configuration.Bind(settings);
+
+builder.Services.AddLogging(configure => configure
+        .AddSimpleConsole(o =>
+            o.SingleLine = !builder.Environment.IsDevelopment()));
+
 builder.Services.AddGrpc(o => o.EnableDetailedErrors = true);
 
-if (builder.Configuration.GetValue<string>("OTLP_ENDPOINT_URL") is string url) {
+if (settings.Otlp.Endpoint is string url) {
 
-    builder.Services.AddOpenTelemetry()
-        .ConfigureResource(resource =>
-            resource
-                .AddService(builder.Environment.ApplicationName))
-        .WithMetrics(o =>
-            o.AddRuntimeInstrumentation()
-                .AddMeter([
-                    "Microsoft.AspNetCore.Hosting",
-                    "Microsoft.AspNetCore.Server.Kestrel",
-                    "System.Net.Http",
-                ]).AddPrometheusExporter())
-        .WithTracing(traceBuilder =>
-            traceBuilder
-                .SetSampler<AlwaysOnSampler>()
-                .AddAspNetCoreInstrumentation())
-        .WithLogging();
-
-    builder.Services.ConfigureOpenTelemetryTracerProvider(o =>
-        o.AddOtlpExporter(o => o.Endpoint = new Uri(url)));
-
-    builder.Services.ConfigureOpenTelemetryLoggerProvider(o =>
-        o.AddOtlpExporter(o => o.Endpoint = new Uri(url)));
+    builder.Services.AddOpenTelemetryConfiguration<Program>(
+            url,
+            builder.Environment.ApplicationName, [
+                "Microsoft.AspNetCore.Hosting",
+                "Microsoft.AspNetCore.Server.Kestrel",
+                "System.Net.Http",
+            ], [], null, null, options => options.RecordException = true);
 }
+
+builder.Services.AddHealthChecks();
 
 builder.Services.AddLocalization();
 
 var app = builder.Build();
+
+app.UseHealthChecks("/");
 
 var supportedCultures = new[] {
     new CultureInfo("en-US"),
@@ -53,7 +47,7 @@ app.UseRequestLocalization(new RequestLocalizationOptions {
 
 app.MapGrpcService<LocalizationService>();
 
-if (builder.Configuration.GetValue<string>("OTLP_ENDPOINT_URL") is not null) {
+if (settings.Otlp.Endpoint is not null) {
     app.MapPrometheusScrapingEndpoint();
 }
 

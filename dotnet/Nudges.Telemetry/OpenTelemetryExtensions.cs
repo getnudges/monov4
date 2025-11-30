@@ -8,7 +8,7 @@ using OpenTelemetry.Trace;
 namespace Nudges.Telemetry;
 
 public static class OpenTelemetryExtensions {
-    public static IServiceCollection AddOpenTelemetryConfiguration(
+    public static IServiceCollection AddOpenTelemetryConfiguration<TProgram>(
         this IServiceCollection services,
         string otelUrl,
         string serviceName,
@@ -24,7 +24,7 @@ public static class OpenTelemetryExtensions {
                     .AddService(serviceName)
                     .AddAttributes(new Dictionary<string, object> {
                         ["service.namespace"] = "Nudges",
-                        ["service.version"] = $"{typeof(OpenTelemetryExtensions).Assembly.GetName().Version}",
+                        ["service.version"] = $"{typeof(TProgram).Assembly.GetName().Version}",
                         ["deployment.environment"] = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Unknown"
                     }))
             .WithMetrics(metricsConfig => {

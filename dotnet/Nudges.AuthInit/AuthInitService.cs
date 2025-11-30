@@ -1,3 +1,4 @@
+using ErrorOr;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -15,7 +16,6 @@ internal sealed class AuthInitService(ILogger<AuthInitService> logger,
                                       HashService hashService,
                                       IHostApplicationLifetime appLifetime) : IHostedService {
 
-    private const string AdminPhone = "+15555555555";
 
     public async Task StartAsync(CancellationToken cancellationToken) {
         logger.LogServiceStarting();
@@ -26,16 +26,17 @@ internal sealed class AuthInitService(ILogger<AuthInitService> logger,
     }
 
 
-    private async Task<User> GetOrCreateDefaultUser(UserDbContext dbContext, string phoneNumberHash, CancellationToken cancellationToken) {
+    private async Task<User> GetOrCreateDefaultUser(string phoneNumber, UserDbContext dbContext, CancellationToken cancellationToken) {
+        var phoneNumberHash = hashService.ComputeHash(ValidationHelpers.NormalizePhoneNumber(phoneNumber));
         var defaultUser = await dbContext.Users.Include(c => c.Admin)
             .SingleOrDefaultAsync(c => c.PhoneNumberHash == phoneNumberHash, cancellationToken);
         if (defaultUser is { } user) {
             return user;
         }
-        logger.LogDefaultUserNotFound(AdminPhone);
+        logger.LogDefaultUserNotFound(phoneNumber);
         var newUser = new User {
             Locale = "en-US",
-            PhoneNumber = AdminPhone,
+            PhoneNumber = phoneNumber,
         };
         var record = dbContext.Users.Add(newUser);
         await dbContext.SaveChangesAsync(cancellationToken);
@@ -43,52 +44,39 @@ internal sealed class AuthInitService(ILogger<AuthInitService> logger,
     }
 
     private async Task StoreDefaultAdmin(CancellationToken cancellationToken) {
+        const string adminPhone = "+15555555555";
         await using var context = await userDbContextFactory.CreateDbContextAsync(cancellationToken);
-        var phoneNumberHash = hashService.ComputeHash(ValidationHelpers.NormalizePhoneNumber(AdminPhone));
-        var defaultUser = await GetOrCreateDefaultUser(context, phoneNumberHash, cancellationToken);
+        var phoneNumberHash = hashService.ComputeHash(ValidationHelpers.NormalizePhoneNumber(adminPhone));
+        var defaultUser = await GetOrCreateDefaultUser(adminPhone, context, cancellationToken);
 
         if (defaultUser.Admin is null) {
-            logger.LogDefaultAdminNotFound(AdminPhone);
+            logger.LogDefaultAdminNotFound(adminPhone);
             var adminRecord = context.Admins.Add(new Admin {
                 Id = defaultUser.Id
             });
             await context.SaveChangesAsync(cancellationToken);
         }
-        var existingAdmin = await oidcClient.GetUserByUsername(AdminPhone, cancellationToken);
-        existingAdmin.Map(users =>
+        var existingAdminCreated = await oidcClient.GetUserByUsername(defaultUser.PhoneNumber, cancellationToken).Then(users =>
             users.Find(u => u.Username == phoneNumberHash)
-        );
+        ).Then(u => u is not null);
 
-        var created = await CreateDefaultAdminInOidc(AdminPhone, phoneNumberHash, cancellationToken);
+        if (existingAdminCreated.Value) {
+            logger.LogSkippingAdmin(defaultUser.Id);
+            return;
+        }
 
-        _ = await created.Match(async () => {
-            var newlyCreated = await oidcClient.GetUserByUsername(AdminPhone, cancellationToken);
-            var found = newlyCreated.Map(users =>
-                users.Find(u => u.Username == phoneNumberHash)
-            )
-            .Map(userRep => {
-                defaultUser!.Subject = userRep!.Id!;
-                context.Users.Update(defaultUser);
-                context.SaveChanges();
-                return true;
-            });
-            return found.Match(
-                _ => {
-                    logger.LogStoredDefaultAdmin(defaultUser!.Id);
-                    return Task.CompletedTask;
-                },
-                e => {
-                    logger.LogException(e);
-                    return Task.CompletedTask;
-                });
-        },
-            async e => {
-                logger.LogException(e);
-                return Task.CompletedTask;
-            });
+        var created = await CreateDefaultAdminInOidc(defaultUser.PhoneNumber, phoneNumberHash, cancellationToken).ThenAsync(async _ =>
+            await oidcClient.GetUserByUsername(defaultUser.PhoneNumber, cancellationToken).Then(users =>
+                    users.Find(u => u.Username == defaultUser.PhoneNumber)
+                ).Then(userRep => {
+                    defaultUser!.Subject = userRep!.Id!;
+                    context.Users.Update(defaultUser);
+                    context.SaveChanges();
+                    return true;
+                }));
     }
 
-    private async Task<Maybe<OidcException>> CreateDefaultAdminInOidc(string phoneNumber, string phoneNumberHash, CancellationToken cancellationToken) =>
+    private async Task<ErrorOr<Success>> CreateDefaultAdminInOidc(string phoneNumber, string phoneNumberHash, CancellationToken cancellationToken) =>
         await oidcClient.CreateUser(new UserRepresentation {
             /*
              * ***NOTE:***
@@ -116,28 +104,4 @@ internal sealed class AuthInitService(ILogger<AuthInitService> logger,
         logger.LogServiceStopping();
         return Task.CompletedTask;
     }
-}
-
-internal static partial class AuthInitServiceLogs {
-
-    [LoggerMessage(Level = LogLevel.Information, Message = "AuthInitService is stopping.")]
-    public static partial void LogServiceStopping(this ILogger<AuthInitService> logger);
-
-    [LoggerMessage(Level = LogLevel.Information, Message = "AuthInitService is starting.")]
-    public static partial void LogServiceStarting(this ILogger<AuthInitService> logger);
-
-    [LoggerMessage(Level = LogLevel.Error)]
-    public static partial void LogException(this ILogger<AuthInitService> logger, Exception ex);
-
-    [LoggerMessage(Level = LogLevel.Information, Message = "Default admin with ID '{AdminId}' has been stored.")]
-    public static partial void LogStoredDefaultAdmin(this ILogger<AuthInitService> logger, Guid adminId);
-
-    [LoggerMessage(Level = LogLevel.Information, Message = "Default admin with ID '{AdminId}' already exists.")]
-    public static partial void LogSkippingAdmin(this ILogger<AuthInitService> logger, Guid adminId);
-
-    [LoggerMessage(Level = LogLevel.Information, Message = "Default user with phone number '{PhoneNumber}' not found.")]
-    public static partial void LogDefaultUserNotFound(this ILogger<AuthInitService> logger, string phoneNumber);
-
-    [LoggerMessage(Level = LogLevel.Information, Message = "Default admin user with phone number '{PhoneNumber}' not found in OIDC.")]
-    public static partial void LogDefaultAdminNotFound(this ILogger<AuthInitService> logger, string phoneNumber);
 }

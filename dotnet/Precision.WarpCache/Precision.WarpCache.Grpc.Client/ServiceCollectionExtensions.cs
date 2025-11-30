@@ -1,5 +1,6 @@
 using System.Text.Json.Serialization.Metadata;
 using Grpc.Net.Client;
+using Nudges.Configuration;
 using Precision.WarpCache.Grpc.Client;
 
 namespace Microsoft.Extensions.DependencyInjection;
@@ -15,19 +16,16 @@ public static class ServiceCollectionExtensions {
     /// <param name="serverAddress">The cache service server address.</param>
     /// <param name="jsonTypeInfo">The JSON type information for the cache value type.</param>
     /// <returns>The <see cref="IServiceCollection"/> so that additional calls can be chained.</returns>
-    public static IServiceCollection AddWarpCacheClient<TValue>(this IServiceCollection services, string serverAddress, JsonTypeInfo<TValue> jsonTypeInfo) {
+    public static IServiceCollection AddWarpCacheClient<TValue>(this IServiceCollection services, WarpCacheSettings settings, JsonTypeInfo<TValue> jsonTypeInfo) {
         ArgumentNullException.ThrowIfNull(services);
         ArgumentNullException.ThrowIfNull(jsonTypeInfo);
+        ArgumentNullException.ThrowIfNull(settings);
 
-        if (string.IsNullOrEmpty(serverAddress)) {
-            throw new ArgumentException("Server address cannot be null or empty.", nameof(serverAddress));
-        }
-
-        services.AddKeyedSingleton(serverAddress, (s, _) => GrpcChannel.ForAddress(serverAddress));
+        services.AddKeyedSingleton(settings.Url, (s, _) => GrpcChannel.ForAddress(settings.Url));
 
         services.AddSingleton<ICacheClient<TValue>>(s =>
             new CacheClient<TValue>(
-                s.GetKeyedService<GrpcChannel>(serverAddress)!,
+                s.GetKeyedService<GrpcChannel>(settings.Url)!,
                 jsonTypeInfo));
 
         return services;

@@ -2,7 +2,7 @@ using System.Threading.Channels;
 
 namespace Precision.WarpCache;
 
-public sealed class ChannelCacheMediator<TKey, TValue> where TKey : notnull {
+public sealed class ChannelCacheMediator<TKey, TValue> : IDisposable where TKey : notnull {
     private readonly ICacheStore<TKey, TValue> _cacheStore;
     private readonly IEvictionPolicy<TKey> _evictionPolicy;
     private readonly TimeProvider _timeProvider;
@@ -114,6 +114,8 @@ public sealed class ChannelCacheMediator<TKey, TValue> where TKey : notnull {
             System.Diagnostics.Debugger.Break();
         }
     }
+
+    public void Dispose() => _cts.Dispose();
 }
 
 public record struct CacheResult<TValue>(TValue Value, bool Found, long? ExpiryTime);

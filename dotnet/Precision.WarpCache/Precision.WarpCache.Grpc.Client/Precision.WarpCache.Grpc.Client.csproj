@@ -18,6 +18,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\Nudges.Configuration\Nudges.Configuration.csproj" />
     <ProjectReference Include="..\Precision.WarpCache\Precision.WarpCache.csproj" />
   </ItemGroup>
 

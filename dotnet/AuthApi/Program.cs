@@ -10,52 +10,27 @@ using Nudges.Auth.Web;
 using Nudges.Configuration.Extensions;
 using Nudges.Kafka;
 using Nudges.Kafka.Events;
-using OpenTelemetry.Logs;
-using OpenTelemetry.Metrics;
-using OpenTelemetry.Resources;
-using OpenTelemetry.Trace;
+using Nudges.Telemetry;
 using Precision.WarpCache.Grpc.Client;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Configuration.AddFlatFilesFromMap(
-    builder.Configuration.GetValue("FILEMAP", string.Empty), false);
+var settings = new Settings();
+builder.Configuration.Bind(settings);
 
-builder.Services.Configure<OidcConfig>(builder.Configuration.GetSection("Oidc"));
+if (settings.Otlp.Endpoint is string url)
+{
 
-if (builder.Configuration.GetOtlpEndpointUrl() is string url) {
-
-    builder.Services.AddOpenTelemetry()
-        .ConfigureResource(resource =>
-            resource.AddService(builder.Environment.ApplicationName))
-        .WithMetrics(o =>
-            o.AddRuntimeInstrumentation()
-                .AddMeter([
-                    "Microsoft.AspNetCore.Hosting",
-                    "Microsoft.AspNetCore.Server.Kestrel",
-                    "System.Net.Http"
-                ]).AddPrometheusExporter())
-        .WithTracing(traceBuilder =>
-            traceBuilder
-                .SetSampler<AlwaysOnSampler>()
-                .AddHttpClientInstrumentation()
-                .AddAspNetCoreInstrumentation(options =>
-                    options.Filter = context =>
-                        context.Request.Method != "GET")
-                .AddSource([
-                    "Nudges.Kafka.KafkaMessageProducer",
-                    "Nudges.Telemetry.TracingMiddleware"
-                ]))
-        .WithLogging();
-
-    builder.Services.ConfigureOpenTelemetryMeterProvider(o =>
-        o.AddOtlpExporter(o => o.Endpoint = new Uri(url)));
-
-    builder.Services.ConfigureOpenTelemetryTracerProvider(o =>
-        o.AddOtlpExporter(o => o.Endpoint = new Uri(url)));
-
-    builder.Services.ConfigureOpenTelemetryLoggerProvider(o =>
-        o.AddOtlpExporter(o => o.Endpoint = new Uri(url)));
+    builder.Services.AddOpenTelemetryConfiguration<Program>(
+            url,
+            builder.Environment.ApplicationName, [
+                "Microsoft.AspNetCore.Hosting",
+                "Microsoft.AspNetCore.Server.Kestrel",
+                "System.Net.Http",
+            ], [
+                $"{typeof(KafkaMessageProducer<,>).Namespace}.KafkaMessageProducer",
+                $"{typeof(Handlers).FullName}"
+            ], null, null, options => options.RecordException = true);
 }
 
 builder.Services.AddExceptionHandler(o =>
@@ -75,7 +50,7 @@ builder.Services.AddExceptionHandler(o =>
     });
 
 builder.Services.AddWarpCacheClient(
-    builder.Configuration.GetCacheServerAddress(),
+    settings.WarpCache,
     StringMessageSerializerContext.Default.String);
 
 builder.Services.AddLogging(configure => configure
@@ -84,17 +59,17 @@ builder.Services.AddLogging(configure => configure
 
 builder.Services.AddSingleton<KafkaMessageProducer<NotificationKey, NotificationEvent>>(sp =>
     new NotificationEventProducer(Topics.Notifications, new ProducerConfig {
-        BootstrapServers = sp.GetRequiredService<IConfiguration>().GetKafkaBrokerList()
+        BootstrapServers = settings.Kafka.BrokerList,
     }));
 builder.Services.AddSingleton<KafkaMessageProducer<UserAuthenticationEventKey, UserAuthenticationEvent>>(sp =>
     new UserAuthenticationEventProducer(Topics.UserAuthentication, new ProducerConfig {
-        BootstrapServers = sp.GetRequiredService<IConfiguration>().GetKafkaBrokerList()
+        BootstrapServers = settings.Kafka.BrokerList,
     }));
 
 builder.Services.AddTransient<IOtpVerifier, OtpVerifier>();
 
 builder.Services.AddHttpClient<IOidcClient, KeycloakOidcClient>(client => {
-    client.BaseAddress = new Uri(builder.Configuration.GetOidcServerUrl());
+    client.BaseAddress = new Uri(settings.Oidc.ServerUrl);
     client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue(MediaTypeNames.Application.Json));
 }).ConfigurePrimaryHttpMessageHandler(s => {
     if (builder.Configuration.GetIgnoreSslCertValidation() == "true") {
@@ -104,6 +79,8 @@ builder.Services.AddHttpClient<IOidcClient, KeycloakOidcClient>(client => {
     }
     return new HttpClientHandler();
 });
+
+builder.Services.AddControllers();
 
 builder.Services.AddHealthChecks();
 
@@ -119,13 +96,11 @@ app.UseExceptionHandler();
 
 app.MapHealthChecks("/health");
 
-if (builder.Configuration.GetOtlpEndpointUrl() is not null) {
+if (settings.Otlp.Endpoint is not null)
+{
     app.MapPrometheusScrapingEndpoint();
 }
 
-app.MapPost("/otp", Handlers.GenerateOtp);
-app.MapPost("/otp/verify", Handlers.ValidateOtp);
-app.MapGet("/login", Handlers.OAuthLogin);
-app.MapGet("/redirect", Handlers.OAuthRedirect);
+app.MapControllers();
 
 await app.RunAsync();

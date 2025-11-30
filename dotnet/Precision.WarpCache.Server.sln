@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 18
-VisualStudioVersion = 18.0.11205.157 d18.0
+VisualStudioVersion = 18.0.11205.157
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Precision.WarpCache", "Precision.WarpCache\Precision.WarpCache\Precision.WarpCache.csproj", "{F757B64E-51A7-4072-8DCE-74664CE9EF5D}"
 EndProject
@@ -14,6 +14,12 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Precision.WarpCache.Grpc", "Precision.WarpCache\Precision.WarpCache.Grpc\Precision.WarpCache.Grpc.csproj", "{6DD9D59D-1124-4312-AEEA-D1D2B2CCC51D}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Precision.WarpCache.Grpc.Client", "Precision.WarpCache\Precision.WarpCache.Grpc.Client\Precision.WarpCache.Grpc.Client.csproj", "{82D89C15-AE04-4792-97B5-F2EC43E2273A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Nudges.Configuration", "Nudges.Configuration\Nudges.Configuration.csproj", "{7C641EF9-4E3B-D2C4-01D4-309E455DB67B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Nudges.Telemetry", "Nudges.Telemetry\Nudges.Telemetry.csproj", "{813277CD-C9FB-C096-1FD1-BF5D467AF411}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Precision.WarpCache.Redis", "Precision.WarpCache\Precision.WarpCache.Redis\Precision.WarpCache.Redis.csproj", "{A74E9EBA-0965-0BA2-3DC8-B25FF073B1F5}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -45,6 +51,18 @@ Global
 		{82D89C15-AE04-4792-97B5-F2EC43E2273A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{82D89C15-AE04-4792-97B5-F2EC43E2273A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{82D89C15-AE04-4792-97B5-F2EC43E2273A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7C641EF9-4E3B-D2C4-01D4-309E455DB67B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7C641EF9-4E3B-D2C4-01D4-309E455DB67B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7C641EF9-4E3B-D2C4-01D4-309E455DB67B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7C641EF9-4E3B-D2C4-01D4-309E455DB67B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{813277CD-C9FB-C096-1FD1-BF5D467AF411}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{813277CD-C9FB-C096-1FD1-BF5D467AF411}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{813277CD-C9FB-C096-1FD1-BF5D467AF411}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{813277CD-C9FB-C096-1FD1-BF5D467AF411}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A74E9EBA-0965-0BA2-3DC8-B25FF073B1F5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A74E9EBA-0965-0BA2-3DC8-B25FF073B1F5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A74E9EBA-0965-0BA2-3DC8-B25FF073B1F5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A74E9EBA-0965-0BA2-3DC8-B25FF073B1F5}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

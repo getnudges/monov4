@@ -3,17 +3,24 @@
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 
-# Copy csproj and restore dependencies
-COPY ["./LocalizationApi/LocalizationApi.csproj", "."]
-RUN dotnet restore "LocalizationApi.csproj"
-
-# Copy the rest of the source code
-COPY ./LocalizationApi/ .
-
 # Install NativeAOT build prerequisites
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
     clang zlib1g-dev
+
+# Copy csproj and restore dependencies
+COPY LocalizationApi/LocalizationApi.csproj ./LocalizationApi/
+COPY Nudges.Configuration/Nudges.Configuration.csproj ./Nudges.Configuration/
+COPY Nudges.Telemetry/Nudges.Telemetry.csproj ./Nudges.Telemetry/
+
+RUN dotnet restore LocalizationApi/LocalizationApi.csproj
+
+# Copy the rest of the source code
+COPY LocalizationApi/. ./LocalizationApi/
+COPY Nudges.Configuration/. ./Nudges.Configuration/
+COPY Nudges.Telemetry/. ./Nudges.Telemetry/
+
+WORKDIR /src/LocalizationApi
 
 # Build and publish the app with AOT enabled
 RUN dotnet publish "LocalizationApi.csproj" \
@@ -37,16 +44,12 @@ ENV DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=false
 ENV LC_ALL=en_US.UTF-8
 ENV LANG=en_US.UTF-8
 
-# # Create non-root user for security
-# RUN adduser --disabled-password --gecos "" appuser
-# USER appuser
-
-# # Copy the published AOT app from the build stage
+# Copy the published AOT app from the build stage
 COPY --from=build /app/publish .
 
-# Configure health checks
-# HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-#     CMD wget -q -O - http://localhost:8888/health || exit 1
+# Configure health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+    CMD timeout 3 bash -c '</dev/tcp/localhost/8888' || exit 1
 
 ENTRYPOINT ["/app/LocalizationApi"]
 

@@ -33,6 +33,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Nudges.Configuration.Analyz
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Nudges.Telemetry", "Nudges.Telemetry\Nudges.Telemetry.csproj", "{B9E5F0E5-128A-84DF-8A24-9243A9AA0493}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Nudges.Core", "Nudges.Core\Nudges.Core.csproj", "{AA3A62C4-CC50-4F92-994F-097D6ADCF77D}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -99,6 +101,10 @@ Global
 		{B9E5F0E5-128A-84DF-8A24-9243A9AA0493}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B9E5F0E5-128A-84DF-8A24-9243A9AA0493}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B9E5F0E5-128A-84DF-8A24-9243A9AA0493}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AA3A62C4-CC50-4F92-994F-097D6ADCF77D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AA3A62C4-CC50-4F92-994F-097D6ADCF77D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AA3A62C4-CC50-4F92-994F-097D6ADCF77D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AA3A62C4-CC50-4F92-994F-097D6ADCF77D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

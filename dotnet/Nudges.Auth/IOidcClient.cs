@@ -1,4 +1,4 @@
-using Monads;
+using ErrorOr;
 
 namespace Nudges.Auth;
 
@@ -11,19 +11,19 @@ public interface IOidcClient {
     /// </summary>
     /// <param name="username">User's username</param>
     /// <param name="password">User's password</param>
-    public Task<Result<TokenResponse, OidcException>> GetUserTokenAsync(string username, string password, CancellationToken cancellationToken);
+    public Task<ErrorOr<TokenResponse>> GetUserTokenAsync(string username, string password, CancellationToken cancellationToken);
     /// <summary>
     /// Retrieves a token from Keycloak using the authorization code grant type.
     /// </summary>
     /// <param name="code">Code from OIDC auth flow</param>
     /// <param name="codeVerifier">Code Verifier from OIDC auth flow</param>
     /// <param name="redirectUri">Redirect URI from OIDC auth flow</param>
-    public Task<Result<TokenResponse, OidcException>> GrantTokenAsync(string code, string codeVerifier, string redirectUri, CancellationToken cancellationToken);
+    public Task<ErrorOr<TokenResponse>> GrantTokenAsync(string code, string codeVerifier, string redirectUri, CancellationToken cancellationToken);
     /// <summary>
     /// Creates a new user in Keycloak.
     /// </summary>
     /// <param name="userRepresentation"> Keycloak <see cref="UserRepresentation"/> object. (see <see href="https://www.keycloak.org/docs-api/latest/rest-api/index.html#UserRepresentation"/>)</param>
-    public Task<Maybe<OidcException>> CreateUser(UserRepresentation userRepresentation, CancellationToken cancellationToken);
+    public Task<ErrorOr<Success>> CreateUser(UserRepresentation userRepresentation, CancellationToken cancellationToken);
 
-    public Task<Result<List<UserRepresentation>, OidcException>> GetUserByUsername(string username, CancellationToken cancellationToken);
+    public Task<ErrorOr<List<UserRepresentation>>> GetUserByUsername(string username, CancellationToken cancellationToken);
 }

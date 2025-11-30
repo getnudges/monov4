@@ -20,13 +20,13 @@ internal static class AppConfiguration {
     [ConfigurationKey]
     public const string RedisUrl = "REDIS_URL";
     [ConfigurationKey]
-    public const string CacheServerAddress = "CACHE_SERVER_ADDRESS";
+    public const string CacheServerAddress = "WarpCache__Url";
     [ConfigurationKey]
     public const string StripeApiKey = "STRIPE_API_KEY";
     [ConfigurationKey]
     public const string StripeApiUrl = "STRIPE_API_URL";
     [ConfigurationKey]
-    public const string KafkaBrokerList = "KAFKA_BROKER_LIST";
+    public const string KafkaBrokerList = "Kafka__BrokerList";
     [ConfigurationKey]
     public const string GraphQLApiUrl = "GRAPHQL_API_URL";
     [ConfigurationKey]

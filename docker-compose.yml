@@ -181,16 +181,12 @@ services:
     networks:
       - Nudges
     build:
-      context: ./dotnet/Precision.WarpCache
-      dockerfile: Server.Dockerfile
+      context: ./dotnet
+      dockerfile: WarpCache.Dockerfile
     ports:
       - "7777:7777"
-    environment:
-      - ASPNETCORE_ENVIRONMENT=Development
-      - Kestrel__EndpointDefaults__Protocols=Http2
-      - Kestrel__Endpoints__gRPC__Url=http://*:7777
     env_file:
-      - ./dotnet/.env.docker
+      - ./dotnet/Precision.WarpCache/Precision.WarpCache.Grpc/.env.docker
     # depends_on:
     #   - redis
 
@@ -337,9 +333,9 @@ services:
     #   - redis
     #   - unleash
 
-  localizer-api:
-    hostname: localizer-api
-    container_name: localizer-api
+  localization-api:
+    hostname: localization-api
+    container_name: localization-api
     networks:
       - Nudges
     build:
@@ -347,11 +343,15 @@ services:
       dockerfile: ./LocalizationApi.Dockerfile
     ports:
       - "8888:8888"
-    environment:
-      - ASPNETCORE_ENVIRONMENT=Development
-      - Kestrel__Endpoints__gRPC__Url=http://*:8888
     env_file:
       - ./dotnet/LocalizationApi/.env.docker
+    healthcheck:
+      test:
+        ["CMD-SHELL", "timeout 1 bash -c '</dev/tcp/localhost/8888' || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 60s
 
   notifications-listener:
     container_name: notifications-listener
@@ -364,7 +364,6 @@ services:
       DOTNET_ENVIRONMENT: Development
       ASPNETCORE_ENVIRONMENT: Development
       HTTP_PORTS: 7100
-      Oidc__ClientId: kafka-consumer
     ports:
       - "7100"
     env_file:
@@ -387,7 +386,6 @@ services:
       DOTNET_ENVIRONMENT: Development
       ASPNETCORE_ENVIRONMENT: Development
       HTTP_PORTS: 7100
-      Oidc__ClientId: kafka-consumer
     ports:
       - "7100"
     env_file:
@@ -433,7 +431,6 @@ services:
       DOTNET_ENVIRONMENT: Development
       ASPNETCORE_ENVIRONMENT: Development
       HTTP_PORTS: 7100
-      Oidc__ClientId: kafka-consumer
     ports:
       - "7100"
     env_file:

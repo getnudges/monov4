@@ -54,7 +54,8 @@ static IHostBuilder CreateBaseHost(string[] args, string name) =>
         .ConfigureWebHostDefaults(configure => {
             configure.ConfigureKestrel(options => { }).PreferHostingUrls(true);
             configure.Configure(configure => {
-                if (configure.ApplicationServices.GetRequiredService<IConfiguration>().GetValue<string>("OTLP_ENDPOINT_URL") is not null) {
+                if (configure.ApplicationServices.GetRequiredService<IConfiguration>().GetValue<string>("Otlp__Endpoint") is not null)
+                {
                     configure.UseRouting().UseEndpoints(e => e.MapPrometheusScrapingEndpoint());
                 }
             });
@@ -67,7 +68,8 @@ static IHostBuilder CreateBaseHost(string[] args, string name) =>
                 .ConfigureServices((hostContext, services) => {
                     services.AddLogging(configure => configure.AddSimpleConsole(o => o.SingleLine = true));
 
-                    if (hostContext.Configuration.GetValue<string>("OTLP_ENDPOINT_URL") is string url) {
+                    if (hostContext.Configuration.GetValue<string>("Otlp__Endpoint") is string url)
+                    {
                         services.AddOpenTelemetryConfiguration(
                             url,
                             $"{name}-{hostContext.HostingEnvironment.ApplicationName}", [

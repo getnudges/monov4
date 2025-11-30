@@ -7,7 +7,7 @@
       "applicationUrl": "https://::5555",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development",
-        "OTLP_ENDPOINT_URL": "http://localhost:4317",
+        "Otlp__Endpoint": "http://localhost:4317",
         "IGNORE_SSL_CERT_VALIDATION": "true"
       }
     }

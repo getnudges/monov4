@@ -7,6 +7,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="ErrorOr" Version="2.0.1" />
     <PackageReference Include="Keycloak.AuthServices.Sdk" Version="2.7" />
     <PackageReference Include="Microsoft.Extensions.Configuration.UserSecrets" Version="10.0.0" />
   </ItemGroup>
@@ -14,6 +15,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Monads\Monads.csproj" />
     <ProjectReference Include="..\Nudges.Auth\Nudges.Auth.csproj" />
+    <ProjectReference Include="..\Nudges.Core\Nudges.Core.csproj" />
   </ItemGroup>
 
 </Project>
