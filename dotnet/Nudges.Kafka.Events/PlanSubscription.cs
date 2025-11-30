@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace Nudges.Kafka.Events;
 
 public partial record PlanSubscriptionKey(string EventType, Guid EventKey) {
@@ -7,4 +9,8 @@ public partial record PlanSubscriptionKey(string EventType, Guid EventKey) {
 }
 
 [EventModel(typeof(PlanSubscriptionKey))]
-public partial record PlanSubscriptionEvent;
+[JsonPolymorphic(TypeDiscriminatorPropertyName = "$type")]
+[JsonDerivedType(typeof(PlanSubscriptionCreatedEvent), "planSubscription.created")]
+public abstract partial record PlanSubscriptionEvent;
+
+public partial record PlanSubscriptionCreatedEvent(Guid PlanSubscriptionId) : PlanSubscriptionEvent;

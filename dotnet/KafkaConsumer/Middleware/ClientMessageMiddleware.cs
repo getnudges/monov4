@@ -22,11 +22,9 @@ internal class ClientMessageMiddleware(ILogger<ClientMessageMiddleware> logger,
 
     public async Task<Result<bool, Exception>> HandleMessageAsync(ConsumeResult<ClientKey, ClientEvent> cr, CancellationToken cancellationToken) {
         logger.LogAction($"Received message {cr.Message.Key}");
-        return await (cr switch {
-            { Message.Key.EventType: nameof(ClientKey.ClientCreated), Message.Key.EventKey: var clientId } =>
-                HandleClientCreated(clientId, cancellationToken),
-            { Message.Key.EventType: nameof(ClientKey.ClientUpdated), Message.Key.EventKey: var clientId } =>
-                HandleClientUpdated(clientId, cancellationToken),
+        return await (cr.Message.Value switch {
+            ClientCreatedEvent created => HandleClientCreated(created.ClientNodeId, cancellationToken),
+            ClientUpdatedEvent updated => HandleClientUpdated(updated.ClientNodeId, cancellationToken),
             _ => Result.ExceptionTask(new UnhandledMessageException($"No handler registered for event {cr.Message.Key}.")),
         });
     }

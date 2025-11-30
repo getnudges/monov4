@@ -22,9 +22,8 @@ internal class NotificationMessageMiddleware(ILogger<NotificationMessageMiddlewa
 
     public async Task<Result<bool, Exception>> HandleMessageAsync(ConsumeResult<NotificationKey, NotificationEvent> cr, CancellationToken cancellationToken) {
         logger.LogAction($"Received message {cr.Message.Key}");
-        return await (cr switch {
-            { Message.Key.EventType: nameof(NotificationKey.SendSms), Message.Key.EventKey: var phoneNumber, Message.Value: var value } =>
-                HandleSendSms(phoneNumber, value.ResourceKey, value.Locale, value.Replacements, cancellationToken),
+        return await (cr.Message.Value switch {
+            SendSmsNotificationEvent sendSms => HandleSendSms(cr.Message.Key.EventKey, sendSms.ResourceKey, sendSms.Locale, sendSms.Replacements, cancellationToken),
             _ => Result.ExceptionTask(new UnhandledMessageException($"No handler registered for event {cr.Message.Key}.")),
         });
     }

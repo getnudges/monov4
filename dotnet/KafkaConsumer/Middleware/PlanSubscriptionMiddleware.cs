@@ -21,9 +21,8 @@ internal class PlanSubscriptionEventMiddleware(ILogger<PlanSubscriptionEventMidd
 
     public async Task<Result<bool, Exception>> HandleMessageAsync(ConsumeResult<PlanSubscriptionKey, PlanSubscriptionEvent> cr, CancellationToken cancellationToken) {
         logger.LogAction($"Received message {cr.Message.Key}");
-        return await (cr switch {
-            { Message.Key.EventType: nameof(PlanSubscriptionKey.PlanSubscriptionCreated), Message.Key.EventKey: var planSubscriptionId } =>
-                HandlePlanSubscriptionCreated(planSubscriptionId, cancellationToken),
+        return await (cr.Message.Value switch {
+            PlanSubscriptionCreatedEvent created => HandlePlanSubscriptionCreated(created.PlanSubscriptionId, cancellationToken),
             _ => Result.ExceptionTask(new UnhandledMessageException($"No handler registered for event {cr.Message.Key}.")),
         });
     }
@@ -38,7 +37,9 @@ internal class PlanSubscriptionEventMiddleware(ILogger<PlanSubscriptionEventMidd
             }, cancellationToken).Map(async _ => {
                 try {
                     await notificationProducer.Produce(
-                        NotificationKey.StartSubscription(planSubscriptionId.ToString()), NotificationEvent.Empty, cancellationToken);
+                        NotificationKey.StartSubscription(planSubscriptionId.ToString()),
+                        new StartSubscriptionNotificationEvent(string.Empty, sub.Locale ?? "en-US", []),
+                        cancellationToken);
                     return Result.Success<bool, Exception>(true);
                 } catch (Exception e) {
                     return Result.Exception<bool>(e);

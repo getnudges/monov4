@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Text.Json.Serialization;
 using Confluent.Kafka;
 
 namespace Nudges.Kafka.Events;
@@ -19,14 +20,32 @@ public record NotificationKey(string EventType, string EventKey) {
 }
 
 [EventModel(typeof(NotificationKey))]
-public record NotificationEvent(string ResourceKey, string Locale, Dictionary<string, string> Replacements) {
-    // TODO: this is where it falls apart. I need to be able to handle messages of different types
-    // Hopefully without having a million different classes
-    public static readonly NotificationEvent Empty = new(string.Empty, CultureInfo.CurrentCulture.Name, []);
-    public static NotificationEvent ClientCreated() => new(nameof(ClientCreated), CultureInfo.CurrentCulture.Name, []);
-    public static NotificationEvent ClientUpdated() => new(nameof(ClientUpdated), CultureInfo.CurrentCulture.Name, []);
-    public static NotificationEvent SendSms(string resourceKey, string locale, Dictionary<string, string> replacements) => new(resourceKey, locale, replacements);
+[JsonPolymorphic(TypeDiscriminatorPropertyName = "$type")]
+[JsonDerivedType(typeof(SendSmsNotificationEvent), "notification.sendSms")]
+[JsonDerivedType(typeof(ClientCreatedNotificationEvent), "notification.clientCreated")]
+[JsonDerivedType(typeof(ClientUpdatedNotificationEvent), "notification.clientUpdated")]
+[JsonDerivedType(typeof(EndSubscriptionNotificationEvent), "notification.endSubscription")]
+[JsonDerivedType(typeof(StartSubscriptionNotificationEvent), "notification.startSubscription")]
+public abstract record NotificationEvent;
+
+public record SendSmsNotificationEvent(string ResourceKey, string Locale, Dictionary<string, string> Replacements) : NotificationEvent {
+    public static SendSmsNotificationEvent Create(string resourceKey, string locale, Dictionary<string, string> replacements) =>
+        new(resourceKey, locale, replacements);
 }
+
+public record ClientCreatedNotificationEvent(string ResourceKey, string Locale, Dictionary<string, string> Replacements) : NotificationEvent {
+    public static ClientCreatedNotificationEvent Create() =>
+        new(nameof(ClientCreatedNotificationEvent), CultureInfo.CurrentCulture.Name, []);
+}
+
+public record ClientUpdatedNotificationEvent(string ResourceKey, string Locale, Dictionary<string, string> Replacements) : NotificationEvent {
+    public static ClientUpdatedNotificationEvent Create() =>
+        new(nameof(ClientUpdatedNotificationEvent), CultureInfo.CurrentCulture.Name, []);
+}
+
+public record EndSubscriptionNotificationEvent(string ResourceKey, string Locale, Dictionary<string, string> Replacements) : NotificationEvent;
+
+public record StartSubscriptionNotificationEvent(string ResourceKey, string Locale, Dictionary<string, string> Replacements) : NotificationEvent;
 
 public static class NotificationProducerExtensions {
     public static Task<DeliveryResult<NotificationKey, NotificationEvent>> ProduceOtpRequested(
@@ -36,7 +55,7 @@ public static class NotificationProducerExtensions {
         ArgumentException.ThrowIfNullOrEmpty(locale);
         ArgumentException.ThrowIfNullOrEmpty(otp);
 
-        return producer.Produce(NotificationKey.SendSms(phoneNumber), NotificationEvent.SendSms("SendOtp", locale, new Dictionary<string, string> { { "otp", otp } }), cancellationToken);
+        return producer.Produce(NotificationKey.SendSms(phoneNumber), SendSmsNotificationEvent.Create("SendOtp", locale, new Dictionary<string, string> { { "otp", otp } }), cancellationToken);
     }
 
     public static Task<DeliveryResult<NotificationKey, NotificationEvent>> ProduceSendSms(
@@ -45,7 +64,7 @@ public static class NotificationProducerExtensions {
         ArgumentException.ThrowIfNullOrEmpty(phoneNumber);
         ArgumentException.ThrowIfNullOrEmpty(locale);
 
-        return producer.Produce(NotificationKey.SendSms(phoneNumber), NotificationEvent.SendSms(resourceKey, locale, replacements), cancellationToken);
+        return producer.Produce(NotificationKey.SendSms(phoneNumber), SendSmsNotificationEvent.Create(resourceKey, locale, replacements), cancellationToken);
     }
 }
 
