@@ -12,7 +12,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Monads\Monads.csproj" />
     <ProjectReference Include="..\Nudges.Core\Nudges.Core.csproj" />
     <ProjectReference Include="..\Precision.WarpCache\Precision.WarpCache\Precision.WarpCache.csproj" />
   </ItemGroup>

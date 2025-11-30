@@ -23,6 +23,8 @@ COPY Precision.WarpCache/Precision.WarpCache.Redis ./Precision.WarpCache/Precisi
 COPY Nudges.Configuration ./Nudges.Configuration/
 COPY Nudges.Telemetry ./Nudges.Telemetry/
 
+WORKDIR /src/Precision.WarpCache
+
 # Build and publish the app with AOT enabled
 RUN dotnet publish "Precision.WarpCache.Grpc/Precision.WarpCache.Grpc.csproj" \
     -r linux-x64 \

@@ -3,15 +3,15 @@ using System.Globalization;
 using System.Net.Http.Json;
 using System.Text.Json.Serialization;
 using System.Text.Json.Serialization.Metadata;
+using ErrorOr;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Monads;
 using Precision.WarpCache;
 
 namespace Nudges.Auth;
 
 public interface IServerTokenClient {
-    public Task<Result<TokenResponse, OidcException>> GetTokenAsync(CancellationToken cancellationToken = default);
+    public Task<ErrorOr<TokenResponse>> GetTokenAsync(CancellationToken cancellationToken = default);
 }
 
 public sealed class ServerTokenClient(HttpClient client, IOptions<OidcConfig> config, ICacheStore<string, string> cacheStore, ILogger<ServerTokenClient> logger) : IServerTokenClient {
@@ -20,7 +20,7 @@ public sealed class ServerTokenClient(HttpClient client, IOptions<OidcConfig> co
     private readonly ICacheStore<string, string> _cacheStore = cacheStore;
 
 
-    private async Task<Result<T, OidcException>> SendRequestAsync<T>(HttpRequestMessage request, JsonTypeInfo<T> jsonTypeInfo, CancellationToken cancellationToken) {
+    private async Task<ErrorOr<T>> SendRequestAsync<T>(HttpRequestMessage request, JsonTypeInfo<T> jsonTypeInfo, CancellationToken cancellationToken) {
         try {
             var response = await _client.SendAsync(request, cancellationToken);
             if (!response.IsSuccessStatusCode) {
@@ -35,11 +35,13 @@ public sealed class ServerTokenClient(HttpClient client, IOptions<OidcConfig> co
             logger.LogRequestError(ex);
             Activity.Current?.AddException(ex);
             Activity.Current?.SetStatus(ActivityStatusCode.Error, ex.Message);
-            return OidcException.FromException($"Request failed: {ex.Message}", ex);
+            return Error.Unexpected("SendRequestAsync.Exception", ex.Message, new Dictionary<string,object>([
+                new KeyValuePair<string, object>("StackTrace", ex.StackTrace ?? string.Empty),
+            ]));
         }
     }
 
-    private async Task<Result<TokenResponse, OidcException>> GetAdminToken(CancellationToken cancellationToken) {
+    private async Task<ErrorOr<TokenResponse>> GetAdminToken(CancellationToken cancellationToken) {
         var request = new HttpRequestMessage(HttpMethod.Post, $"/realms/{_config.Realm}/protocol/openid-connect/token") {
             Content = new FormUrlEncodedContent(new Dictionary<string, string> {
                 { "client_id", _config.ClientId },
@@ -51,7 +53,7 @@ public sealed class ServerTokenClient(HttpClient client, IOptions<OidcConfig> co
         return await SendRequestAsync(request, TokenResponseContext.Default.TokenResponse, cancellationToken);
     }
 
-    public async Task<Result<TokenResponse, OidcException>> GetTokenAsync(CancellationToken cancellationToken = default) {
+    public async Task<ErrorOr<TokenResponse>> GetTokenAsync(CancellationToken cancellationToken = default) {
         // uncomment to clear cache for testing
         //await _cacheStore.RemoveAsync($"{_config.Realm}:token:{_config.ClientId}", cancellationToken);
         var cached = await _cacheStore.GetAsync($"{_config.Realm}:token:{_config.ClientId}", cancellationToken);
@@ -63,7 +65,7 @@ public sealed class ServerTokenClient(HttpClient client, IOptions<OidcConfig> co
         }
 
         try {
-            return await GetAdminToken(cancellationToken).Map(async adminToken => {
+            return await GetAdminToken(cancellationToken).ThenAsync(async adminToken => {
                 await _cacheStore.SetAsync(
                     $"{_config.Realm}:token:{_config.ClientId}", adminToken.AccessToken, TimeSpan.FromSeconds(adminToken.ExpiresIn));
                 return adminToken;
@@ -71,7 +73,9 @@ public sealed class ServerTokenClient(HttpClient client, IOptions<OidcConfig> co
         } catch (Exception ex) {
             Activity.Current?.AddException(ex);
             Activity.Current?.SetStatus(ActivityStatusCode.Error, ex.Message);
-            return new OidcException("Could not retrieve token", ex);
+            return Error.Unexpected("SendRequestAsync.Exception", ex.Message, new Dictionary<string, object>([
+                new KeyValuePair<string, object>("StackTrace", ex.StackTrace ?? string.Empty),
+            ]));
         }
 
     }

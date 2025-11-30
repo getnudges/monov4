@@ -208,7 +208,7 @@ services:
     networks:
       - Nudges
     env_file:
-      - ./dotnet/.env.docker
+      - ./dotnet/tools/Nudges.Data.Migrator/.env.docker
     # depends_on:
     #   - postgres
 
@@ -219,7 +219,7 @@ services:
     networks:
       - Nudges
     env_file:
-      - ./dotnet/.env.docker
+      - ./dotnet/tools/DbSeeder/.env.docker
     # depends_on:
     #   - postgres
 
@@ -230,7 +230,7 @@ services:
     networks:
       - Nudges
     env_file:
-      - ./dotnet/.env.docker
+      - ./dotnet/Nudges.AuthInit/.env.docker
     # depends_on:
     #   keycloak:
     #       condition: service_healthy
@@ -249,7 +249,7 @@ services:
       - ASPNETCORE_ENVIRONMENT=Development
       - HTTP_PORTS=5145
     env_file:
-      - ./dotnet/.env.docker
+      - ./dotnet/GraphMonitor/.env.docker
     # depends_on:
     #   - warp-cache
 

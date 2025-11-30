@@ -8,7 +8,6 @@ using Microsoft.Extensions.Options;
 using Nudges.Auth;
 using Nudges.Auth.Keycloak;
 using Nudges.AuthInit;
-using Nudges.Configuration.Extensions;
 using Nudges.Data;
 using Nudges.Data.Security;
 using Nudges.Data.Users;
@@ -26,11 +25,14 @@ static IHostBuilder CreateDbHostBuilder(string[] args) =>
     CreateBaseHost(args)
         .ConfigureServices((hostContext, services) => {
             services.AddLogging(static configure => configure.AddSimpleConsole(o => o.SingleLine = true));
+            // we have to use the admin creds because at this point client configs aren't exported yet
             services.Configure<OidcConfig>(hostContext.Configuration.GetSection("Oidc"));
             services.Configure<HashSettings>(hostContext.Configuration.GetSection("HashSettings"));
             services.AddOptions<HashSettings>(nameof(HashSettings));
             services.Configure<EncryptionSettings>(hostContext.Configuration.GetSection("EncryptionSettings"));
             services.AddOptions<EncryptionSettings>(nameof(EncryptionSettings));
+            var settings = new Settings();
+            hostContext.Configuration.Bind(settings);
             services.AddSingleton(static sp => {
                 var config = sp.GetRequiredService<IConfiguration>();
                 var base64 = config["HashSettings:HashKeyBase64"]
@@ -69,11 +71,9 @@ static IHostBuilder CreateDbHostBuilder(string[] args) =>
                 );
             });
 
-            services.AddHttpClient<IOidcClient, KeycloakOidcClient>((sp, client) => {
-                var configuration = sp.GetRequiredService<IConfiguration>();
-                var baseUrl = configuration.GetOidcServerUrl();
-                client.BaseAddress = new Uri(baseUrl);
-            }).ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler {
+            services.AddHttpClient<IOidcClient, KeycloakOidcClient>((sp, client) =>
+                client.BaseAddress = new Uri(settings.Oidc.ServerUrl))
+            .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler {
                 ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
             });
 

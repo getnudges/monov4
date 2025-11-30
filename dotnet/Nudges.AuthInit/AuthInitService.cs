@@ -2,7 +2,6 @@ using ErrorOr;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using Monads;
 using Nudges.Auth;
 using Nudges.Data.Users;
 using Nudges.Data.Users.Models;
@@ -15,7 +14,6 @@ internal sealed class AuthInitService(ILogger<AuthInitService> logger,
                                       IOidcClient oidcClient,
                                       HashService hashService,
                                       IHostApplicationLifetime appLifetime) : IHostedService {
-
 
     public async Task StartAsync(CancellationToken cancellationToken) {
         logger.LogServiceStarting();
@@ -57,8 +55,12 @@ internal sealed class AuthInitService(ILogger<AuthInitService> logger,
             await context.SaveChangesAsync(cancellationToken);
         }
         var existingAdminCreated = await oidcClient.GetUserByUsername(defaultUser.PhoneNumber, cancellationToken).Then(users =>
-            users.Find(u => u.Username == phoneNumberHash)
+            users.Find(u => u.Username == adminPhone)
         ).Then(u => u is not null);
+
+        if (existingAdminCreated.IsError) {
+            throw new Exception($"Failed to create default admin in OIDC: {existingAdminCreated.FirstError}");
+        }
 
         if (existingAdminCreated.Value) {
             logger.LogSkippingAdmin(defaultUser.Id);
@@ -74,6 +76,10 @@ internal sealed class AuthInitService(ILogger<AuthInitService> logger,
                     context.SaveChanges();
                     return true;
                 }));
+
+        if (created.IsError) {
+            throw new Exception($"Failed to create default admin in OIDC: {created.FirstError}");
+        }
     }
 
     private async Task<ErrorOr<Success>> CreateDefaultAdminInOidc(string phoneNumber, string phoneNumberHash, CancellationToken cancellationToken) =>
@@ -86,7 +92,7 @@ internal sealed class AuthInitService(ILogger<AuthInitService> logger,
             Credentials = [
                     new() {
                         Type = "password",
-                        Value = "pass",
+                        Value = "pass", // Default password; it's only relevant to local dev, so that's fine.
                         Temporary = false
                     }
                 ],

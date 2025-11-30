@@ -44,8 +44,7 @@ internal sealed class DbSeedService(ILogger<DbSeedService> logger,
         var defaultUser = await context.Users.Include(u => u.Client)
             .SingleOrDefaultAsync(c => c.PhoneNumberHash == phoneNumberHash, cancellationToken);
         if (defaultUser is not { } user) {
-            logger.LogDefaultClientNotFound(DefaultClientPhone);
-            return;
+            throw new Exception("Default Admin user not found. Make sure to create the default admin user before seeding the default client.");
         }
         if (defaultUser?.Client is not { } client) {
             var defaultClient = context.Clients.Where(c => c.Id == user.Id).FirstOrDefault();

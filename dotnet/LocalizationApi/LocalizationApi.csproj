@@ -6,6 +6,7 @@
     <Nullable>enable</Nullable>
     <PublishAot>true</PublishAot>
     <InvariantGlobalization>false</InvariantGlobalization>
+    <UserSecretsId>7ceee687-e916-40cb-a4e8-99e5d0d525dd</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>
