@@ -120,25 +120,27 @@ sequenceDiagram
     participant ProductApi
     participant Kafka
     participant PlansListener
-    participant Stripe
+    participant ProductsListener
     participant Webhooks
+    participant Stripe
     
     Client->>Gateway: CreatePlan mutation
     Gateway->>ProductApi: createPlan
     ProductApi->>ProductApi: Save to DB
     ProductApi->>Kafka: PlanChangeEvent
     ProductApi-->>Gateway: Plan created
-    Gateway-->>Client: 200 OK (31ms)
+    Gateway-->>Client: 200 OK
     
     Note over Client,Kafka: User has response, async flow continues
     
     Kafka->>PlansListener: Consume PlanChangeEvent
     PlansListener->>Stripe: Create Product
-    Stripe-->>PlansListener: Product created
     Stripe->>Webhooks: product.created webhook
-    Webhooks->>ProductApi: GetPlanByForeignId
-    ProductApi-->>Webhooks: Plan details
-    Webhooks->>Kafka: ForeignProductEvent
+    Webhooks->>Kafka: ForeignProductSynchronizedEvent
+    Kafka->>ProductsListener: Consume ForeignProductSynchronizedEvent
+    ProductsListener->>ProductApi: PatchPlan
+    ProductApi->>Gateway: onPlanUpdated
+    Gateway->>Client: onPlanUpdated subscription
 ```
 
 ---
