@@ -7,7 +7,7 @@ internal static class AppConfiguration {
     public const string ResourcesPath = "Resources";
 
     [ConfigurationKey]
-    public const string ApiKey = "API_KEY";
+    public const string ApiKey = "WEBHOOKS_API_KEY";
     [ConfigurationKey]
     public const string RedisUrl = "REDIS_URL";
     [ConfigurationKey]

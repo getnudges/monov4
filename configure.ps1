@@ -184,6 +184,7 @@ Get-Content $externalEnvPath | ForEach-Object {
 $requiredExternalKeys = @(
     "STRIPE_API_KEY",
     "STRIPE_WEBHOOKS_SECRET",
+    "WEBHOOKS_API_KEY",
     "TWILIO_ACCOUNT_SID",
     "TWILIO_AUTH_TOKEN",
     "TWILIO_MESSAGE_SERVICE_SID"
@@ -229,7 +230,6 @@ if ($Docker -and $masterValues.Count -eq 0) {
         DB_PASSWORD                                                                  = $pwd
         ADMIN_USERNAME                                                               = 'admin'
         ADMIN_PASSWORD                                                               = $adminPwd
-        API_KEY                                                                      = New-RandomString -length 32
         AUTH_API_KEY                                                                 = New-RandomString -length 32
         MONITOR_API_KEY                                                              = New-RandomString -length 32
         AUTH_API_URL                                                                 = 'https://auth-api:5555'
