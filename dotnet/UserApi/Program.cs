@@ -1,4 +1,5 @@
 using Confluent.Kafka;
+using HotChocolate.Diagnostics;
 using Keycloak.AuthServices.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization.Infrastructure;
@@ -19,9 +20,12 @@ using UserApi;
 
 var builder = WebApplication.CreateBuilder(args);
 
-if (builder.Configuration.GetOtlpEndpointUrl() is string url) {
+var settings = new Settings();
+builder.Configuration.Bind(settings);
 
-    builder.Services.AddOpenTelemetryConfiguration(
+if (settings.Otlp.Endpoint is string url && !string.IsNullOrEmpty(url)) {
+
+    builder.Services.AddOpenTelemetryConfiguration<Program>(
         url,
         builder.Environment.ApplicationName, [
             "Microsoft.AspNetCore.Hosting",
@@ -105,11 +109,11 @@ builder.Services.AddDbContextFactory<UserDbContext>(static (sp, o) => {
 builder.Services
     .AddSingleton<KafkaMessageProducer<NotificationKey, NotificationEvent>>(sp =>
         new NotificationEventProducer(Topics.Notifications, new ProducerConfig {
-            BootstrapServers = sp.GetRequiredService<IConfiguration>().GetKafkaBrokerList()
+            BootstrapServers = settings.Kafka.BrokerList
         }))
     .AddSingleton<KafkaMessageProducer<ClientKey, ClientEvent>>(sp =>
         new ClientEventProducer(Topics.Clients, new ProducerConfig {
-            BootstrapServers = sp.GetRequiredService<IConfiguration>().GetKafkaBrokerList()
+            BootstrapServers = settings.Kafka.BrokerList
         }));
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme);
@@ -170,6 +174,11 @@ builder.Services
     .AddGlobalObjectIdentification()
     .ModifyRequestOptions(opt => opt.IncludeExceptionDetails = true)
     .AddRedisSubscriptions((sp) => sp.GetRequiredService<IConnectionMultiplexer>())
+    .AddInstrumentation(o => {
+        o.Scopes = ActivityScopes.ResolveFieldValue;
+        o.IncludeDocument = false;
+        o.RequestDetails = RequestDetails.Default;
+    })
     .InitializeOnStartup();
 
 builder.Services.AddHealthChecks();
@@ -178,7 +187,7 @@ var app = builder.Build();
 
 app.UseHealthChecks("/health");
 
-if (builder.Configuration.GetOtlpEndpointUrl() is not null) {
+if (settings.Otlp.Endpoint is not null) {
     app.MapPrometheusScrapingEndpoint();
 }
 

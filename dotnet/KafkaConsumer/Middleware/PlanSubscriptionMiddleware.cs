@@ -22,28 +22,28 @@ internal class PlanSubscriptionEventMiddleware(ILogger<PlanSubscriptionEventMidd
     public async Task<Result<bool, Exception>> HandleMessageAsync(ConsumeResult<PlanSubscriptionKey, PlanSubscriptionEvent> cr, CancellationToken cancellationToken) {
         logger.LogAction($"Received message {cr.Message.Key}");
         return await (cr.Message.Value switch {
-            PlanSubscriptionCreatedEvent created => HandlePlanSubscriptionCreated(created.PlanSubscriptionId, cancellationToken),
+            PlanSubscriptionCreatedEvent created => HandlePlanSubscriptionCreated(created, cancellationToken),
             _ => Result.ExceptionTask(new UnhandledMessageException($"No handler registered for event {cr.Message.Key}.")),
         });
     }
 
-    private async Task<Result<bool, Exception>> HandlePlanSubscriptionCreated(Guid planSubscriptionId, CancellationToken cancellationToken) {
+    private async Task<Result<bool, Exception>> HandlePlanSubscriptionCreated(PlanSubscriptionCreatedEvent data, CancellationToken cancellationToken) {
         using var client = new DisposableWrapper<INudgesClient>(nudgesClientFactory);
 
-        return await client.Instance.GetPlanSubscriptionById(planSubscriptionId, cancellationToken).Map(async sub =>
-            await client.Instance.UpdateClient(new UpdateClientInput {
-                Id = sub.ClientId,
-                SubscriptionId = planSubscriptionId,
-            }, cancellationToken).Map(async _ => {
-                try {
-                    await notificationProducer.Produce(
-                        NotificationKey.StartSubscription(planSubscriptionId.ToString()),
-                        new StartSubscriptionNotificationEvent(string.Empty, sub.Locale ?? "en-US", []),
-                        cancellationToken);
-                    return Result.Success<bool, Exception>(true);
-                } catch (Exception e) {
-                    return Result.Exception<bool>(e);
-                }
-            }));
+        return await client.Instance.UpdateClient(new UpdateClientInput {
+            Id = data.ClientId,
+            SubscriptionId = "GET_THIS_FROM_STRIPE", //data.PlanSubscriptionId,
+        }, cancellationToken).Map(async _ => {
+            try {
+                await notificationProducer.Produce(
+                    NotificationKey.StartSubscription(data.PlanSubscriptionId),
+                    // TODO: populate with real data
+                    new StartSubscriptionNotificationEvent(string.Empty, "en-US", []),
+                    cancellationToken);
+                return Result.Success<bool, Exception>(true);
+            } catch (Exception e) {
+                return Result.Exception<bool>(e);
+            }
+        });
     }
 }

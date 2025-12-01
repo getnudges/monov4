@@ -13,6 +13,7 @@ COPY Nudges.Kafka/*.csproj ./Nudges.Kafka/
 COPY Nudges.Kafka.Analyzers/*.csproj ./Nudges.Kafka.Analyzers/
 COPY Nudges.Auth/*.csproj ./Nudges.Auth/
 COPY Nudges.Telemetry/*.csproj ./Nudges.Telemetry/
+COPY Nudges.Core/*.csproj ./Nudges.Core/
 COPY Nudges.HotChocolate.Utils/*.csproj ./Nudges.HotChocolate.Utils/
 COPY Precision.WarpCache/Precision.WarpCache/*.csproj ./Precision.WarpCache/Precision.WarpCache/
 COPY Precision.WarpCache/Precision.WarpCache.Grpc.Client/*.csproj ./Precision.WarpCache/Precision.WarpCache.Grpc.Client/
@@ -36,6 +37,7 @@ COPY Nudges.Kafka/ ./Nudges.Kafka/
 COPY Nudges.Kafka.Analyzers/ ./Nudges.Kafka.Analyzers/
 COPY Nudges.Auth/ ./Nudges.Auth/
 COPY Nudges.Telemetry/ ./Nudges.Telemetry/
+COPY Nudges.Core/ ./Nudges.Core/
 COPY Nudges.HotChocolate.Utils/ ./Nudges.HotChocolate.Utils/
 COPY Precision.WarpCache/Precision.WarpCache/ ./Precision.WarpCache/Precision.WarpCache/
 COPY Precision.WarpCache/Precision.WarpCache.Grpc.Client/ ./Precision.WarpCache/Precision.WarpCache.Grpc.Client/

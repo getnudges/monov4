@@ -17,13 +17,13 @@ internal class StripeService(IStripeClient stripeClient, ILogger<StripeService> 
     private readonly PaymentIntentService _paymentService = new(stripeClient);
     private readonly CustomerService _customerService = new(stripeClient);
 
-    public async Task<Result<string, Exception>> CreateCustomer(string id, string phone, string name, CancellationToken cancellationToken) {
+    public async Task<Result<string, Exception>> CreateCustomer(Guid id, string phone, string name, CancellationToken cancellationToken) {
         try {
             var newCustomer = await _customerService.CreateAsync(new CustomerCreateOptions {
                 Name = name,
                 Phone = phone,
                 Metadata = new Dictionary<string, string> {
-                    { "clientId", id },
+                    { "clientId", id.ToString("N") },
                 },
             }, cancellationToken: cancellationToken);
             return newCustomer.Id;
@@ -69,12 +69,12 @@ internal class StripeService(IStripeClient stripeClient, ILogger<StripeService> 
         }
     }
 
-    public async Task<Result<string, PriceTierCreationError>> CreateForeignPrice(IGetPriceTier_PriceTier tier, CancellationToken cancellationToken) {
+    public async Task<Result<string, PriceTierCreationError>> CreateForeignPrice(Nudges.Contracts.Products.PriceTier tier, CancellationToken cancellationToken) {
         using var activity = ActivitySource.StartActivity(nameof(CreateForeignPrice), ActivityKind.Internal, Activity.Current?.Context ?? default);
         activity?.SetTag("priceTierId", tier.Id);
         activity?.Start();
         try {
-            var price = await _priceService.CreateAsync(tier.ToShopifyPriceCreateOptions(), cancellationToken: cancellationToken);
+            var price = await _priceService.CreateAsync(tier.ToShopifyPriceCreateOptions(""), cancellationToken: cancellationToken);
             if (price is not null) {
                 activity?.SetTag("foreignServiceId", price.Id);
                 activity?.SetStatus(ActivityStatusCode.Ok);
@@ -111,10 +111,10 @@ internal class StripeService(IStripeClient stripeClient, ILogger<StripeService> 
         }
     }
 
-    public async Task<Result<bool, PriceTierUpdateError>> UpdateForeignPrice(IGetPriceTier_PriceTier tier, CancellationToken cancellationToken) {
+    public async Task<Result<bool, PriceTierUpdateError>> UpdateForeignPrice(Nudges.Contracts.Products.PriceTier tier, CancellationToken cancellationToken) {
         using var activity = ActivitySource.StartActivity(nameof(UpdateForeignPrice), ActivityKind.Client, Activity.Current?.Context ?? default);
         activity?.SetTag("priceTierId", tier.Id);
-        activity?.Start();
+
         try {
             var price = await _priceService.UpdateAsync(tier.ForeignServiceId, tier.ToShopifyPriceUpdateOptions(), cancellationToken: cancellationToken);
             if (price is null) {
@@ -130,7 +130,7 @@ internal class StripeService(IStripeClient stripeClient, ILogger<StripeService> 
         }
     }
 
-    public async Task<Result<bool, ProductUpdateError>> UpdateForeignProduct(IGetPlan_Plan plan, CancellationToken cancellationToken) {
+    public async Task<Result<bool, ProductUpdateError>> UpdateForeignProduct(Nudges.Contracts.Products.Plan plan, CancellationToken cancellationToken) {
         try {
             var product = await _productService.UpdateAsync(plan.ForeignServiceId, plan.ToShopifyProductUpdateOptions(), new RequestOptions {
                 IdempotencyKey = Activity.Current?.Id,
@@ -212,16 +212,16 @@ internal static class ProductMappings {
             //],
         };
 
-    public static ProductUpdateOptions ToShopifyProductUpdateOptions(this IGetPlan_Plan plan) =>
+    public static ProductUpdateOptions ToShopifyProductUpdateOptions(this Nudges.Contracts.Products.Plan plan) =>
         new() {
             Name = plan.Name,
             Description = string.IsNullOrEmpty(plan.Description) ? null : plan.Description,
             Active = plan.IsActive,
             Images = string.IsNullOrEmpty(plan.IconUrl) ? default : [plan.IconUrl],
             Metadata = new Dictionary<string, string> {
-                { "planId", plan.Id },
+                { "planId", plan.Id.ToString(CultureInfo.InvariantCulture) },
             },
-            MarketingFeatures = [
+            MarketingFeatures = plan.Features is not null ? [
                 new ProductMarketingFeatureOptions {
                     Name = $"{plan.Features.MaxMessages} messages per billing period",
                 },
@@ -231,20 +231,20 @@ internal static class ProductMappings {
                 new ProductMarketingFeatureOptions {
                     Name = $"{(plan.Features.AiSupport == true ? string.Empty : "No ")}AI Features",
                 }
-            ],
+            ] : [],
         };
 
-    public static PriceCreateOptions ToShopifyPriceCreateOptions(this IGetPriceTier_PriceTier tier) =>
+    public static PriceCreateOptions ToShopifyPriceCreateOptions(this Nudges.Contracts.Products.PriceTier tier, string productId) =>
         new() {
             Active = true,
-            Product = tier.Plan?.ForeignServiceId!,
+            Product = productId,
             Metadata = new Dictionary<string, string> {
-                { "priceTierId", tier.Id },
+                { "priceTierId", tier.Id.ToString(CultureInfo.InvariantCulture) },
             },
             Recurring = new PriceRecurringOptions {
-                Interval = GetIntervalString(tier.Duration),
+                //Interval = GetIntervalString(tier.Duration),
             },
-            LookupKey = tier.Id,
+            //LookupKey = tier.Id.ToString(CultureInfo.InvariantCulture),
             Currency = "usd",
             UnitAmount = (long)Math.Round(tier.Price * 100)
         };
@@ -257,9 +257,9 @@ internal static class ProductMappings {
             _ => throw new ArgumentOutOfRangeException(nameof(duration), duration, "Invalid duration"),
         };
 
-    public static PriceUpdateOptions ToShopifyPriceUpdateOptions(this IGetPriceTier_PriceTier tier) =>
+    public static PriceUpdateOptions ToShopifyPriceUpdateOptions(this Nudges.Contracts.Products.PriceTier tier) =>
         new() {
-            Active = Enum.GetName(tier.Status)?.ToUpperInvariant().EqualsInvariantIgnoreCase(
+            Active = tier.Status.ToUpperInvariant().EqualsInvariantIgnoreCase(
                 PriceTierStatusExtensions.ToStatusString(BasicStatus.Active)),
         };
 }

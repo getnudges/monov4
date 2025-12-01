@@ -11,6 +11,7 @@ using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
 using Nudges.Auth;
 using Nudges.Auth.Web;
+using Nudges.Configuration;
 using Nudges.Kafka;
 using Nudges.Kafka.Events;
 using Nudges.Telemetry;
@@ -24,7 +25,8 @@ public sealed class Handlers(IOtpVerifier otpVerifier,
                              ICacheClient<string> cache,
                              IOidcClient tokenClient,
                              KafkaMessageProducer<NotificationKey, NotificationEvent> notificationProducer,
-                             KafkaMessageProducer<UserAuthenticationEventKey, UserAuthenticationEvent> userEventProducer) : ControllerBase {
+                             KafkaMessageProducer<UserAuthenticationEventKey, UserAuthenticationEvent> userEventProducer,
+                             ILogger<Handlers> logger) : ControllerBase {
 
     public static readonly ActivitySource ActivitySource = new($"{typeof(Handlers).FullName}");
 
@@ -59,6 +61,7 @@ public sealed class Handlers(IOtpVerifier otpVerifier,
 
         if (!HttpContext.Request.Headers.TryGetValue("X-Role-Claim", out var role)) {
             activity?.SetStatus(ActivityStatusCode.Error, "Missing required role claim.");
+            logger.LogMissingClaim();
             return BadRequest(new ErrorResponse("Missing required role claim."));
         }
 
@@ -121,13 +124,16 @@ public sealed class Handlers(IOtpVerifier otpVerifier,
 
     [HttpGet("redirect")]
     public async Task<IActionResult> OAuthRedirect([FromQuery] string? code, [FromQuery] string state, [FromQuery] string? error, [FromQuery] string? error_description) {
-
         using var activity = ActivitySource.StartActivity(nameof(OAuthRedirect), ActivityKind.Server, HttpContext.Request.GetActivityContext());
-        activity?.Start();
 
         if (!string.IsNullOrEmpty(error)) {
             activity?.SetStatus(ActivityStatusCode.Error, $"OAuth error: {error} - {error_description}");
-            return BadRequest(new ErrorResponse(error_description ?? "Unknown OAuth error."));
+            activity?.AddEvent(new ActivityEvent("oauth.error",
+                tags: new ActivityTagsCollection {
+                    { "error.type", error },
+                    { "error.message", error_description }
+                }));
+            return BadRequest(new ErrorResponse($"OAuth error: {error} - {error_description}"));
         }
 
         if (string.IsNullOrWhiteSpace(code) || string.IsNullOrWhiteSpace(state)) {
@@ -148,12 +154,11 @@ public sealed class Handlers(IOtpVerifier otpVerifier,
         var result = await tokenResponse.ThenAsync(
             r => CreateRedirectResponse(r, state, oauthState))
             .Else(e => {
-                var message = string.Join(',', e.Select(i => i.Description));
+                var message = string.Join('\n', e.Select(i => i.Description));
                 activity?.SetStatus(ActivityStatusCode.Error, $"Failed to grant token: {message}");
                 return Problem(message);
-            });
+            }).ThenDo(_ => activity?.SetStatus(ActivityStatusCode.Ok));
 
-        activity?.SetStatus(ActivityStatusCode.Ok);
         return result.Value;
     }
 
@@ -193,12 +198,12 @@ public sealed class Handlers(IOtpVerifier otpVerifier,
     }
 
     [HttpGet("login")]
-    public async Task<IActionResult> OAuthLogin([FromQuery] string redirectUri, [FromServices] IOptions<Settings> settingsConfig, [FromServices] IOptions<OidcConfig> oidcConfig) {
+    public async Task<IActionResult> OAuthLogin([FromQuery] string redirectUri, [FromServices] IOptions<OidcSettings> settingsConfig) {
 
         using var activity = ActivitySource.StartActivity(nameof(OAuthLogin), ActivityKind.Server, HttpContext.Request.GetActivityContext());
         activity?.Start();
 
-        var baseUrl = new Uri($"{settingsConfig.Value.Oidc.ServerUrl}/realms/{oidcConfig.Value.Realm}/protocol/openid-connect/auth");
+        var baseUrl = new Uri($"{settingsConfig.Value.ServerUrl}/realms/{settingsConfig.Value.Realm}/protocol/openid-connect/auth");
         var host = HttpContext.Request.Headers["X-Forwarded-Host"].FirstOrDefault() ?? HttpContext.Request.Host.Host;
         var port = HttpContext.Request.Headers["X-Forwarded-Port"].FirstOrDefault() ?? HttpContext.Request.Host.Port?.ToString(CultureInfo.InvariantCulture)
                    ?? (HttpContext.Request.Scheme == "https" ? "443" : "80");
@@ -210,7 +215,7 @@ public sealed class Handlers(IOtpVerifier otpVerifier,
         var stateKey = Base64UrlEncoder.Encode(state);
 
         var query = await new FormUrlEncodedContent(new Dictionary<string, string> {
-                { "client_id", oidcConfig.Value.ClientId },
+                { "client_id", settingsConfig.Value.ClientId },
                 { "response_type", "code" },
                 { "redirect_uri", redirectUrl.ToString() },
                 { "scope", "openid profile email phone" },

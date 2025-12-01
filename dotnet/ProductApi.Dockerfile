@@ -1,4 +1,10 @@
 # syntax=docker/dockerfile:1
+FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS base
+
+# Install Kerberos library
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+    libgssapi-krb5-2
 
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 
@@ -13,6 +19,7 @@ COPY Nudges.Kafka/*.csproj ./Nudges.Kafka/
 COPY Nudges.Kafka.Analyzers/*.csproj ./Nudges.Kafka.Analyzers/
 COPY Nudges.Auth/*.csproj ./Nudges.Auth/
 COPY Nudges.Telemetry/*.csproj ./Nudges.Telemetry/
+COPY Nudges.Core/*.csproj ./Nudges.Core/
 COPY Nudges.HotChocolate.Utils/*.csproj ./Nudges.HotChocolate.Utils/
 COPY Precision.WarpCache/Precision.WarpCache/*.csproj ./Precision.WarpCache/Precision.WarpCache/
 COPY Precision.WarpCache/Precision.WarpCache.Grpc.Client/*.csproj ./Precision.WarpCache/Precision.WarpCache.Grpc.Client/
@@ -36,6 +43,7 @@ COPY Nudges.Kafka/ ./Nudges.Kafka/
 COPY Nudges.Kafka.Analyzers/ ./Nudges.Kafka.Analyzers/
 COPY Nudges.Auth/ ./Nudges.Auth/
 COPY Nudges.Telemetry/ ./Nudges.Telemetry/
+COPY Nudges.Core/ ./Nudges.Core/
 COPY Nudges.HotChocolate.Utils/ ./Nudges.HotChocolate.Utils/
 COPY Precision.WarpCache/Precision.WarpCache/ ./Precision.WarpCache/Precision.WarpCache/
 COPY Precision.WarpCache/Precision.WarpCache.Grpc.Client/ ./Precision.WarpCache/Precision.WarpCache.Grpc.Client/
@@ -51,6 +59,7 @@ RUN --mount=type=cache,target=/root/.nuget/packages \
     dotnet build ProductApi.csproj -c Release -o /app
 
 FROM build AS publish
+WORKDIR /src/ProductApi
 RUN --mount=type=cache,target=/root/.nuget/packages \
     dotnet publish ProductApi.csproj -c Release -o /src/publish /p:UseAppHost=false
 

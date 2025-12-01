@@ -1,12 +1,12 @@
 # syntax=docker/dockerfile:1
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
-ARG GRAPH_MONITOR_URL
 
 WORKDIR /src
 COPY Nudges.Data/*.csproj ./Nudges.Data/
 COPY Nudges.Models/*.csproj ./Nudges.Models/
 COPY Nudges.Redis/*.csproj ./Nudges.Redis/
 COPY Nudges.Telemetry/*.csproj ./Nudges.Telemetry/
+COPY Nudges.Core/*.csproj ./Nudges.Core/
 COPY Nudges.Auth/*.csproj ./Nudges.Auth/
 COPY Nudges.Auth.Web/*.csproj ./Nudges.Auth.Web/
 COPY Nudges.Kafka/*.csproj ./Nudges.Kafka/

@@ -13,25 +13,12 @@ interface Node {
   id: ID!
 }
 
-type AddSubscriberPayload {
-  errors: [AddSubscriberError!]
-  subscriber: Subscriber
-}
-
 type Admin implements Node {
   id: ID!
-  idNavigation: Client!
 }
 
 type AlreadySubscribedError implements Error {
   message: String!
-}
-
-type Announcement {
-  client: Client
-  clientId: UUID
-  messageSid: String!
-  sentOn: DateTime
 }
 
 type CancelCheckoutSessionPayload {
@@ -53,39 +40,14 @@ type CheckoutSessionError implements Error {
 }
 
 type Client implements Node {
-  admin: Admin
-  announcements: [Announcement!]!
-  clientId: String!
-    @cost(weight: "10")
-    @deprecated(reason: "Use `id` field instead.")
   customerId: String
   id: ID!
-  joinedDate: DateTime
-  locale: String!
+  locale: String @cost(weight: "10")
   name: String!
-  phoneNumber: String!
+  phoneNumberHash: String @cost(weight: "10")
   slug: String!
   subscriberCount: Int! @cost(weight: "10")
-  subscribers(
-    "Returns the elements in the list that come after the specified cursor."
-    after: String
-    "Returns the elements in the list that come before the specified cursor."
-    before: String
-    "Returns the first _n_ elements from the list."
-    first: Int
-    "Returns the last _n_ elements from the list."
-    last: Int
-    order: [SubscriberSortInput!] @cost(weight: "10")
-    where: SubscriberFilterInput @cost(weight: "10")
-  ): SubscribersConnection
-    @listSize(
-      assumedSize: 50
-      slicingArguments: ["first", "last"]
-      slicingArgumentDefaultValue: 10
-      sizedFields: ["edges", "nodes"]
-      requireOneSlicingArgument: false
-    )
-    @cost(weight: "10")
+  subscribers("Returns the elements in the list that come after the specified cursor." after: String "Returns the elements in the list that come before the specified cursor." before: String "Returns the first _n_ elements from the list." first: Int "Returns the last _n_ elements from the list." last: Int order: [SubscriberSortInput!] @cost(weight: "10") where: SubscriberFilterInput @cost(weight: "10")): SubscribersConnection @listSize(assumedSize: 50, slicingArguments: [ "first", "last" ], slicingArgumentDefaultValue: 10, sizedFields: [ "edges", "nodes" ], requireOneSlicingArgument: false)
   subscription: PlanSubscription @cost(weight: "10")
   subscriptionId: ID @cost(weight: "10")
 }
@@ -243,86 +205,28 @@ type MerchantServicesEdge {
 }
 
 type Mutation {
-  addSubscriber(input: AddSubscriberInput!): AddSubscriberPayload!
-    @authorize(policy: "client")
-    @cost(weight: "10")
-  cancelCheckoutSession(
-    input: CancelCheckoutSessionInput!
-  ): CancelCheckoutSessionPayload!
-    @authorize(policy: "client")
-    @cost(weight: "10")
-  createCheckoutSession(
-    input: CreateCheckoutSessionInput!
-  ): CreateCheckoutSessionPayload!
-    @authorize(policy: "client")
-    @cost(weight: "10")
-  createClient(input: CreateClientInput!): CreateClientPayload!
-    @authorize(roles: ["admin", "client"])
-    @cost(weight: "10")
-  createDiscountCode(
-    input: CreateDiscountCodeInput!
-  ): CreateDiscountCodePayload! @authorize(policy: "admin") @cost(weight: "10")
-  createPaymentConfirmation(
-    input: CreatePaymentConfirmationInput!
-  ): CreatePaymentConfirmationPayload!
-    @authorize(policy: "admin")
-    @cost(weight: "10")
-  createPlan(input: CreatePlanInput!): CreatePlanPayload!
-    @authorize(policy: "admin")
-    @cost(weight: "10")
-  createPlanSubscription(
-    input: CreatePlanSubscriptionInput!
-  ): CreatePlanSubscriptionPayload!
-    @authorize(policy: "admin")
-    @cost(weight: "10")
-  deleteClient(input: DeleteClientInput!): DeleteClientPayload!
-    @authorize(policy: "admin")
-    @cost(weight: "10")
-  deleteDiscountCode(
-    input: DeleteDiscountCodeInput!
-  ): DeleteDiscountCodePayload! @authorize(policy: "admin") @cost(weight: "10")
-  deletePlan(input: DeletePlanInput!): DeletePlanPayload!
-    @authorize(policy: "admin")
-    @cost(weight: "10")
-  deletePriceTier(input: DeletePriceTierInput!): DeletePriceTierPayload!
-    @authorize(policy: "admin")
-    @cost(weight: "10")
-  deleteSubscriber(input: DeleteSubscriberInput!): DeleteSubscriberPayload!
-    @authorize(policy: "admin")
-    @cost(weight: "10")
-  endSubscription(input: EndSubscriptionInput!): EndSubscriptionPayload!
-    @authorize(policy: "client")
-    @cost(weight: "10")
-  patchDiscountCode(input: PatchDiscountCodeInput!): PatchDiscountCodePayload!
-    @authorize(policy: "admin")
-    @cost(weight: "10")
-  patchPlan(input: PatchPlanInput!): PatchPlanPayload!
-    @authorize(policy: "admin")
-    @cost(weight: "10")
-  patchPriceTier(input: PatchPriceTierInput!): PatchPriceTierPayload!
-    @authorize(policy: "admin")
-    @cost(weight: "10")
-  sendMessage(input: SendMessageInput!): SendMessagePayload! @cost(weight: "10")
-  subscribeToClient(input: SubscribeToClientInput!): SubscribeToClientPayload!
-    @authorize(policy: "subscriber")
-    @cost(weight: "10")
-  subscribeToPlan(input: SubscribeToPlanInput!): SubscribeToPlanPayload!
-    @authorize(policy: "client")
-    @cost(weight: "10")
-  unsubscribeFromClient(
-    input: UnsubscribeFromClientInput!
-  ): UnsubscribeFromClientPayload!
-    @authorize(policy: "subscriber")
-    @cost(weight: "10")
-  updateClient(input: UpdateClientInput!): UpdateClientPayload!
-    @authorize(roles: ["admin", "client"])
-    @cost(weight: "10")
-  updateDiscountCode(
-    input: UpdateDiscountCodeInput!
-  ): UpdateDiscountCodePayload! @authorize(policy: "admin") @cost(weight: "10")
-  updatePlan(input: UpdatePlanInput!): UpdatePlanPayload!
-    @authorize(policy: "admin")
-    @cost(weight: "10")
+  cancelCheckoutSession(input: CancelCheckoutSessionInput!): CancelCheckoutSessionPayload! @authorize(policy: "client") @cost(weight: "10")
+  createCheckoutSession(input: CreateCheckoutSessionInput!): CreateCheckoutSessionPayload! @authorize(policy: "client") @cost(weight: "10")
+  createClient(input: CreateClientInput!): CreateClientPayload! @authorize(roles: [ "client" ]) @cost(weight: "10")
+  createDiscountCode(input: CreateDiscountCodeInput!): CreateDiscountCodePayload! @authorize(policy: "admin") @cost(weight: "10")
+  createPaymentConfirmation(input: CreatePaymentConfirmationInput!): CreatePaymentConfirmationPayload! @authorize(policy: "admin") @cost(weight: "10")
+  createPlan(input: CreatePlanInput!): CreatePlanPayload! @authorize(roles: [ "admin" ]) @cost(weight: "10")
+  createPlanSubscription(input: CreatePlanSubscriptionInput!): CreatePlanSubscriptionPayload! @authorize(policy: "admin") @cost(weight: "10")
+  deleteClient(input: DeleteClientInput!): DeleteClientPayload! @authorize(policy: "admin") @cost(weight: "10")
+  deleteDiscountCode(input: DeleteDiscountCodeInput!): DeleteDiscountCodePayload! @authorize(policy: "admin") @cost(weight: "10")
+  deletePlan(input: DeletePlanInput!): DeletePlanPayload! @authorize(policy: "admin") @cost(weight: "10")
+  deletePriceTier(input: DeletePriceTierInput!): DeletePriceTierPayload! @authorize(policy: "admin") @cost(weight: "10")
+  deleteSubscriber(input: DeleteSubscriberInput!): DeleteSubscriberPayload! @authorize(policy: "admin") @cost(weight: "10")
+  endSubscription(input: EndSubscriptionInput!): EndSubscriptionPayload! @authorize(policy: "client") @cost(weight: "10")
+  patchDiscountCode(input: PatchDiscountCodeInput!): PatchDiscountCodePayload! @authorize(policy: "admin") @cost(weight: "10")
+  patchPlan(input: PatchPlanInput!): PatchPlanPayload! @authorize(policy: "admin") @cost(weight: "10")
+  patchPriceTier(input: PatchPriceTierInput!): PatchPriceTierPayload! @authorize(policy: "admin") @cost(weight: "10")
+  subscribeToClient(input: SubscribeToClientInput!): SubscribeToClientPayload! @authorize(policy: "subscriber") @cost(weight: "10")
+  subscribeToPlan(input: SubscribeToPlanInput!): SubscribeToPlanPayload! @authorize(policy: "client") @cost(weight: "10")
+  unsubscribeFromClient(input: UnsubscribeFromClientInput!): UnsubscribeFromClientPayload! @authorize(policy: "subscriber") @cost(weight: "10")
+  updateClient(input: UpdateClientInput!): UpdateClientPayload! @authorize(roles: [ "admin", "client" ]) @cost(weight: "10")
+  updateDiscountCode(input: UpdateDiscountCodeInput!): UpdateDiscountCodePayload! @authorize(policy: "admin") @cost(weight: "10")
+  updatePlan(input: UpdatePlanInput!): UpdatePlanPayload! @authorize(policy: "admin") @cost(weight: "10")
 }
 
 type NotSubscribedError implements Error {
@@ -361,9 +265,7 @@ type PaymentConfirmation implements Node {
   id: ID!
   merchantService: MerchantService
   merchantServiceId: Int
-  paymentConfirmationId: String!
-    @cost(weight: "10")
-    @deprecated(reason: "Use `id` field instead.")
+  paymentConfirmationId: String! @cost(weight: "10") @deprecated(reason: "Use `id` field instead.")
 }
 
 type Plan implements Node {
@@ -466,7 +368,7 @@ type PriceTier implements Node {
   id: ID!
   name: String!
   plan: Plan
-  planId: ID
+  planId: ID!
   planSubscriptions: [PlanSubscription!]!
   price: Decimal!
   status: PriceTierStatus! @cost(weight: "10")
@@ -489,185 +391,32 @@ type PriceTierUpdateError implements Error {
 
 type Query {
   client(id: ID!): Client @authorize(policy: "admin") @cost(weight: "10")
-  clientByCustomerId(customerId: String!): Client
-    @authorize(policy: "admin")
-    @cost(weight: "10")
-  clientByPhoneNumber(phoneNumber: String!): Client
-    @authorize(policy: "admin")
-    @cost(weight: "10")
+  clientByCustomerId(customerId: String!): Client @authorize(policy: "admin") @cost(weight: "10")
+  clientByPhoneNumber(phoneNumber: String!): Client @authorize(policy: "admin") @cost(weight: "10")
   clientBySlug(slug: String!): Client @cost(weight: "10")
-  clients(
-    "Returns the elements in the list that come after the specified cursor."
-    after: String
-    "Returns the elements in the list that come before the specified cursor."
-    before: String
-    "Returns the first _n_ elements from the list."
-    first: Int
-    "Returns the last _n_ elements from the list."
-    last: Int
-    order: [ClientSortInput!] @cost(weight: "10")
-    where: ClientFilterInput @cost(weight: "10")
-  ): ClientsConnection
-    @authorize(policy: "admin")
-    @listSize(
-      assumedSize: 50
-      slicingArguments: ["first", "last"]
-      slicingArgumentDefaultValue: 10
-      sizedFields: ["edges", "nodes"]
-      requireOneSlicingArgument: false
-    )
-    @cost(weight: "10")
-  discountCode(id: ID): DiscountCode
-    @authorize(policy: "admin")
-    @cost(weight: "10")
-  discountCodeByCode(code: String!): DiscountCode
-    @authorize(policy: "admin")
-    @cost(weight: "10")
-  discountCodes(
-    "Returns the elements in the list that come after the specified cursor."
-    after: String
-    "Returns the elements in the list that come before the specified cursor."
-    before: String
-    "Returns the first _n_ elements from the list."
-    first: Int
-    "Returns the last _n_ elements from the list."
-    last: Int
-    order: [DiscountCodeSortInput!] @cost(weight: "10")
-    where: DiscountCodeFilterInput @cost(weight: "10")
-  ): DiscountCodesConnection
-    @authorize(policy: "admin")
-    @listSize(
-      assumedSize: 50
-      slicingArguments: ["first", "last"]
-      slicingArgumentDefaultValue: 10
-      sizedFields: ["edges", "nodes"]
-      requireOneSlicingArgument: false
-    )
-    @cost(weight: "10")
-  merchantService(id: ID!): MerchantService
-    @authorize(roles: ["admin"])
-    @cost(weight: "10")
-  merchantServices(
-    "Returns the elements in the list that come after the specified cursor."
-    after: String
-    "Returns the elements in the list that come before the specified cursor."
-    before: String
-    "Returns the first _n_ elements from the list."
-    first: Int
-    "Returns the last _n_ elements from the list."
-    last: Int
-    order: [MerchantServiceSortInput!] @cost(weight: "10")
-    where: MerchantServiceFilterInput @cost(weight: "10")
-  ): MerchantServicesConnection
-    @authorize(roles: ["admin"])
-    @listSize(
-      assumedSize: 50
-      slicingArguments: ["first", "last"]
-      slicingArgumentDefaultValue: 10
-      sizedFields: ["edges", "nodes"]
-      requireOneSlicingArgument: false
-    )
-    @cost(weight: "10")
+  clients("Returns the elements in the list that come after the specified cursor." after: String "Returns the elements in the list that come before the specified cursor." before: String "Returns the first _n_ elements from the list." first: Int "Returns the last _n_ elements from the list." last: Int order: [ClientSortInput!] @cost(weight: "10") where: ClientFilterInput @cost(weight: "10")): ClientsConnection @authorize(policy: "admin") @listSize(assumedSize: 50, slicingArguments: [ "first", "last" ], slicingArgumentDefaultValue: 10, sizedFields: [ "edges", "nodes" ], requireOneSlicingArgument: false) @cost(weight: "10")
+  discountCode(id: ID): DiscountCode @authorize(policy: "admin") @cost(weight: "10")
+  discountCodeByCode(code: String!): DiscountCode @authorize(policy: "admin") @cost(weight: "10")
+  discountCodes("Returns the elements in the list that come after the specified cursor." after: String "Returns the elements in the list that come before the specified cursor." before: String "Returns the first _n_ elements from the list." first: Int "Returns the last _n_ elements from the list." last: Int order: [DiscountCodeSortInput!] @cost(weight: "10") where: DiscountCodeFilterInput @cost(weight: "10")): DiscountCodesConnection @authorize(policy: "admin") @listSize(assumedSize: 50, slicingArguments: [ "first", "last" ], slicingArgumentDefaultValue: 10, sizedFields: [ "edges", "nodes" ], requireOneSlicingArgument: false) @cost(weight: "10")
+  merchantService(id: ID!): MerchantService @authorize(roles: [ "admin" ]) @cost(weight: "10")
+  merchantServices("Returns the elements in the list that come after the specified cursor." after: String "Returns the elements in the list that come before the specified cursor." before: String "Returns the first _n_ elements from the list." first: Int "Returns the last _n_ elements from the list." last: Int order: [MerchantServiceSortInput!] @cost(weight: "10") where: MerchantServiceFilterInput @cost(weight: "10")): MerchantServicesConnection @authorize(roles: [ "admin" ]) @listSize(assumedSize: 50, slicingArguments: [ "first", "last" ], slicingArgumentDefaultValue: 10, sizedFields: [ "edges", "nodes" ], requireOneSlicingArgument: false) @cost(weight: "10")
   paymentConfirmation(id: UUID!): PaymentConfirmation @cost(weight: "10")
-  paymentConfirmationByCode(confirmationCode: String!): PaymentConfirmation
-    @authorize(roles: ["admin"])
-    @cost(weight: "10")
-  plan(id: ID): Plan @authorize(roles: ["admin", "client"]) @cost(weight: "10")
-  planByForeignId(id: String!): Plan
-    @authorize(roles: ["admin", "client"])
-    @cost(weight: "10")
-  plans(
-    "Returns the elements in the list that come after the specified cursor."
-    after: String
-    "Returns the elements in the list that come before the specified cursor."
-    before: String
-    duration: TimeSpan
-    "Returns the first _n_ elements from the list."
-    first: Int
-    "Returns the last _n_ elements from the list."
-    last: Int
-    order: [PlanSortInput!] @cost(weight: "10")
-    where: PlanFilterInput @cost(weight: "10")
-  ): PlansConnection
-    @authorize(roles: ["admin", "client"])
-    @listSize(
-      assumedSize: 50
-      slicingArguments: ["first", "last"]
-      slicingArgumentDefaultValue: 10
-      sizedFields: ["edges", "nodes"]
-      requireOneSlicingArgument: false
-    )
-    @cost(weight: "10")
-  planSubscription(id: ID!): PlanSubscription
-    @authorize(roles: ["admin", "client"])
-    @cost(weight: "10")
-  planSubscriptionById(id: UUID!): PlanSubscription
-    @authorize(roles: ["admin", "client"])
-    @cost(weight: "10")
-  planSubscriptions(
-    "Returns the elements in the list that come after the specified cursor."
-    after: String
-    "Returns the elements in the list that come before the specified cursor."
-    before: String
-    "Returns the first _n_ elements from the list."
-    first: Int
-    "Returns the last _n_ elements from the list."
-    last: Int
-    order: [PlanSubscriptionSortInput!] @cost(weight: "10")
-    where: PlanSubscriptionFilterInput @cost(weight: "10")
-  ): PlanSubscriptionsConnection
-    @authorize(roles: ["admin", "client"])
-    @listSize(
-      assumedSize: 50
-      slicingArguments: ["first", "last"]
-      slicingArgumentDefaultValue: 10
-      sizedFields: ["edges", "nodes"]
-      requireOneSlicingArgument: false
-    )
-    @cost(weight: "10")
-  priceTier(id: ID!): PriceTier
-    @authorize(roles: ["admin", "client"])
-    @cost(weight: "10")
-  priceTierByForeignId(id: String!): PriceTier
-    @authorize(roles: ["admin", "client"])
-    @cost(weight: "10")
-  subscriber(subPhone: String!): Subscriber
-    @authorize(roles: ["admin", "client"])
-    @cost(weight: "10")
-  subscriberByPhoneNumber(phoneNumber: String!): Subscriber
-    @authorize(policy: "admin")
-    @cost(weight: "10")
-  subscribers(
-    "Returns the elements in the list that come after the specified cursor."
-    after: String
-    "Returns the elements in the list that come before the specified cursor."
-    before: String
-    "Returns the first _n_ elements from the list."
-    first: Int
-    "Returns the last _n_ elements from the list."
-    last: Int
-    order: [SubscriberSortInput!] @cost(weight: "10")
-    where: SubscriberFilterInput @cost(weight: "10")
-  ): SubscribersConnection
-    @authorize(roles: ["admin", "client"])
-    @listSize(
-      assumedSize: 50
-      slicingArguments: ["first", "last"]
-      slicingArgumentDefaultValue: 10
-      sizedFields: ["edges", "nodes"]
-      requireOneSlicingArgument: false
-    )
-    @cost(weight: "10")
+  paymentConfirmationByCode(confirmationCode: String!): PaymentConfirmation @authorize(roles: [ "admin" ]) @cost(weight: "10")
+  plan(id: ID): Plan @authorize(roles: [ "admin", "client" ]) @cost(weight: "10")
+  planByForeignId(id: String!): Plan @authorize(roles: [ "admin", "service" ]) @cost(weight: "10")
+  plans("Returns the elements in the list that come after the specified cursor." after: String "Returns the elements in the list that come before the specified cursor." before: String duration: TimeSpan "Returns the first _n_ elements from the list." first: Int "Returns the last _n_ elements from the list." last: Int order: [PlanSortInput!] @cost(weight: "10") where: PlanFilterInput @cost(weight: "10")): PlansConnection @authorize(roles: [ "admin", "client" ]) @listSize(assumedSize: 50, slicingArguments: [ "first", "last" ], slicingArgumentDefaultValue: 10, sizedFields: [ "edges", "nodes" ], requireOneSlicingArgument: false) @cost(weight: "10")
+  planSubscription(id: ID!): PlanSubscription @authorize(roles: [ "admin", "client" ]) @cost(weight: "10")
+  planSubscriptionById(id: UUID!): PlanSubscription @authorize(roles: [ "admin", "client" ]) @cost(weight: "10")
+  planSubscriptions("Returns the elements in the list that come after the specified cursor." after: String "Returns the elements in the list that come before the specified cursor." before: String "Returns the first _n_ elements from the list." first: Int "Returns the last _n_ elements from the list." last: Int order: [PlanSubscriptionSortInput!] @cost(weight: "10") where: PlanSubscriptionFilterInput @cost(weight: "10")): PlanSubscriptionsConnection @authorize(roles: [ "admin", "client" ]) @listSize(assumedSize: 50, slicingArguments: [ "first", "last" ], slicingArgumentDefaultValue: 10, sizedFields: [ "edges", "nodes" ], requireOneSlicingArgument: false) @cost(weight: "10")
+  priceTier(id: ID!): PriceTier @authorize(roles: [ "admin", "client" ]) @cost(weight: "10")
+  priceTierByForeignId(id: String!): PriceTier @authorize(roles: [ "admin", "client" ]) @cost(weight: "10")
+  subscriberByPhoneNumber(phoneNumber: String!): Subscriber @authorize(policy: "admin") @cost(weight: "10")
+  subscribers("Returns the elements in the list that come after the specified cursor." after: String "Returns the elements in the list that come before the specified cursor." before: String "Returns the first _n_ elements from the list." first: Int "Returns the last _n_ elements from the list." last: Int order: [SubscriberSortInput!] @cost(weight: "10") where: SubscriberFilterInput @cost(weight: "10")): SubscribersConnection @authorize(roles: [ "admin", "client" ]) @listSize(assumedSize: 50, slicingArguments: [ "first", "last" ], slicingArgumentDefaultValue: 10, sizedFields: [ "edges", "nodes" ], requireOneSlicingArgument: false) @cost(weight: "10")
   totalClients: Int! @cost(weight: "10")
   totalPlans: Int! @cost(weight: "10")
   totalPlanSubscriptions: Int! @authorize(policy: "admin") @cost(weight: "10")
   totalSubscribers: Int! @cost(weight: "10")
   viewer: User @cost(weight: "10")
-}
-
-type SendMessagePayload {
-  failed: Int!
-  sent: Int!
 }
 
 type SubscribeToClientPayload {
@@ -680,36 +429,11 @@ type SubscribeToPlanPayload {
 }
 
 type Subscriber implements Node {
-  clients(
-    "Returns the elements in the list that come after the specified cursor."
-    after: String
-    "Returns the elements in the list that come before the specified cursor."
-    before: String
-    "Returns the first _n_ elements from the list."
-    first: Int
-    "Returns the last _n_ elements from the list."
-    last: Int
-    order: [ClientSortInput!] @cost(weight: "10")
-    where: ClientFilterInput @cost(weight: "10")
-  ): ClientsConnection
-    @listSize(
-      assumedSize: 50
-      slicingArguments: ["first", "last"]
-      slicingArgumentDefaultValue: 10
-      sizedFields: ["edges", "nodes"]
-      requireOneSlicingArgument: false
-    )
-    @cost(weight: "10")
-  fullPhone: String @authorize(policy: "admin") @cost(weight: "10")
+  clients("Returns the elements in the list that come after the specified cursor." after: String "Returns the elements in the list that come before the specified cursor." before: String "Returns the first _n_ elements from the list." first: Int "Returns the last _n_ elements from the list." last: Int order: [ClientSortInput!] @cost(weight: "10") where: ClientFilterInput @cost(weight: "10")): ClientsConnection @listSize(assumedSize: 50, slicingArguments: [ "first", "last" ], slicingArgumentDefaultValue: 10, sizedFields: [ "edges", "nodes" ], requireOneSlicingArgument: false) @cost(weight: "10")
   id: ID!
-  joinedDate: DateTime
-  locale: String!
-  maskedPhone: String @cost(weight: "10")
+  locale: String @cost(weight: "10")
+  phoneNumberHash: String @cost(weight: "10")
   subscriptionCount: Int! @cost(weight: "10")
-}
-
-type SubscriberExistsError implements Error {
-  message: String!
 }
 
 type SubscriberNotFoundError implements Error {
@@ -737,8 +461,8 @@ type SubscribersEdge {
 type Subscription {
   ClientCreated: Client @cost(weight: "10")
   onClientUpdated(id: ID!): Client @authorize(policy: "client")
-  onPlanUpdated(id: ID!): Plan @authorize(policy: "admin") @cost(weight: "10")
-  onPriceTierUpdated(id: ID!): Plan @authorize(policy: "admin")
+  onPlanUpdated(id: ID!): Plan @cost(weight: "10")
+  onPriceTierUpdated(id: ID!): Plan @authorize(policy: "admin") @cost(weight: "10")
   SubscriberUnsubscribed: Subscriber @cost(weight: "10")
 }
 
@@ -786,8 +510,6 @@ type UpdatePlanPayload {
   plan: Plan
 }
 
-union AddSubscriberError = SubscriberExistsError
-
 union CreateCheckoutSessionError = CheckoutSessionError | UnauthorizedError
 
 union CreateClientError = ClientCreateError
@@ -804,12 +526,9 @@ union DeleteSubscriberError = SubscriberNotFoundError
 
 union PatchPlanError = PlanUpdateError | PlanNotFoundError
 
-union PatchPriceTierError =
-  | PriceTierNotFoundError
-  | KafkaProduceError
-  | PriceTierUpdateError
+union PatchPriceTierError = PriceTierNotFoundError | KafkaProduceError | PriceTierUpdateError
 
-union SubscribeToClientError = AlreadySubscribedError
+union SubscribeToClientError = ClientCreateError | AlreadySubscribedError
 
 union UnsubscribeFromClientError = NotSubscribedError | ClientNotFoundError
 
@@ -819,30 +538,16 @@ union UpdatePlanError = PlanNotFoundError | PlanUpdateError
 
 union User = Admin | Client | Subscriber
 
-input AddSubscriberInput {
-  locale: String!
-  phoneNumber: String!
-}
-
 input AdminFilterInput {
   and: [AdminFilterInput!]
   id: UuidOperationFilterInput
-  idNavigation: ClientFilterInput
+  idNavigation: UserFilterInput
   or: [AdminFilterInput!]
 }
 
 input AdminSortInput {
   id: SortEnumType @cost(weight: "10")
-  idNavigation: ClientSortInput @cost(weight: "10")
-}
-
-input AnnouncementFilterInput {
-  and: [AnnouncementFilterInput!]
-  client: ClientFilterInput
-  clientId: UuidOperationFilterInput
-  messageSid: StringOperationFilterInput
-  or: [AnnouncementFilterInput!]
-  sentOn: DateTimeOperationFilterInput
+  idNavigation: UserSortInput @cost(weight: "10")
 }
 
 input BooleanOperationFilterInput {
@@ -855,29 +560,22 @@ input CancelCheckoutSessionInput {
 }
 
 input ClientFilterInput {
-  admin: AdminFilterInput
   and: [ClientFilterInput!]
-  announcements: ListFilterInputTypeOfAnnouncementFilterInput
   customerId: StringOperationFilterInput
   id: UuidOperationFilterInput
-  joinedDate: DateTimeOperationFilterInput
-  locale: StringOperationFilterInput
+  idNavigation: UserFilterInput
   name: StringOperationFilterInput
   or: [ClientFilterInput!]
-  phoneNumber: StringOperationFilterInput
   slug: StringOperationFilterInput
-  subscriberPhoneNumbers: ListFilterInputTypeOfSubscriberFilterInput
+  subscribers: ListFilterInputTypeOfSubscriberFilterInput
   subscriptionId: StringOperationFilterInput
 }
 
 input ClientSortInput {
-  admin: AdminSortInput @cost(weight: "10")
   customerId: SortEnumType @cost(weight: "10")
   id: SortEnumType @cost(weight: "10")
-  joinedDate: SortEnumType @cost(weight: "10")
-  locale: SortEnumType @cost(weight: "10")
+  idNavigation: UserSortInput @cost(weight: "10")
   name: SortEnumType @cost(weight: "10")
-  phoneNumber: SortEnumType @cost(weight: "10")
   slug: SortEnumType @cost(weight: "10")
   subscriptionId: SortEnumType @cost(weight: "10")
 }
@@ -1029,7 +727,7 @@ input DiscountFilterInput {
 }
 
 input EndSubscriptionInput {
-  id: ID!
+  id: UUID!
 }
 
 input IntOperationFilterInput {
@@ -1045,13 +743,6 @@ input IntOperationFilterInput {
   nin: [Int] @cost(weight: "10")
   nlt: Int @cost(weight: "10")
   nlte: Int @cost(weight: "10")
-}
-
-input ListFilterInputTypeOfAnnouncementFilterInput {
-  all: AnnouncementFilterInput @cost(weight: "10")
-  any: Boolean @cost(weight: "10")
-  none: AnnouncementFilterInput @cost(weight: "10")
-  some: AnnouncementFilterInput @cost(weight: "10")
 }
 
 input ListFilterInputTypeOfClientFilterInput {
@@ -1155,7 +846,7 @@ input PatchPlanInput {
   features: PatchPlanFeatureInput
   foreignServiceId: String
   iconUrl: String
-  id: ID!
+  id: Int!
   isActive: Boolean
   name: String
   priceTiers: [PatchPlanPriceTierInput!]
@@ -1297,11 +988,6 @@ input PriceTierSortInput {
   status: SortEnumType @cost(weight: "10")
 }
 
-input SendMessageInput {
-  audience: Audience!
-  message: String!
-}
-
 input StringOperationFilterInput {
   and: [StringOperationFilterInput!]
   contains: String @cost(weight: "20")
@@ -1322,24 +1008,22 @@ input SubscribeToClientInput {
 }
 
 input SubscribeToPlanInput {
-  clientId: ID!
+  clientId: UUID!
   paymentConfirmationId: UUID!
-  priceTierId: ID!
+  priceTierId: Int!
 }
 
 input SubscriberFilterInput {
   and: [SubscriberFilterInput!]
   clients: ListFilterInputTypeOfClientFilterInput
-  joinedDate: DateTimeOperationFilterInput
-  locale: StringOperationFilterInput
+  id: UuidOperationFilterInput
+  idNavigation: UserFilterInput
   or: [SubscriberFilterInput!]
-  phoneNumber: StringOperationFilterInput
 }
 
 input SubscriberSortInput {
-  joinedDate: SortEnumType @cost(weight: "10")
-  locale: SortEnumType @cost(weight: "10")
-  phoneNumber: SortEnumType @cost(weight: "10")
+  id: SortEnumType @cost(weight: "10")
+  idNavigation: UserSortInput @cost(weight: "10")
 }
 
 input TimeSpanOperationFilterInput {
@@ -1388,10 +1072,9 @@ input UnsubscribeFromClientInput {
 
 input UpdateClientInput {
   customerId: String
-  id: ID!
-  locale: String
+  id: UUID!
   name: String
-  subscriptionId: UUID
+  subscriptionId: String
 }
 
 input UpdateDiscountCodeInput {
@@ -1435,6 +1118,34 @@ input UpdatePlanPriceTierInput {
   status: String!
 }
 
+input UserFilterInput {
+  admin: AdminFilterInput
+  and: [UserFilterInput!]
+  client: ClientFilterInput
+  id: UuidOperationFilterInput
+  joinedDate: DateTimeOperationFilterInput
+  locale: StringOperationFilterInput
+  or: [UserFilterInput!]
+  phoneNumber: StringOperationFilterInput
+  phoneNumberEncrypted: StringOperationFilterInput
+  phoneNumberHash: StringOperationFilterInput
+  subject: StringOperationFilterInput
+  subscriber: SubscriberFilterInput
+}
+
+input UserSortInput {
+  admin: AdminSortInput @cost(weight: "10")
+  client: ClientSortInput @cost(weight: "10")
+  id: SortEnumType @cost(weight: "10")
+  joinedDate: SortEnumType @cost(weight: "10")
+  locale: SortEnumType @cost(weight: "10")
+  phoneNumber: SortEnumType @cost(weight: "10")
+  phoneNumberEncrypted: SortEnumType @cost(weight: "10")
+  phoneNumberHash: SortEnumType @cost(weight: "10")
+  subject: SortEnumType @cost(weight: "10")
+  subscriber: SubscriberSortInput @cost(weight: "10")
+}
+
 input UuidOperationFilterInput {
   eq: UUID @cost(weight: "10")
   gt: UUID @cost(weight: "10")
@@ -1458,14 +1169,6 @@ enum ApplyPolicy {
   BEFORE_RESOLVER
   "The policy is applied in the validation step before the execution."
   VALIDATION
-}
-
-enum Audience {
-  ACTIVE_CLIENTS
-  ACTIVE_CLIENTS_WITHOUT_SUBSCRIBERS
-  ALL_CLIENTS
-  ALL_SUBSCRIBERS
-  EVERYONE
 }
 
 "The duration of a price tier"
@@ -1666,43 +1369,19 @@ enum SortEnumType {
 }
 
 "The authorize directive."
-directive @authorize(
-  "Defines when when the authorize directive shall be applied.By default the authorize directives are applied during the validation phase."
-  apply: ApplyPolicy! = BEFORE_RESOLVER
-  "The name of the authorization policy that determines access to the annotated resource."
-  policy: String
-  "Roles that are allowed to access the annotated resource."
-  roles: [String!]
-) repeatable on OBJECT | FIELD_DEFINITION
+directive @authorize("Defines when when the authorize directive shall be applied.By default the authorize directives are applied during the validation phase." apply: ApplyPolicy! = BEFORE_RESOLVER "The name of the authorization policy that determines access to the annotated resource." policy: String "Roles that are allowed to access the annotated resource." roles: [String!]) repeatable on OBJECT | FIELD_DEFINITION
 
 "The purpose of the `cost` directive is to define a `weight` for GraphQL types, fields, and arguments. Static analysis can use these weights when calculating the overall cost of a query or response."
-directive @cost(
-  "The `weight` argument defines what value to add to the overall cost for every appearance, or possible appearance, of a type, field, argument, etc."
-  weight: String!
-) on SCALAR | OBJECT | FIELD_DEFINITION | ARGUMENT_DEFINITION | ENUM | INPUT_FIELD_DEFINITION
+directive @cost("The `weight` argument defines what value to add to the overall cost for every appearance, or possible appearance, of a type, field, argument, etc." weight: String!) on SCALAR | OBJECT | FIELD_DEFINITION | ARGUMENT_DEFINITION | ENUM | INPUT_FIELD_DEFINITION
 
 "The purpose of the `@listSize` directive is to either inform the static analysis about the size of returned lists (if that information is statically available), or to point the analysis to where to find that information."
-directive @listSize(
-  "The `assumedSize` argument can be used to statically define the maximum length of a list returned by a field."
-  assumedSize: Int
-  "The `slicingArguments` argument can be used to define which of the field's arguments with numeric type are slicing arguments, so that their value determines the size of the list returned by that field. It may specify a list of multiple slicing arguments."
-  slicingArguments: [String!]
-  "The `slicingArgumentDefaultValue` argument can be used to define a default value for a slicing argument, which is used if the argument is not present in a query."
-  slicingArgumentDefaultValue: Int
-  "The `sizedFields` argument can be used to define that the value of the `assumedSize` argument or of a slicing argument does not affect the size of a list returned by a field itself, but that of a list returned by one of its sub-fields."
-  sizedFields: [String!]
-  "The `requireOneSlicingArgument` argument can be used to inform the static analysis that it should expect that exactly one of the defined slicing arguments is present in a query. If that is not the case (i.e., if none or multiple slicing arguments are present), the static analysis may throw an error."
-  requireOneSlicingArgument: Boolean! = true
-) on FIELD_DEFINITION
+directive @listSize("The `assumedSize` argument can be used to statically define the maximum length of a list returned by a field." assumedSize: Int "The `slicingArguments` argument can be used to define which of the field's arguments with numeric type are slicing arguments, so that their value determines the size of the list returned by that field. It may specify a list of multiple slicing arguments." slicingArguments: [String!] "The `slicingArgumentDefaultValue` argument can be used to define a default value for a slicing argument, which is used if the argument is not present in a query." slicingArgumentDefaultValue: Int "The `sizedFields` argument can be used to define that the value of the `assumedSize` argument or of a slicing argument does not affect the size of a list returned by a field itself, but that of a list returned by one of its sub-fields." sizedFields: [String!] "The `requireOneSlicingArgument` argument can be used to inform the static analysis that it should expect that exactly one of the defined slicing arguments is present in a query. If that is not the case (i.e., if none or multiple slicing arguments are present), the static analysis may throw an error." requireOneSlicingArgument: Boolean! = true) on FIELD_DEFINITION
 
 "The `@specifiedBy` directive is used within the type system definition language to provide a URL for specifying the behavior of custom scalar definitions."
-directive @specifiedBy(
-  "The specifiedBy URL points to a human-readable specification. This field will only read a result for scalar types."
-  url: String!
-) on SCALAR
+directive @specifiedBy("The specifiedBy URL points to a human-readable specification. This field will only read a result for scalar types." url: String!) on SCALAR
 
 "The `DateTime` scalar represents an ISO-8601 compliant date time type."
-scalar DateTime @specifiedBy(url: "https://www.graphql-scalars.com/date-time")
+scalar DateTime @specifiedBy(url: "https:\/\/www.graphql-scalars.com\/date-time")
 
 "The `Decimal` scalar type represents a decimal floating-point number."
 scalar Decimal
@@ -1710,6 +1389,6 @@ scalar Decimal
 "The `TimeSpan` scalar represents an ISO-8601 compliant duration type."
 scalar TimeSpan
 
-scalar URL @specifiedBy(url: "https://tools.ietf.org/html/rfc3986")
+scalar URL @specifiedBy(url: "https:\/\/tools.ietf.org\/html\/rfc3986")
 
-scalar UUID @specifiedBy(url: "https://tools.ietf.org/html/rfc4122")
+scalar UUID @specifiedBy(url: "https:\/\/tools.ietf.org\/html\/rfc4122")

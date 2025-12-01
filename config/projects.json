@@ -40,7 +40,7 @@
       "Kafka__BrokerList": "localhost:9092",
       "AUTH_API_URL": "https://localhost:5555",
       "Otlp__Endpoint": "http://localhost:4317",
-      "GRAPHQL_API_URL": "http://localhost:5900/graphql",
+      "GRAPHQL_API_URL": "http://localhost:5443/graphql",
       "LOCALIZATION_API_URL": "http://localhost:8888",
       "WarpCache__Url": "http://localhost:7777",
       "STRIPE_API_URL": "http://localhost:4243",
@@ -55,7 +55,7 @@
         "Oidc__ServerUrl": "Oidc:ServerUrl"
       }
     }
-  }, //
+  },
   "GraphQLGateway": {
     "project": "dotnet/GraphQLGateway/GraphQLGateway/GraphQLGateway.csproj",
     "localOverrides": {
@@ -67,6 +67,7 @@
     "project": "dotnet/ProductApi/ProductApi.csproj",
     "envSource": "./keycloak/.env.product-api",
     "localOverrides": {
+      "REDIS_URL": "localhost:6379",
       "ConnectionStrings__ProductDb": "Host=localhost;Port=5432;Database=productdb;Username=productdb;Password={{PRODUCTDB_PASSWORD}};",
       "WarpCache__Url": "http://localhost:7777",
       "Kafka__BrokerList": "localhost:9092",
@@ -83,6 +84,7 @@
     "project": "dotnet/UserApi/UserApi.csproj",
     "envSource": "./keycloak/.env.user-api",
     "localOverrides": {
+      "REDIS_URL": "localhost:6379",
       "ConnectionStrings__UserDb": "Host=localhost;Port=5432;Database=userdb;Username=userdb;Password={{USERDB_PASSWORD}};",
       "WarpCache__Url": "http://localhost:7777",
       "Kafka__BrokerList": "localhost:9092",
@@ -99,6 +101,7 @@
     "project": "dotnet/PaymentApi/PaymentApi.csproj",
     "envSource": "./keycloak/.env.payment-api",
     "localOverrides": {
+      "REDIS_URL": "localhost:6379",
       "ConnectionStrings__PaymentDb": "Host=localhost;Port=5432;Database=paymentdb;Username=paymentdb;Password={{PAYMENTDB_PASSWORD}};",
       "WarpCache__Url": "http://localhost:7777",
       "Kafka__BrokerList": "localhost:9092",
@@ -118,8 +121,8 @@
       "REDIS_URL": "localhost:6379",
       "WarpCache__Url": "http://localhost:7777",
       "Kafka__BrokerList": "localhost:9092",
-      "GRAPHQL_API_URL": "http://localhost:5900/graphql",
-      "AUTH_API_URL": "http://localhost:5555",
+      "GRAPHQL_API_URL": "https://localhost:5443/graphql",
+      "AUTH_API_URL": "https://localhost:5555",
       "LOCALIZATION_API_URL": "http://localhost:8888",
       "STRIPE_API_URL": "http://localhost:4243",
       "IGNORE_SSL_CERT_VALIDATION": "true"

@@ -8,7 +8,7 @@ mutation CreatePlanSubscription($input: CreatePlanSubscriptionInput!) {
     planSubscription {
       id
       client {
-        phoneNumber
+        id
       }
     }
   }

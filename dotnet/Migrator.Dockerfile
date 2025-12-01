@@ -1,6 +1,9 @@
-ARG ConnectionStrings__UserDb
-ARG ConnectionStrings__ProductDb
-ARG ConnectionStrings__PaymentDb
+FROM mcr.microsoft.com/dotnet/runtime:10.0 AS base
+
+# Install Kerberos library
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+    libgssapi-krb5-2
 
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 
@@ -51,11 +54,7 @@ RUN dotnet ef migrations bundle \
 RUN chmod +x ./efbundle
 RUN mv ./efbundle ./migratePaymentDb
 
-FROM mcr.microsoft.com/dotnet/runtime:10.0 AS exec
-
-ENV ConnectionStrings__UserDb="$ConnectionStrings__UserDb"
-ENV ConnectionStrings__ProductDb="$ConnectionStrings__ProductDb"
-ENV ConnectionStrings__PaymentDb="$ConnectionStrings__PaymentDb"
+FROM base AS exec
 
 WORKDIR /app
 COPY --from=build /src/migrateUserDb migrateUserDb

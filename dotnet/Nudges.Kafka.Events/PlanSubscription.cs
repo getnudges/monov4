@@ -13,4 +13,4 @@ public partial record PlanSubscriptionKey(string EventType, Guid EventKey) {
 [JsonDerivedType(typeof(PlanSubscriptionCreatedEvent), "planSubscription.created")]
 public abstract partial record PlanSubscriptionEvent;
 
-public partial record PlanSubscriptionCreatedEvent(Guid PlanSubscriptionId) : PlanSubscriptionEvent;
+public partial record PlanSubscriptionCreatedEvent(Guid ClientId, Guid PlanSubscriptionId) : PlanSubscriptionEvent;

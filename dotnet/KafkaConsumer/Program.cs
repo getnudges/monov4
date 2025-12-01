@@ -8,7 +8,9 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Nudges.Auth;
+using Nudges.Configuration;
 using Nudges.Configuration.Extensions;
 using Nudges.Kafka.Events;
 using Nudges.Kafka.Middleware;
@@ -46,7 +48,6 @@ var rootCommand = new RootCommand {
     userAuthCmd,
     foreignProductCmd,
 };
-
 await rootCommand.Parse(args).InvokeAsync();
 
 static IHostBuilder CreateBaseHost(string[] args, string name) =>
@@ -54,75 +55,78 @@ static IHostBuilder CreateBaseHost(string[] args, string name) =>
         .ConfigureWebHostDefaults(configure => {
             configure.ConfigureKestrel(options => { }).PreferHostingUrls(true);
             configure.Configure(configure => {
-                if (configure.ApplicationServices.GetRequiredService<IConfiguration>().GetValue<string>("Otlp__Endpoint") is not null)
-                {
+                if (configure.ApplicationServices.GetRequiredService<IOptions<OtlpSettings>>().Value?.Endpoint is not null) {
                     configure.UseRouting().UseEndpoints(e => e.MapPrometheusScrapingEndpoint());
                 }
             });
         })
-        .ConfigureAppConfiguration(static (hostingContext, config) =>
-            config
-                .AddFlatFilesFromMap(
-                    hostingContext.Configuration.GetValue("FILEMAP", string.Empty), false))
-                .UseConsoleLifetime()
-                .ConfigureServices((hostContext, services) => {
-                    services.AddLogging(configure => configure.AddSimpleConsole(o => o.SingleLine = true));
+        .ConfigureAppConfiguration((hostingContext, config) =>
+            config.AddEnvironmentVariables().AddUserSecrets<Program>())
+        .ConfigureServices((hostContext, services) => {
+            var settings = new Settings();
+            hostContext.Configuration.Bind(settings);
+            services.Configure<OidcSettings>(hostContext.Configuration.GetSection(nameof(Settings.Oidc)));
+            services.Configure<OidcConfig>(hostContext.Configuration.GetSection(nameof(Settings.Oidc)));
+            services.Configure<KafkaSettings>(hostContext.Configuration.GetSection(nameof(Settings.Kafka)));
+            services.Configure<OtlpSettings>(hostContext.Configuration.GetSection(nameof(Settings.Otlp)));
+            services.AddLogging(configure => configure.AddSimpleConsole(o => o.SingleLine = true));
 
-                    if (hostContext.Configuration.GetValue<string>("Otlp__Endpoint") is string url)
-                    {
-                        services.AddOpenTelemetryConfiguration(
-                            url,
-                            $"{name}-{hostContext.HostingEnvironment.ApplicationName}", [
-                                "Microsoft.AspNetCore.Hosting",
+            if (settings.Otlp.Endpoint is string url) {
+                services.AddOpenTelemetryConfiguration<Program>(
+                    url,
+                    $"{name}-{hostContext.HostingEnvironment.ApplicationName}", [
+                        "Microsoft.AspNetCore.Hosting",
                                 "Microsoft.AspNetCore.Server.Kestrel",
                                 "System.Net.Http",
                                 $"{typeof(TracingMiddleware<,>).Namespace}.TracingMiddleware",
-                            ], [
-                                $"{typeof(TracingMiddleware<,>).Namespace}.TracingMiddleware",
+                    ], [
+                        $"{typeof(TracingMiddleware<,>).Namespace}.TracingMiddleware",
                                 $"{typeof(StripeService).Namespace}.StripeService",
                                 $"{typeof(TracingMiddleware<,>).Namespace}.TracingMiddleware",
                                 $"{typeof(RetryMiddleware<,>).Namespace}.RetryMiddleware",
                                 $"{typeof(CircuitBreakerMiddleware<,>).Namespace}.CircuitBreaker",
-                            ], null, null, o => o.Filter = ctx => ctx.Request.Method == "POST");
-                    }
+                    ], null, null, o => o.Filter = ctx => ctx.Request.Method == "POST");
+            }
 
-                    services.AddWarpCacheClient(
-                        hostContext.Configuration.GetCacheServerAddress(),
-                        StringMessageSerializerContext.Default.String);
+            services.AddWarpCacheClient(
+                settings.WarpCache,
+                StringMessageSerializerContext.Default.String);
 
-                    services.AddSingleton(TimeProvider.System);
-                    services.AddSingleton<ICacheStore<string, string>, MemoryCacheStore<string, string>>();
-                    services.AddSingleton<IEvictionPolicy<string>>(new LruEvictionPolicy<string>(1000));
-                    services.AddSingleton<ChannelCacheMediator<string, string>>();
+            services.AddSingleton(TimeProvider.System);
+            services.AddSingleton<ICacheStore<string, string>, MemoryCacheStore<string, string>>();
+            services.AddSingleton<IEvictionPolicy<string>>(new LruEvictionPolicy<string>(1000));
+            services.AddSingleton<ChannelCacheMediator<string, string>>();
 
-                    services.Configure<OidcConfig>(hostContext.Configuration.GetSection("Oidc"));
+            services.Configure<OidcConfig>(hostContext.Configuration.GetSection("Oidc"));
 
-                    services.AddHttpClient<IServerTokenClient, ServerTokenClient>()
-                        .ConfigurePrimaryHttpMessageHandler(sp => {
-                            var env = sp.GetRequiredService<IHostEnvironment>();
-                            return env.IsDevelopment()
-                                ? new HttpClientHandler {
-                                    ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
-                                } : new HttpClientHandler();
-                        })
-                        .ConfigureHttpClient(client =>
-                            client.BaseAddress = new Uri(hostContext.Configuration.GetOidcServerUrl()));
-                    services.AddNudgesClient()
-                        .ConfigureHttpClient((sp, client) => {
-                            var config = sp.GetRequiredService<IConfiguration>();
-                            client.BaseAddress = new Uri(config.GetGraphQLApiUrl());
-                            using var scope = sp.CreateScope();
-                            var tokenResult = scope.ServiceProvider.GetRequiredService<IServerTokenClient>()
-                                .GetTokenAsync().ConfigureAwait(false).GetAwaiter().GetResult();
-                            // TODO: I need to do something significant if I can't get the token.
-                            tokenResult.Match(token => {
-                                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token.AccessToken);
-                                // TODO: this throw is intentional.  It should break the startup.
-                            }, e => throw e);
-                        });
-                    services.AddSingleton<Func<INudgesClient>>(static sp => sp.GetRequiredService<INudgesClient>);
-                    services.AddLocalizationClient((sp, o) => {
-                        o.ServerAddress = sp.GetRequiredService<IConfiguration>().GetLocalizationApiUrl();
-                        return o;
-                    });
+            services.AddHttpClient<IServerTokenClient, ServerTokenClient>()
+                .ConfigurePrimaryHttpMessageHandler(sp => {
+                    var env = sp.GetRequiredService<IHostEnvironment>();
+                    return env.IsDevelopment()
+                        ? new HttpClientHandler {
+                            ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
+                        } : new HttpClientHandler();
+                })
+                .ConfigureHttpClient(client =>
+                    client.BaseAddress = new Uri(settings.Oidc.ServerUrl));
+
+            services.AddHttpContextAccessor();
+            services.AddScoped<AuthenticationDelegatingHandler>();
+            services.AddHttpClient<INudgesClient>(NudgesClient.ClientName)
+                .AddHttpMessageHandler<AuthenticationDelegatingHandler>()
+                .ConfigurePrimaryHttpMessageHandler(sp =>
+                    sp.GetRequiredService<IHostEnvironment>().IsDevelopment()
+                        ? new HttpClientHandler {
+                            ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
+                        } : new HttpClientHandler());
+            services.AddNudgesClient()
+                .ConfigureHttpClient((sp, client) => {
+                    var config = sp.GetRequiredService<IConfiguration>();
+                    client.BaseAddress = new Uri(config.GetGraphQLApiUrl());
                 });
+            services.AddSingleton<Func<INudgesClient>>(static sp => sp.GetRequiredService<INudgesClient>);
+            services.AddLocalizationClient((sp, o) => {
+                o.ServerAddress = sp.GetRequiredService<IConfiguration>().GetLocalizationApiUrl();
+                return o;
+            });
+        });

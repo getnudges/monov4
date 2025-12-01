@@ -28,6 +28,9 @@ builder.Configuration
     .AddUserSecrets(typeof(Program).Assembly)
     .AddEnvironmentVariables();
 
+var settings = new Settings();
+builder.Configuration.Bind(settings);
+
 // configure Oidc settings
 builder.Services.Configure<OidcConfig>(builder.Configuration.GetSection("Oidc"));
 
@@ -39,9 +42,9 @@ builder.Logging.AddSimpleConsole(o => {
 
 
 // configure OpenTelemetry
-if (builder.Configuration.GetValue<string>("Otlp__Endpoint") is string url)
-{
-    builder.Services.AddOpenTelemetryConfiguration(
+if (settings.Otlp.Endpoint is string url) {
+
+    builder.Services.AddOpenTelemetryConfiguration<Program>(
         url,
         builder.Environment.ApplicationName, [
             "Microsoft.AspNetCore.Hosting",
@@ -59,17 +62,17 @@ if (builder.Configuration.GetValue<string>("Otlp__Endpoint") is string url)
 }
 
 // configure Kafka producers
-builder.Services.AddSingleton<KafkaMessageProducer<PaymentKey, PaymentEvent>>(static sp =>
+builder.Services.AddSingleton<KafkaMessageProducer<PaymentKey, PaymentEvent>>(sp =>
     new PaymentEventProducer(Topics.Payments, new ProducerConfig {
-        BootstrapServers = sp.GetRequiredService<IConfiguration>().GetKafkaBrokerList()
+        BootstrapServers = settings.Kafka.BrokerList
     }));
-builder.Services.AddSingleton<KafkaMessageProducer<NotificationKey, NotificationEvent>>(static sp =>
+builder.Services.AddSingleton<KafkaMessageProducer<NotificationKey, NotificationEvent>>(sp =>
     new NotificationEventProducer(Topics.Notifications, new ProducerConfig {
-        BootstrapServers = sp.GetRequiredService<IConfiguration>().GetKafkaBrokerList()
+        BootstrapServers = settings.Kafka.BrokerList
     }));
-builder.Services.AddSingleton<KafkaMessageProducer<ForeignProductEventKey, ForeignProductEvent>>(static sp =>
+builder.Services.AddSingleton<KafkaMessageProducer<ForeignProductEventKey, ForeignProductEvent>>(sp =>
     new ForeignProductEventProducer(Topics.ForeignProducts, new ProducerConfig {
-        BootstrapServers = sp.GetRequiredService<IConfiguration>().GetKafkaBrokerList()
+        BootstrapServers = settings.Kafka.BrokerList
     }));
 
 // configure Stripe client
@@ -77,12 +80,6 @@ builder.Services.AddSingleton<IStripeClient>(s =>
     new StripeClient(builder.Configuration.GetStripeApiKey(), apiBase: builder.Configuration.GetStripeApiUrl()));
 builder.Services.AddTransient<IStripeVerifier, StripeVerifier>();
 
-
-// configure GraphQL client
-builder.Services.AddHttpContextAccessor();
-builder.Services.AddScoped<AuthenticationDelegatingHandler>();
-builder.Services.AddHttpClient<INudgesClient>(NudgesClient.ClientName)
-    .AddHttpMessageHandler<AuthenticationDelegatingHandler>();
 
 // configure stripe webhook handlers
 builder.Services.AddTransient<ProductCreatedCommand>();
@@ -128,32 +125,33 @@ builder.Services.AddSingleton<ICacheStore<string, string>, MemoryCacheStore<stri
 builder.Services.AddSingleton<IEvictionPolicy<string>>(new LruEvictionPolicy<string>(1000));
 builder.Services.AddSingleton<ChannelCacheMediator<string, string>>();
 builder.Services.AddWarpCacheClient(
-    builder.Configuration.GetCacheServerAddress(),
+    settings.WarpCache,
     StringMessageSerializerContext.Default.String);
 
 // configure server token client
 builder.Services.AddHttpClient<IServerTokenClient, ServerTokenClient>()
-    .ConfigurePrimaryHttpMessageHandler(sp => {
-        var env = sp.GetRequiredService<IHostEnvironment>();
-        return env.IsDevelopment()
+    .ConfigurePrimaryHttpMessageHandler(sp =>
+        sp.GetRequiredService<IHostEnvironment>().IsDevelopment()
             ? new HttpClientHandler {
                 ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
-            } : new HttpClientHandler();
-    })
+            } : new HttpClientHandler())
     .ConfigureHttpClient(client =>
-        client.BaseAddress = new Uri(builder.Configuration.GetOidcServerUrl()));
+        client.BaseAddress = new Uri(settings.Oidc.ServerUrl));
 
+// configure GraphQL client
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<AuthenticationDelegatingHandler>();
+builder.Services.AddHttpClient<INudgesClient>(NudgesClient.ClientName)
+    .AddHttpMessageHandler<AuthenticationDelegatingHandler>()
+    .ConfigurePrimaryHttpMessageHandler(sp =>
+        sp.GetRequiredService<IHostEnvironment>().IsDevelopment()
+            ? new HttpClientHandler {
+                ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
+            } : new HttpClientHandler());
 builder.Services.AddNudgesClient()
     .ConfigureHttpClient((sp, client) => {
         var config = sp.GetRequiredService<IConfiguration>();
         client.BaseAddress = new Uri(config.GetGraphQLApiUrl());
-        using var scope = sp.CreateScope();
-        var token = scope.ServiceProvider.GetRequiredService<IServerTokenClient>()
-            .GetTokenAsync().ConfigureAwait(false).GetAwaiter().GetResult();
-        token.Match(token => {
-            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token.AccessToken);
-            // TODO: this throw is intentional.  It should break the startup.
-        }, e => throw e);
     });
 
 builder.Services.AddHeaderPropagation(o => {
@@ -168,8 +166,7 @@ var app = builder.Build();
 
 app.MapHealthChecks("/health");
 
-if (builder.Configuration.GetValue<string>("Otlp__Endpoint") is not null)
-{
+if (settings.Otlp.Endpoint is not null) {
     app.MapPrometheusScrapingEndpoint();
 }
 

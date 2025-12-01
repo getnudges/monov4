@@ -77,7 +77,7 @@ public class GraphQLGatewayFixture : IDisposable {
     public GraphQLGatewayFixture() {
         // Adjust the base address if needed to match your docker-compose setup.
         Client = new HttpClient {
-            BaseAddress = new Uri("http://localhost:5900")
+            BaseAddress = new Uri("http://localhost:5443")
         };
     }
 

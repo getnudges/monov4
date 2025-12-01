@@ -29,7 +29,7 @@ RUN dotnet publish "./GraphMonitor.csproj" \
     /p:PublishAot=true \
     /p:InvariantGlobalization=true
 
-FROM mcr.microsoft.com/dotnet/runtime-deps:9.0 AS final
+FROM mcr.microsoft.com/dotnet/runtime-deps:10.0 AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
 ENTRYPOINT ["./GraphMonitor"]

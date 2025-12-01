@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.HttpOverrides;
 using Nudges.Auth;
 using Nudges.Auth.Keycloak;
 using Nudges.Auth.Web;
+using Nudges.Configuration;
 using Nudges.Configuration.Extensions;
 using Nudges.Kafka;
 using Nudges.Kafka.Events;
@@ -18,8 +19,10 @@ var builder = WebApplication.CreateBuilder(args);
 var settings = new Settings();
 builder.Configuration.Bind(settings);
 
-if (settings.Otlp.Endpoint is string url)
-{
+builder.Services.Configure<OidcSettings>(builder.Configuration.GetSection(nameof(Settings.Oidc)));
+builder.Services.Configure<OidcConfig>(builder.Configuration.GetSection(nameof(Settings.Oidc)));
+
+if (settings.Otlp.Endpoint is string url) {
 
     builder.Services.AddOpenTelemetryConfiguration<Program>(
             url,
@@ -96,8 +99,7 @@ app.UseExceptionHandler();
 
 app.MapHealthChecks("/health");
 
-if (settings.Otlp.Endpoint is not null)
-{
+if (settings.Otlp.Endpoint is not null) {
     app.MapPrometheusScrapingEndpoint();
 }
 

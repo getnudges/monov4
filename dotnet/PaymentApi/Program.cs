@@ -1,16 +1,16 @@
 using Confluent.Kafka;
+using HotChocolate.Diagnostics;
 using Keycloak.AuthServices.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using Nudges.Auth;
 using Nudges.Configuration.Extensions;
+using Nudges.Data;
 using Nudges.Data.Payments;
 using Nudges.Kafka;
 using Nudges.Kafka.Events;
-using OpenTelemetry.Logs;
-using OpenTelemetry.Metrics;
-using OpenTelemetry.Resources;
+using Nudges.Telemetry;
 using OpenTelemetry.Trace;
 using PaymentApi;
 using PaymentApi.Services;
@@ -19,57 +19,64 @@ using Stripe;
 
 var builder = WebApplication.CreateBuilder(args);
 
+var settings = new Settings();
+builder.Configuration.Bind(settings);
+
 builder.Services.AddHttpContextAccessor();
 
-if (builder.Configuration.GetValue<string>("Otlp__Endpoint") is string url)
-{
+if (settings.Otlp.Endpoint is string url && !string.IsNullOrEmpty(url)) {
 
-    builder.Services.AddOpenTelemetry()
-        .ConfigureResource(resource =>
-            resource.AddService(builder.Environment.ApplicationName))
-        .WithMetrics(o =>
-            o.AddRuntimeInstrumentation()
-                .AddMeter([
-                    "Microsoft.AspNetCore.Hosting",
-                    "Microsoft.AspNetCore.Server.Kestrel",
-                    "System.Net.Http",
-                    $"{typeof(Mutation).FullName}",
-                ]).AddPrometheusExporter())
-        .WithTracing(traceBuilder =>
-            traceBuilder
-                .SetSampler<AlwaysOnSampler>()
-                .AddSource([
-                    $"{typeof(KafkaMessageProducer<,>).Namespace}.KafkaMessageProducer",
-                    $"{typeof(StripePaymentProvider).FullName}",
-                    $"{typeof(Mutation).FullName}",
-                ]))
-        .WithLogging();
+    builder.Services.AddOpenTelemetryConfiguration<Program>(
+        url,
+        builder.Environment.ApplicationName, [
+            "Microsoft.AspNetCore.Hosting",
+            "Microsoft.AspNetCore.Server.Kestrel",
+            "System.Net.Http",
+            "Microsoft.EntityFrameworkCore",
+            $"{typeof(Mutation).FullName}"
+        ], [
+            $"{typeof(KafkaMessageProducer<,>).Namespace}.KafkaMessageProducer",
+            $"{typeof(Mutation).FullName}"
+        ], null, o => o.AddHotChocolateInstrumentation(), options => {
+            options.RecordException = true;
+            options.Filter = ctx => ctx.Request.Method == "POST";
 
-    builder.Services.ConfigureOpenTelemetryTracerProvider(o =>
-        o.AddOtlpExporter(o => o.Endpoint = new Uri(url)));
+            options.EnrichWithHttpResponse = (activity, response) => {
+                if (response.HttpContext.Items.TryGetValue("OperationName", out var opNameObj) &&
+                    opNameObj is string opName &&
+                    !string.IsNullOrWhiteSpace(opName)) {
+                    activity.DisplayName = opName;
+                    activity.SetTag("graphql.operation.name", opName);
+                }
 
-    builder.Services.ConfigureOpenTelemetryLoggerProvider(o =>
-        o.AddOtlpExporter(o => o.Endpoint = new Uri(url)));
+                if (response.HttpContext.Items.TryGetValue("GraphQLOperationType", out var opTypeObj) &&
+                    opTypeObj is string opType) {
+                    activity.SetTag("graphql.operation.type", opType);
+                }
+
+                activity.SetTag("graphql.transport", "http");
+            };
+        });
 }
 
 builder.Services.AddTransient<IConnectionMultiplexer>(static c =>
     ConnectionMultiplexer.Connect(c.GetRequiredService<IConfiguration>().GetRedisUrl()));
 
 builder.Services.AddPooledDbContextFactory<PaymentDbContext>(static (s, o) =>
-    o.UseNpgsql(s.GetRequiredService<IConfiguration>().GetConnectionString("PaymentDb")));
+    o.UseNpgsql(s.GetRequiredService<IConfiguration>().GetConnectionString(DbConstants.PaymentDb)));
 
 builder.Services.AddHttpContextAccessor();
 
 builder.Services.AddAuthorization();
 
-builder.Services.AddSingleton<KafkaMessageProducer<NotificationKey, NotificationEvent>>(static sp =>
+builder.Services.AddSingleton<KafkaMessageProducer<NotificationKey, NotificationEvent>>(sp =>
     new NotificationEventProducer(Topics.Notifications, new ProducerConfig {
-        BootstrapServers = sp.GetRequiredService<IConfiguration>().GetKafkaBrokerList()
+        BootstrapServers = settings.Kafka.BrokerList
     }));
 
-builder.Services.AddSingleton<KafkaMessageProducer<PaymentKey, PaymentEvent>>(static sp =>
+builder.Services.AddSingleton<KafkaMessageProducer<PaymentKey, PaymentEvent>>(sp =>
     new PaymentEventProducer(Topics.Payments, new ProducerConfig {
-        BootstrapServers = sp.GetRequiredService<IConfiguration>().GetKafkaBrokerList()
+        BootstrapServers = settings.Kafka.BrokerList
     }));
 
 builder.Services.AddTransient<IStripeClient>(static s => {
@@ -141,6 +148,11 @@ builder.Services
     //.AddRedisSubscriptions(static p => p.GetRequiredService<IConnectionMultiplexer>())
     .ModifyOptions(static o => o.ValidatePipelineOrder = false)
     //.AddQueryFieldToMutationPayloads()
+    .AddInstrumentation(o => {
+        o.Scopes = ActivityScopes.ResolveFieldValue;
+        o.IncludeDocument = false;
+        o.RequestDetails = RequestDetails.Default;
+    })
     .InitializeOnStartup();
 
 builder.Services.AddHealthChecks();
@@ -149,8 +161,7 @@ var app = builder.Build();
 
 app.UseHealthChecks("/health");
 
-if (builder.Configuration.GetValue<string>("Otlp__Endpoint") is not null)
-{
+if (settings.Otlp.Endpoint is string e && !string.IsNullOrEmpty(e)) {
     app.MapPrometheusScrapingEndpoint();
 }
 
@@ -162,5 +173,3 @@ app.UseWebSockets();
 app.MapGraphQL();
 
 app.RunWithGraphQLCommands(args);
-
-public partial class Program { }

@@ -1,4 +1,4 @@
-using System.Text.Json.Serialization;
+using GraphMonitor;
 using Precision.WarpCache;
 using Precision.WarpCache.Redis;
 using StackExchange.Redis;
@@ -13,12 +13,12 @@ builder.Services.AddExceptionHandler<Exception>((o, ex) =>
         await context.Response.WriteAsync(ex.Message);
     });
 
-builder.Services.AddLogging(o => o.AddConsole());
+builder.Services.AddLogging(o => o.AddSimpleConsole(o => o.SingleLine = true));
 
 builder.Services.AddSingleton<ICacheStore<string, string>, RedisCacheStore<string>>(
     s => new RedisCacheStore<string>(
         s.GetRequiredService<IConnectionMultiplexer>(),
-        StringMessageSerializerContext.Default));
+        StringMessageSerializerContext.Default.String));
 
 builder.Services.AddSingleton<IConnectionMultiplexer>(s =>
     ConnectionMultiplexer.Connect(builder.Configuration.GetValue<string>("REDIS_URL")!));
@@ -35,8 +35,7 @@ app.Use(async (context, next) => {
         return;
     }
     if (context.Request.Headers.TryGetValue("X-Api-Key", out var value) &&
-        value == context.RequestServices.GetRequiredService<IConfiguration>().GetValue<string>("MONITOR_API_KEY"))
-    {
+        value == context.RequestServices.GetRequiredService<IConfiguration>().GetValue<string>("MONITOR_API_KEY")) {
         await next.Invoke(context);
         return;
     }
@@ -99,11 +98,3 @@ internal class GraphMonitorLogs {
         LoggerMessage.Define(LogLevel.Information, new EventId(1, "LogSchemaStored"), "Schema stored");
 }
 
-public partial class Program { }
-
-public record struct StringMessage(string Message);
-
-[JsonSourceGenerationOptions(
-    GenerationMode = JsonSourceGenerationMode.Default)]
-[JsonSerializable(typeof(string))]
-public sealed partial class StringMessageSerializerContext : JsonSerializerContext;

@@ -36,12 +36,10 @@ internal class PaymentMessageMiddleware(ILogger<PaymentMessageMiddleware> logger
         using var client = new DisposableWrapper<INudgesClient>(nudgesClientFactory);
         logger.LogAction($"Handling PaymentComplete for {paymentEvent}");
 
-        return await client.Instance.GetPriceTierByForeignId(paymentEvent.PriceForeignServiceId, cancellationToken).Match(async tier =>
-            await client.Instance.CreatePlanSubscription(new CreatePlanSubscriptionInput {
-                PaymentConfirmationId = paymentEvent.PaymentConfirmationId.ToString(),
-                ClientId = paymentEvent.ClientId.ToString(),
-                PriceTierForeignServiceId = paymentEvent.PriceForeignServiceId,
-            }, cancellationToken).Map<ICreatePlanSubscription_CreatePlanSubscription, bool, Exception>(e => true),
-            () => new MissingDataException("Could not find PriceTier"));
+        return await client.Instance.CreatePlanSubscription(new CreatePlanSubscriptionInput {
+            PaymentConfirmationId = paymentEvent.PaymentConfirmationId.ToString(),
+            ClientId = paymentEvent.ClientId.ToString(),
+            PriceTierForeignServiceId = paymentEvent.PriceForeignServiceId,
+        }, cancellationToken).Map<ICreatePlanSubscription_CreatePlanSubscription, bool, Exception>(e => true);
     }
 }

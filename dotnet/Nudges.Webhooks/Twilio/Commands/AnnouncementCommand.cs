@@ -70,24 +70,26 @@ internal sealed partial class AnnouncementConfirmCommand(INudgesClient nudgesCli
                     });
         });
 
-    private async Task<Result<int, Exception>> SendMessages(string clientPhone, Dictionary<string, string> replacements, CancellationToken cancellationToken) =>
-        await nudgesClient.GetClientByPhoneNumber(clientPhone, cancellationToken).Map<IGetClientByPhoneNumber_ClientByPhoneNumber, int, Exception>(async client => {
-            var subs = client.Subscribers?.Nodes?.Select(n => new {
-                n.FullPhone,
-                n.Locale,
-            })?.Where(n => !string.IsNullOrEmpty(n.FullPhone)) ?? [];
-            var totalSent = 0;
-            foreach (var sub in subs) {
-                try {
-                    await notificationProducer.Produce(
-                        NotificationKey.SendSms(sub.FullPhone!),
-                        NotificationEvent.SendSms("Anything", sub.Locale, replacements),
-                        cancellationToken);
-                    totalSent++;
-                } catch (Exception e) {
-                    logger.LogSendFailure(e);
-                }
-            }
-            return totalSent;
-        });
+    private Task<Result<int, Exception>> SendMessages(string clientPhone, Dictionary<string, string> replacements, CancellationToken cancellationToken) =>
+        Task.FromResult(Result.Success<int, Exception>(0));
+
+        //await nudgesClient.GetClientByPhoneNumber(clientPhone, cancellationToken).Map<IGetClientByPhoneNumber_ClientByPhoneNumber, int, Exception>(async client => {
+        //    var subs = client.Subscribers?.Nodes?.Select(n => new {
+        //        n.FullPhone,
+        //        n.Locale,
+        //    })?.Where(n => !string.IsNullOrEmpty(n.FullPhone)) ?? [];
+        //    var totalSent = 0;
+        //    foreach (var sub in subs) {
+        //        try {
+        //            await notificationProducer.Produce(
+        //                NotificationKey.SendSms(sub.FullPhone!),
+        //                new SendSmsNotificationEvent("Anything", sub.Locale, replacements),
+        //                cancellationToken);
+        //            totalSent++;
+        //        } catch (Exception e) {
+        //            logger.LogSendFailure(e);
+        //        }
+        //    }
+        //    return totalSent;
+        //});
 }

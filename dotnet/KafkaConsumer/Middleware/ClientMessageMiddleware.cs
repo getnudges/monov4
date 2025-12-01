@@ -23,25 +23,23 @@ internal class ClientMessageMiddleware(ILogger<ClientMessageMiddleware> logger,
     public async Task<Result<bool, Exception>> HandleMessageAsync(ConsumeResult<ClientKey, ClientEvent> cr, CancellationToken cancellationToken) {
         logger.LogAction($"Received message {cr.Message.Key}");
         return await (cr.Message.Value switch {
-            ClientCreatedEvent created => HandleClientCreated(created.ClientNodeId, cancellationToken),
-            ClientUpdatedEvent updated => HandleClientUpdated(updated.ClientNodeId, cancellationToken),
+            ClientCreatedEvent created => HandleClientCreated(created, cancellationToken),
+            ClientUpdatedEvent updated => HandleClientUpdated(updated, cancellationToken),
             _ => Result.ExceptionTask(new UnhandledMessageException($"No handler registered for event {cr.Message.Key}.")),
         });
     }
 
-    private async Task<Result<bool, Exception>> HandleClientCreated(string clientNodeId, CancellationToken cancellationToken) {
+    private async Task<Result<bool, Exception>> HandleClientCreated(ClientCreatedEvent data, CancellationToken cancellationToken) {
         using var client = new DisposableWrapper<INudgesClient>(nudgesClientFactory);
 
-        return await client.Instance.GetClient(clientNodeId, cancellationToken).Map(async clientInfo => {
-            return await foreignProductService.CreateCustomer(
-                clientNodeId, clientInfo.PhoneNumber, clientInfo.Name, cancellationToken).Map(async customerId =>
-                    await client.Instance.UpdateClient(new UpdateClientInput {
-                        Id = clientNodeId,
-                        CustomerId = customerId,
-                    }, cancellationToken)).Map(async _ =>
-                        // TODO: include link to the client to set up their Keycloak-based account
-                        await SendSms(clientInfo.PhoneNumber, "ClientCreated", clientInfo.Locale, [], cancellationToken));
-        });
+        return await foreignProductService.CreateCustomer(
+            data.Id, data.PhoneNumber, data.Name, cancellationToken).Map(async customerId =>
+                await client.Instance.UpdateClient(new UpdateClientInput {
+                    Id = data.Id,
+                    CustomerId = customerId,
+                }, cancellationToken)).Map(async _ =>
+                    // TODO: include link to the client to set up their Keycloak-based account
+                    await SendSms(data.PhoneNumber, "ClientCreated", data.Locale, [], cancellationToken));
     }
 
     private async Task<Result<bool, Exception>> SendSms(string phoneNumber,
@@ -57,7 +55,7 @@ internal class ClientMessageMiddleware(ILogger<ClientMessageMiddleware> logger,
         }
     }
 
-    private Task<Result<bool, Exception>> HandleClientUpdated(string clientId, CancellationToken cancellationToken) {
+    private Task<Result<bool, Exception>> HandleClientUpdated(ClientUpdatedEvent data, CancellationToken cancellationToken) {
         //using var client = new DisposableWrapper<INudgesClient>(nudgesClientFactory);
         //var result = await client.Instance.GetClient.ExecuteAsync(clientId, cancellationToken);
 

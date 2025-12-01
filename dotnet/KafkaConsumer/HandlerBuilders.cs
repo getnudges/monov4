@@ -9,6 +9,8 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using Nudges.Configuration;
 using Nudges.Configuration.Extensions;
 using Nudges.Kafka;
 using Nudges.Kafka.Events;
@@ -38,7 +40,7 @@ internal static class HandlerBuilders {
                     KafkaMessageProcessorBuilder
                         .For<NotificationKey, NotificationEvent>(
                             Topics.Notifications,
-                            sp.GetRequiredService<IConfiguration>().GetKafkaBrokerList(),
+                            sp.GetRequiredService<IOptions<KafkaSettings>>().Value.BrokerList,
                             cancellationToken: sp.GetRequiredService<IHostApplicationLifetime>().ApplicationStopping)
                         .Use(new TracingMiddleware<NotificationKey, NotificationEvent>())
                         .Use(sp.GetRequiredService<NotificationMessageMiddleware>())
@@ -51,12 +53,12 @@ internal static class HandlerBuilders {
             .ConfigureServices(static (hostContext, services) => {
                 services.AddSingleton<KafkaMessageProducer<NotificationKey, NotificationEvent>>(static sp =>
                     new NotificationEventProducer(Topics.Notifications, new ProducerConfig {
-                        BootstrapServers = sp.GetRequiredService<IConfiguration>().GetKafkaBrokerList(),
+                        BootstrapServers = sp.GetRequiredService<IOptions<KafkaSettings>>().Value.BrokerList,
                         AllowAutoCreateTopics = true,
                     }));
                 services.AddSingleton<KafkaMessageProducer<ClientKey, ClientEvent>>(static sp =>
                     new ClientEventProducer(Topics.Notifications, new ProducerConfig {
-                        BootstrapServers = sp.GetRequiredService<IConfiguration>().GetKafkaBrokerList(),
+                        BootstrapServers = sp.GetRequiredService<IOptions<KafkaSettings>>().Value.BrokerList,
                         AllowAutoCreateTopics = true,
                     }));
 
@@ -71,7 +73,7 @@ internal static class HandlerBuilders {
                     KafkaMessageProcessorBuilder
                         .For<PlanSubscriptionKey, PlanSubscriptionEvent>(
                             Topics.PlanSubscriptions,
-                            sp.GetRequiredService<IConfiguration>().GetKafkaBrokerList(),
+                            sp.GetRequiredService<IOptions<KafkaSettings>>().Value.BrokerList,
                             cancellationToken: sp.GetRequiredService<IHostApplicationLifetime>().ApplicationStopping)
                         .Use(new TracingMiddleware<PlanSubscriptionKey, PlanSubscriptionEvent>())
                         .Use(sp.GetRequiredService<IMessageMiddleware<PlanSubscriptionKey, PlanSubscriptionEvent>>())
@@ -84,7 +86,7 @@ internal static class HandlerBuilders {
             .ConfigureServices(static (hostContext, services) => {
                 services.AddSingleton<KafkaMessageProducer<NotificationKey, NotificationEvent>>(static sp =>
                     new NotificationEventProducer(Topics.Notifications, new ProducerConfig {
-                        BootstrapServers = sp.GetRequiredService<IConfiguration>().GetKafkaBrokerList(),
+                        BootstrapServers = sp.GetRequiredService<IOptions<KafkaSettings>>().Value.BrokerList,
                         AllowAutoCreateTopics = true,
                     }));
 
@@ -101,7 +103,7 @@ internal static class HandlerBuilders {
                     KafkaMessageProcessorBuilder
                         .For<ClientKey, ClientEvent>(
                             Topics.Clients,
-                            sp.GetRequiredService<IConfiguration>().GetKafkaBrokerList(),
+                            sp.GetRequiredService<IOptions<KafkaSettings>>().Value.BrokerList,
                             cancellationToken: sp.GetRequiredService<IHostApplicationLifetime>().ApplicationStopping)
                         .Use(new TracingMiddleware<ClientKey, ClientEvent>())
                         .Use(sp.GetRequiredService<IMessageMiddleware<ClientKey, ClientEvent>>())
@@ -114,12 +116,12 @@ internal static class HandlerBuilders {
             .ConfigureServices(static (hostContext, services) => {
                 services.AddSingleton<KafkaMessageProducer<NotificationKey, NotificationEvent>>(static sp =>
                     new NotificationEventProducer(Topics.Notifications, new ProducerConfig {
-                        BootstrapServers = sp.GetRequiredService<IConfiguration>().GetKafkaBrokerList(),
+                        BootstrapServers = sp.GetRequiredService<IOptions<KafkaSettings>>().Value.BrokerList,
                         AllowAutoCreateTopics = true,
                     }));
                 services.AddSingleton<KafkaMessageProducer<DeadLetterEventKey, DeadLetterEvent>>(static sp =>
                     new DeadLetterEventProducer(Topics.DeadLetter, new ProducerConfig {
-                        BootstrapServers = sp.GetRequiredService<IConfiguration>().GetKafkaBrokerList(),
+                        BootstrapServers = sp.GetRequiredService<IOptions<KafkaSettings>>().Value.BrokerList,
                         AllowAutoCreateTopics = true,
                     }));
 
@@ -128,7 +130,7 @@ internal static class HandlerBuilders {
                     KafkaMessageProcessorBuilder
                         .For<UserAuthenticationEventKey, UserAuthenticationEvent>(
                             Topics.UserAuthentication,
-                            sp.GetRequiredService<IConfiguration>().GetKafkaBrokerList(),
+                            sp.GetRequiredService<IOptions<KafkaSettings>>().Value.BrokerList,
                             cancellationToken: sp.GetRequiredService<IHostApplicationLifetime>().ApplicationStopping)
                         .Use(new TracingMiddleware<UserAuthenticationEventKey, UserAuthenticationEvent>())
                         .Use(sp.GetRequiredService<IMessageMiddleware<UserAuthenticationEventKey, UserAuthenticationEvent>>())
@@ -141,7 +143,7 @@ internal static class HandlerBuilders {
             .ConfigureServices(static (hostContext, services) => {
                 services.AddSingleton<KafkaMessageProducer<NotificationKey, NotificationEvent>>(static sp =>
                     new NotificationEventProducer(Topics.Notifications, new ProducerConfig {
-                        BootstrapServers = sp.GetRequiredService<IConfiguration>().GetKafkaBrokerList(),
+                        BootstrapServers = sp.GetRequiredService<IOptions<KafkaSettings>>().Value.BrokerList,
                         AllowAutoCreateTopics = true,
                     }));
 
@@ -150,7 +152,7 @@ internal static class HandlerBuilders {
                     KafkaMessageProcessorBuilder
                         .For<PaymentKey, PaymentEvent>(
                             Topics.Payments,
-                            sp.GetRequiredService<IConfiguration>().GetKafkaBrokerList(),
+                            sp.GetRequiredService<IOptions<KafkaSettings>>().Value.BrokerList,
                             cancellationToken: sp.GetRequiredService<IHostApplicationLifetime>().ApplicationStopping)
                         .Use(new TracingMiddleware<PaymentKey, PaymentEvent>())
                         .Use(sp.GetRequiredService<IMessageMiddleware<PaymentKey, PaymentEvent>>())
@@ -164,7 +166,7 @@ internal static class HandlerBuilders {
             .ConfigureServices(static (hostContext, services) => {
                 services.AddSingleton(static sp =>
                     new PriceTierChangeEventProducer(Topics.PriceTiers, new ProducerConfig {
-                        BootstrapServers = sp.GetRequiredService<IConfiguration>().GetKafkaBrokerList(),
+                        BootstrapServers = sp.GetRequiredService<IOptions<KafkaSettings>>().Value.BrokerList,
                         AllowAutoCreateTopics = true,
                     }));
 
@@ -179,7 +181,7 @@ internal static class HandlerBuilders {
                     KafkaMessageProcessorBuilder
                         .For<PlanEventKey, PlanChangeEvent>(
                             Topics.Plans,
-                            sp.GetRequiredService<IConfiguration>().GetKafkaBrokerList(),
+                            sp.GetRequiredService<IOptions<KafkaSettings>>().Value.BrokerList,
                             cancellationToken: sp.GetRequiredService<IHostApplicationLifetime>().ApplicationStopping)
                         .UseCircuitBreaker(TimeProvider.System)
                         .UseRetry(TimeProvider.System)
@@ -199,7 +201,7 @@ internal static class HandlerBuilders {
                     KafkaMessageProcessorBuilder
                         .For<ForeignProductEventKey, ForeignProductEvent>(
                             Topics.ForeignProducts,
-                            sp.GetRequiredService<IConfiguration>().GetKafkaBrokerList(),
+                            sp.GetRequiredService<IOptions<KafkaSettings>>().Value.BrokerList,
                             cancellationToken: sp.GetRequiredService<IHostApplicationLifetime>().ApplicationStopping)
                         .Use(new TracingMiddleware<ForeignProductEventKey, ForeignProductEvent>())
                         .Use(sp.GetRequiredService<IMessageMiddleware<ForeignProductEventKey, ForeignProductEvent>>())
@@ -222,7 +224,7 @@ internal static class HandlerBuilders {
                     KafkaMessageProcessorBuilder
                         .For<PriceTierEventKey, PriceTierChangeEvent>(
                             Topics.PriceTiers,
-                            sp.GetRequiredService<IConfiguration>().GetKafkaBrokerList(),
+                            sp.GetRequiredService<IOptions<KafkaSettings>>().Value.BrokerList,
                             cancellationToken: sp.GetRequiredService<IHostApplicationLifetime>().ApplicationStopping)
                         .Use(new TracingMiddleware<PriceTierEventKey, PriceTierChangeEvent>())
                         .Use(sp.GetRequiredService<IMessageMiddleware<PriceTierEventKey, PriceTierChangeEvent>>())

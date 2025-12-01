@@ -1,9 +1,8 @@
-using System.Diagnostics;
 using HotChocolate.Authorization;
 using Nudges.Auth;
 using Nudges.Data.Products;
 using Nudges.Data.Products.Models;
-using ProductApi.Telemetry;
+using Nudges.Telemetry;
 
 namespace ProductApi;
 

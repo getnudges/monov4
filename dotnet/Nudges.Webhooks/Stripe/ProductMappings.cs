@@ -1,3 +1,4 @@
+using System.Globalization;
 using Monads;
 using Stripe;
 
@@ -9,7 +10,7 @@ internal static class ProductMappings {
             Description = product.Description,
             //Features = product.MarketingFeatures. // TODO: deal with this later
             IconUrl = product.Images.FirstOrDefault(),
-            Id = product.Metadata["planId"],
+            Id = int.Parse(product.Metadata["planId"], CultureInfo.InvariantCulture),
             IsActive = product.Active,
             Name = product.Name,
             ForeignServiceId = product.Id

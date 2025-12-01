@@ -11,7 +11,6 @@ using Nudges.Models;
 using Nudges.Telemetry;
 using ProductApi.Models;
 using ProductApi.Mutations;
-using ProductApi.Telemetry;
 
 namespace ProductApi;
 
@@ -131,7 +130,9 @@ public partial class Mutation {
             logger.LogPlanSubscriptionCreated(newSub.Entity.Id);
 
             await kafkaProducer.Produce(
-                PlanSubscriptionKey.PlanSubscriptionCreated(newSub.Entity.Id), new PlanSubscriptionEvent(), cancellationToken);
+                PlanSubscriptionKey.PlanSubscriptionCreated(newSub.Entity.Id),
+                new PlanSubscriptionCreatedEvent(newSub.Entity.ClientId, newSub.Entity.Id),
+                cancellationToken);
 
             await transaction.CommitAsync(cancellationToken);
             activity?.SetStatus(ActivityStatusCode.Ok);

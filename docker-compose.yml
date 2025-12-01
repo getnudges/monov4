@@ -229,6 +229,8 @@ services:
       dockerfile: AuthInit.Dockerfile
     networks:
       - Nudges
+    extra_hosts:
+      - "keycloak.local:host-gateway"
     env_file:
       - ./dotnet/Nudges.AuthInit/.env.docker
     # depends_on:
@@ -357,6 +359,8 @@ services:
     container_name: notifications-listener
     networks:
       - Nudges
+    extra_hosts:
+      - "keycloak.local:host-gateway"
     build:
       context: ./dotnet
       dockerfile: ./KafkaConsumer.Dockerfile
@@ -379,6 +383,8 @@ services:
     container_name: payments-listener
     networks:
       - Nudges
+    extra_hosts:
+      - "keycloak.local:host-gateway"
     build:
       context: ./dotnet
       dockerfile: ./KafkaConsumer.Dockerfile
@@ -402,6 +408,8 @@ services:
     container_name: plan-subscription-listener
     networks:
       - Nudges
+    extra_hosts:
+      - "keycloak.local:host-gateway"
     build:
       context: ./dotnet
       dockerfile: ./KafkaConsumer.Dockerfile
@@ -424,6 +432,8 @@ services:
     container_name: plans-listener
     networks:
       - Nudges
+    extra_hosts:
+      - "keycloak.local:host-gateway"
     build:
       context: ./dotnet
       dockerfile: ./KafkaConsumer.Dockerfile
@@ -447,6 +457,8 @@ services:
     container_name: price-tiers-listener
     networks:
       - Nudges
+    extra_hosts:
+      - "keycloak.local:host-gateway"
     build:
       context: ./dotnet
       dockerfile: ./KafkaConsumer.Dockerfile
@@ -470,6 +482,8 @@ services:
     container_name: clients-listener
     networks:
       - Nudges
+    extra_hosts:
+      - "keycloak.local:host-gateway"
     build:
       context: ./dotnet
       dockerfile: ./KafkaConsumer.Dockerfile
@@ -492,6 +506,8 @@ services:
     container_name: user-authentication-listener
     networks:
       - Nudges
+    extra_hosts:
+      - "keycloak.local:host-gateway"
     build:
       context: ./dotnet
       dockerfile: ./KafkaConsumer.Dockerfile
@@ -514,6 +530,8 @@ services:
     container_name: foreign-products-listener
     networks:
       - Nudges
+    extra_hosts:
+      - "keycloak.local:host-gateway"
     build:
       context: ./dotnet
       dockerfile: ./KafkaConsumer.Dockerfile
@@ -595,13 +613,9 @@ services:
         - GRAPH_MONITOR_URL=http://host.docker.internal:5145
     ports:
       - "5443:5443"
-      - "5900:5900"
     environment:
       ASPNETCORE_ENVIRONMENT: Development
-      HTTPS_PORTS: 5443
-      Kestrel__Endpoints__Https__Url: https://+:5443
-      Kestrel__Endpoints__Http__Url: http://+:5900
-
+      ASPNETCORE_URLS: https://+:5443
       ASPNETCORE_Kestrel__Certificates__Default__Path: /https/aspnetapp.pfx
       ASPNETCORE_Kestrel__Certificates__Default__Password: pass
     volumes:
@@ -616,6 +630,8 @@ services:
     container_name: auth-api
     networks:
       - Nudges
+    extra_hosts:
+      - "keycloak.local:host-gateway"
     build:
       context: ./dotnet
       dockerfile: AuthApi.Dockerfile
@@ -628,7 +644,6 @@ services:
       ASPNETCORE_URLS: https://+:443
       ASPNETCORE_Kestrel__Certificates__Default__Path: /https/aspnetapp.pfx
       ASPNETCORE_Kestrel__Certificates__Default__Password: pass
-      Logging__LogLevel__Default: Debug
     volumes:
       - ./certs/aspnetapp.pfx:/https/aspnetapp.pfx:ro
     # depends_on:
@@ -660,6 +675,8 @@ services:
     container_name: webhooks
     networks:
       - Nudges
+    extra_hosts:
+      - "keycloak.local:host-gateway"
     build:
       context: ./dotnet
       dockerfile: Nudges.Webhooks.Dockerfile

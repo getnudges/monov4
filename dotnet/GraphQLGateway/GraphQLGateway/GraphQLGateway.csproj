@@ -32,6 +32,8 @@
     </ItemGroup>
 
     <ItemGroup>
+      <ProjectReference Include="..\..\Nudges.Configuration\Nudges.Configuration.csproj" />
+      <ProjectReference Include="..\..\Nudges.Telemetry\Nudges.Telemetry.csproj" />
       <ProjectReference Include="..\..\Precision.WarpCache\Precision.WarpCache.Grpc.Client\Precision.WarpCache.Grpc.Client.csproj" />
     </ItemGroup>
 

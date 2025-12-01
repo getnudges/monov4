@@ -1,5 +1,0 @@
-query GetPlanSubscription($id: ID!) {
-  planSubscription(id: $id) {
-    clientId
-  }
-}

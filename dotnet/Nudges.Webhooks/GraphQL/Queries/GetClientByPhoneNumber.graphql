@@ -7,7 +7,6 @@ query GetClientByPhoneNumber($phoneNumber: String!) {
     subscribers {
       nodes {
         id
-        fullPhone
         locale
       }
     }

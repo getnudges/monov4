@@ -2,7 +2,7 @@ using System.Diagnostics;
 using OpenTelemetry;
 using OpenTelemetry.Context.Propagation;
 
-namespace ProductApi.Telemetry;
+namespace Nudges.Telemetry;
 
 public readonly record struct TraceHeaders(
     IReadOnlyDictionary<string, string> Values);

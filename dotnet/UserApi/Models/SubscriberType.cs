@@ -35,6 +35,27 @@ public class SubscriberType : ObjectType<Subscriber> {
             .UseProjection()
             .UseFiltering()
             .UseSorting();
+        descriptor.Field("phoneNumberHash").Resolve(async p => {
+            var subscriber = p.Parent<Subscriber>();
+            if (subscriber.IdNavigation is null) {
+                var factory = p.Service<IDbContextFactory<UserDbContext>>();
+                await using var dbContext = await factory.CreateDbContextAsync(p.RequestAborted);
+                await dbContext.Entry(subscriber).Reference(c => c.IdNavigation).LoadAsync();
+            }
+
+            return subscriber.IdNavigation!.PhoneNumberHash;
+        }).Type<NonNullType<StringType>>();
+        descriptor.Field("locale").Resolve(async p => {
+            var subscriber = p.Parent<Subscriber>();
+            if (subscriber.IdNavigation is null) {
+                var factory = p.Service<IDbContextFactory<UserDbContext>>();
+                await using var dbContext = await factory.CreateDbContextAsync(p.RequestAborted);
+                await dbContext.Entry(subscriber).Reference(c => c.IdNavigation).LoadAsync();
+            }
+
+            return subscriber.IdNavigation!.Locale;
+        }).Type<NonNullType<StringType>>();
+
     }
 }
 

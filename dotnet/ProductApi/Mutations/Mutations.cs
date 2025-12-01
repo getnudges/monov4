@@ -1,6 +1,6 @@
 using Nudges.Auth;
 using Nudges.HotChocolate.Utils;
-using ProductApi.Telemetry;
+using Nudges.Telemetry;
 
 namespace ProductApi;
 
@@ -10,13 +10,13 @@ public class MutationObjectType : ObjectType<Mutation> {
     protected override void Configure(IObjectTypeDescriptor<Mutation> descriptor) {
 
         descriptor
-            .Field(f => f.SubscribeToPlan(default!, default!, default!, default!, default!, default!))
+            .Field(f => f.SubscribeToPlan(default!, default!, default!, default!, default!))
             .Authorize(PolicyNames.Client)
             .Argument("input", a => a.Type<NonNullType<SubscribeToPlanInputType>>())
             .UseMutationConvention();
 
         descriptor
-            .Field(f => f.EndSubscription(default!, default!, default!, default!, default!))
+            .Field(f => f.EndSubscription(default!, default!, default!, default!))
             .Authorize(PolicyNames.Client)
             .Argument("input", a => a.Type<NonNullType<EndSubscriptionInputType>>())
             .UseMutationConvention();

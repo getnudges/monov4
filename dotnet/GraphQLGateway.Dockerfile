@@ -4,21 +4,31 @@ ARG GRAPH_MONITOR_URL
 WORKDIR /src
 
 COPY Nudges.Data/*.csproj ./Nudges.Data/
-COPY Nudges.Redis/*.csproj ./Nudges.Redis/
-COPY Nudges.Telemetry/*.csproj ./Nudges.Telemetry/
+COPY Nudges.Models/*.csproj ./Nudges.Models/
 COPY Monads/*.csproj ./Monads/
-COPY Nudges.Auth/*.csproj ./Nudges.Auth/
+COPY Nudges.Redis/*.csproj ./Nudges.Redis/
+COPY Nudges.Auth.Web/*.csproj ./Nudges.Auth.Web/
 COPY Nudges.Kafka/*.csproj ./Nudges.Kafka/
 COPY Nudges.Kafka.Analyzers/*.csproj ./Nudges.Kafka.Analyzers/
-COPY Nudges.Auth.Web/*.csproj ./Nudges.Auth.Web/
+COPY Nudges.Auth/*.csproj ./Nudges.Auth/
+COPY Nudges.Telemetry/*.csproj ./Nudges.Telemetry/
+COPY Nudges.Core/*.csproj ./Nudges.Core/
 COPY Nudges.HotChocolate.Utils/*.csproj ./Nudges.HotChocolate.Utils/
+COPY Precision.WarpCache/Precision.WarpCache/*.csproj ./Precision.WarpCache/Precision.WarpCache/
+COPY Precision.WarpCache/Precision.WarpCache.Grpc.Client/*.csproj ./Precision.WarpCache/Precision.WarpCache.Grpc.Client/
+COPY Nudges.Configuration/*.csproj ./Nudges.Configuration/
+COPY Nudges.Configuration.Analyzers/*.csproj ./Nudges.Configuration.Analyzers/
+COPY Nudges.Security/*.csproj ./Nudges.Security/
+COPY Nudges.Data.Security/*.csproj ./Nudges.Data.Security/
+COPY Nudges.Contracts/*.csproj ./Nudges.Contracts/
+COPY Nudges.Kafka.Events/*.csproj ./Nudges.Kafka.Events/
 COPY UserApi/*.csproj ./UserApi/
 COPY ProductApi/*.csproj ./ProductApi/
 COPY PaymentApi/*.csproj ./PaymentApi/
-COPY Precision.WarpCache/Precision.WarpCache.Grpc.Client/Precision.WarpCache.Grpc.Client.csproj ./Precision.WarpCache.Grpc.Client/
 COPY GraphQLGateway/GraphQLGateway/*.csproj ./GraphQLGateway/GraphQLGateway/
 
 RUN dotnet restore GraphQLGateway/GraphQLGateway/GraphQLGateway.csproj
+
 COPY . .
 
 RUN dotnet build GraphQLGateway/GraphQLGateway/GraphQLGateway.csproj -c Release -o /app/build

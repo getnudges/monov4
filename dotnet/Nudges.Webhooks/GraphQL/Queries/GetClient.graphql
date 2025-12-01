@@ -1,6 +1,6 @@
 query GetClient($id: ID!) {
     client(id: $id) {
-        clientId
-        phoneNumber
+        id
+        phoneNumberHash
     }
 }

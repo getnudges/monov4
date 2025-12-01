@@ -5,10 +5,10 @@ using Confluent.Kafka;
 namespace Nudges.Kafka.Events;
 
 public record NotificationKey(string EventType, string EventKey) {
-    public static NotificationKey EndSubscription(string planSubscriptionNodeId) =>
-        new(nameof(EndSubscription), planSubscriptionNodeId);
-    public static NotificationKey StartSubscription(string planSubscriptionNodeId) =>
-        new(nameof(StartSubscription), planSubscriptionNodeId);
+    public static NotificationKey EndSubscription(Guid planSubscriptionId) =>
+        new(nameof(EndSubscription), planSubscriptionId.ToString("N"));
+    public static NotificationKey StartSubscription(Guid planSubscriptionId) =>
+        new(nameof(StartSubscription), planSubscriptionId.ToString("N"));
     public static NotificationKey ClientCreated(string clientNodeId) =>
         new(nameof(ClientCreated), clientNodeId);
     public static NotificationKey ClientUpdated(string nodeId) =>

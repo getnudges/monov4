@@ -15,5 +15,5 @@ public partial record ClientKey(string EventType, string EventKey) {
 [JsonDerivedType(typeof(ClientUpdatedEvent), "client.updated")]
 public abstract partial record ClientEvent;
 
-public partial record ClientCreatedEvent(string ClientNodeId) : ClientEvent;
+public partial record ClientCreatedEvent(Guid Id, string PhoneNumber, string Name, string Locale) : ClientEvent;
 public partial record ClientUpdatedEvent(string ClientNodeId) : ClientEvent;

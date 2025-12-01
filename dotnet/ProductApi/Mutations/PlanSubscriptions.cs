@@ -11,16 +11,12 @@ public partial class Mutation {
 
     public async Task<PlanSubscription> SubscribeToPlan(SubscribeToPlanInput input,
                                                         ProductDbContext context,
-                                                        INodeIdSerializer idSerializer,
                                                         ITopicEventSender subscriptionSender,
                                                         KafkaMessageProducer<NotificationKey, NotificationEvent> notificationProducer,
                                                         CancellationToken cancellationToken) {
 
-        var priceTier = await context.PriceTiers.FindAsync([input.PriceTierId], cancellationToken);
-
-        if (priceTier is null) {
-            throw new PriceTierNotFoundException(input.PriceTierId);
-        }
+        var priceTier = await context.PriceTiers.FindAsync([input.PriceTierId], cancellationToken)
+            ?? throw new PriceTierNotFoundException(input.PriceTierId);
 
         var newSub = context.PlanSubscriptions.Add(new PlanSubscription {
             PriceTierId = input.PriceTierId,
@@ -33,9 +29,11 @@ public partial class Mutation {
         await context.SaveChangesAsync(cancellationToken);
 
         try {
-            var id = idSerializer.Format(nameof(PlanSubscription), newSub.Entity.Id)
-                ?? throw new InvalidOperationException("Failed to serialize node ID");
-            await notificationProducer.Produce(NotificationKey.StartSubscription(id), NotificationEvent.Empty, cancellationToken);
+            await notificationProducer.Produce(
+                NotificationKey.StartSubscription(newSub.Entity.Id),
+                // TODO: real data here
+                new StartSubscriptionNotificationEvent("", "", []),
+                cancellationToken);
             //await subscriptionSender.SendAsync(SubscriptionType.SubscriptionStarted, newSub.Entity, cancellationToken);
         } catch (ProduceException<NotificationKey, NotificationEvent> e) {
             logger.LogException(e);
@@ -49,22 +47,23 @@ public partial class Mutation {
 
     public async Task<PlanSubscription> EndSubscription(EndSubscriptionInput input,
                                                         ProductDbContext context,
-                                                        INodeIdSerializer idSerializer,
                                                         KafkaMessageProducer<NotificationKey, NotificationEvent> notificationProducer,
                                                         CancellationToken cancellationToken) {
-        var planSubscription = await context.PlanSubscriptions.FindAsync([input.Id], cancellationToken);
-        if (planSubscription is null) {
-            throw new PlanSubscriptionNotFoundException(input.Id);
-        }
+
+        var planSubscription = await context.PlanSubscriptions.FindAsync([input.Id], cancellationToken)
+            ?? throw new PlanSubscriptionNotFoundException(input.Id);
         // TODO: additional validation?  Maybe check if it's already ended?
+
         planSubscription.EndDate = DateTime.UtcNow;
         planSubscription.Status = "ENDED";
         await context.SaveChangesAsync(cancellationToken);
 
         try {
-            var id = idSerializer.Format(nameof(PlanSubscription), planSubscription.Id)
-                ?? throw new InvalidOperationException("Failed to serialize node ID");
-            await notificationProducer.Produce(NotificationKey.EndSubscription(id), NotificationEvent.Empty, cancellationToken);
+            await notificationProducer.Produce(
+                NotificationKey.EndSubscription(planSubscription.Id),
+                // TODO: real data here
+                new EndSubscriptionNotificationEvent("", "", []),
+                cancellationToken);
         } catch (ProduceException<string, string> e) {
             logger.LogException(e);
             throw new KafkaProduceException(e.Error, e.Message);
@@ -88,13 +87,13 @@ public record SubscribeToPlanInput(int PriceTierId, Guid ClientId, Guid PaymentC
 public record EndSubscriptionInput(Guid Id);
 public class EndSubscriptionInputType : InputObjectType<EndSubscriptionInput> {
     protected override void Configure(IInputObjectTypeDescriptor<EndSubscriptionInput> descriptor) =>
-        descriptor.Field(f => f.Id).Type<NonNullType<IdType>>().ID(nameof(PlanSubscription));
+        descriptor.Field(f => f.Id);
 }
 
 public class SubscribeToPlanInputType : InputObjectType<SubscribeToPlanInput> {
     protected override void Configure(IInputObjectTypeDescriptor<SubscribeToPlanInput> descriptor) {
-        descriptor.Field(f => f.PriceTierId).Type<NonNullType<IdType>>().ID(nameof(PriceTier));
-        descriptor.Field(f => f.ClientId).Type<NonNullType<IdType>>().ID("Client");
+        descriptor.Field(f => f.PriceTierId);
+        descriptor.Field(f => f.ClientId);
     }
 }
 

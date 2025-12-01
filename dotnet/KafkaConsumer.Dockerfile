@@ -11,6 +11,7 @@ COPY Nudges.Kafka.Events/Nudges.Kafka.Events.csproj ./Nudges.Kafka.Events/
 COPY Nudges.Redis/Nudges.Redis.csproj ./Nudges.Redis/
 COPY Nudges.Localization/Nudges.Localization.csproj ./Nudges.Localization/
 COPY Monads/Monads.csproj ./Monads/
+COPY Nudges.Core/Nudges.Core.csproj ./Nudges.Core/
 COPY Nudges.Stripe/Nudges.Stripe.csproj ./Nudges.Stripe/
 COPY Nudges.Configuration/Nudges.Configuration.csproj ./Nudges.Configuration/
 COPY Nudges.Configuration.Analyzers/Nudges.Configuration.Analyzers.csproj ./Nudges.Configuration.Analyzers/
@@ -34,6 +35,7 @@ COPY Nudges.Kafka.Events/ ./Nudges.Kafka.Events/
 COPY Nudges.Redis/ ./Nudges.Redis/
 COPY Nudges.Localization/ ./Nudges.Localization/
 COPY Monads/ ./Monads/
+COPY Nudges.Core/ ./Nudges.Core/
 COPY Nudges.Stripe/ ./Nudges.Stripe/
 COPY Nudges.Configuration/ ./Nudges.Configuration/
 COPY Nudges.Configuration.Analyzers/ ./Nudges.Configuration.Analyzers/

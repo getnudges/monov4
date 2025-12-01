@@ -5,7 +5,6 @@ using System.Security.Cryptography;
 using System.Text;
 using HotChocolate.Authorization;
 using HotChocolate.Subscriptions;
-using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.JsonWebTokens;
@@ -15,7 +14,6 @@ using Nudges.Data.Users.Models;
 using Nudges.Kafka;
 using Nudges.Kafka.Events;
 using Nudges.Security;
-using StackExchange.Redis;
 
 namespace UserApi;
 
@@ -85,6 +83,11 @@ public class Mutation(ILogger<Mutation> logger) {
         });
         await context.SaveChangesAsync(cancellationToken);
 
+        await clientEventProducer.Produce(
+            ClientKey.ClientCreated(newClient.Entity.Slug),
+            new ClientCreatedEvent(newClient.Entity.Id, newUser.Entity.PhoneNumber, newClient.Entity.Name, newUser.Entity.Locale),
+            cancellationToken);
+
         return newClient.Entity;
     }
 
@@ -107,7 +110,7 @@ public class Mutation(ILogger<Mutation> logger) {
         try {
             await context.SaveChangesAsync(cancellationToken);
             var clientNodeId = idSerializer.Format(nameof(Client), client.Id);
-            await clientEventProducer.Produce(ClientKey.ClientUpdated(clientNodeId), new ClientEvent(), cancellationToken);
+            await clientEventProducer.Produce(ClientKey.ClientUpdated(clientNodeId), new ClientUpdatedEvent(clientNodeId), cancellationToken);
             await subscriptionSender.SendAsync(nameof(Subscription.OnClientUpdated), client, cancellationToken);
             return client;
         } catch (Exception ex) {
@@ -139,6 +142,7 @@ public class Mutation(ILogger<Mutation> logger) {
     }
 
     [Authorize(PolicyNames.Subscriber)]
+    [Error<ClientCreateException>]
     [Error<AlreadySubscribedException>]
     public async Task<Client> SubscribeToClient([ID<Client>] Guid clientId,
                                                 UserDbContext dbContext,
@@ -148,7 +152,7 @@ public class Mutation(ILogger<Mutation> logger) {
                                                 CancellationToken cancellationToken) {
 
         var phoneNumber = httpContext.User.FindFirstValue(JwtRegisteredClaimNames.PhoneNumber)
-            ?? throw new Exception("Phone number claim is missing");
+            ?? throw new ClientCreateException("Phone number claim is missing");
 
         var phoneNumberHash = hashService.ComputeHash(ValidationHelpers.NormalizePhoneNumber(phoneNumber));
         var userLocale = httpContext.User.FindFirstValue(JwtRegisteredClaimNames.Locale);
@@ -172,21 +176,6 @@ public class Mutation(ILogger<Mutation> logger) {
         client.Subscribers.Add(subscriber);
 
         await dbContext.SaveChangesAsync(cancellationToken);
-
-        //try {
-        //    await notificationProducer.Produce(
-        //        NotificationKey.SendSms(phoneNumber),
-        //        NotificationEvent.SendSms("NewSubscriberWelcome", locale, new Dictionary<string, string> {
-        //            { "name", user.Name }
-        //        }), cancellationToken);
-        //    await notificationProducer.Produce(
-        //        NotificationKey.SendSms(user.PhoneNumber),
-        //        NotificationEvent.SendSms("ClientNewSubscriber", user.Locale, new Dictionary<string, string> {
-        //            { "count", user.Subscribers.Count.ToString(CultureInfo.GetCultureInfo(user.Locale)) }
-        //        }), cancellationToken);
-        //} catch (Exception ex) {
-        //    logger.LogException(ex);
-        //}
 
         return client;
     }
@@ -227,7 +216,7 @@ public record UpdateClientInput(Guid Id, string? Name, string? CustomerId, strin
 
 public class UpdateClientInputType : InputObjectType<UpdateClientInput> {
     protected override void Configure(IInputObjectTypeDescriptor<UpdateClientInput> descriptor) =>
-        descriptor.Field(f => f.Id).ID(nameof(Client));
+        descriptor.Field(f => f.Id);
 }
 public record SendMessageInput(Audience Audience, string Message);
 public record AddSubscriberInput(string PhoneNumber, string Locale);

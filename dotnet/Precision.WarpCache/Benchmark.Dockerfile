@@ -14,7 +14,7 @@ COPY . ./
 RUN dotnet publish -c Release -o /out --self-contained -p:PublishAot=true
 
 # Runtime image for execution
-FROM mcr.microsoft.com/dotnet/runtime-deps:9.0 AS runtime
+FROM mcr.microsoft.com/dotnet/runtime-deps:10.0 AS runtime
 WORKDIR /app
 COPY --from=build /out .
 

@@ -1,8 +1,10 @@
 using System.Net.Http.Headers;
-using Precision.WarpCache;
+using Microsoft.AspNetCore.Http;
 using Nudges.Auth;
+using Precision.WarpCache;
 
-namespace Nudges.Webhooks;
+namespace KafkaConsumer;
+
 
 internal sealed class AuthenticationDelegatingHandler(IServerTokenClient authService,
                                                       ChannelCacheMediator<string, string> channelCache,
@@ -48,3 +50,4 @@ internal sealed class AuthenticationDelegatingHandler(IServerTokenClient authSer
         return tokenId;
     }
 }
+

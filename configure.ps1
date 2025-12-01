@@ -232,8 +232,8 @@ if ($Docker -and $masterValues.Count -eq 0) {
         API_KEY                                                                      = New-RandomString -length 32
         AUTH_API_KEY                                                                 = New-RandomString -length 32
         MONITOR_API_KEY                                                              = New-RandomString -length 32
-        AUTH_API_URL                                                                 = 'http://auth-api:5555'
-        GRAPHQL_API_URL                                                              = 'http://host.docker.internal:5900/graphql'
+        AUTH_API_URL                                                                 = 'https://auth-api:5555'
+        GRAPHQL_API_URL                                                              = 'https://host.docker.internal:5900/graphql'
         STRIPE_API_URL                                                               = 'http://payment-processor-proxy:4243'
         WarpCache__Url                                                               = 'http://warp-cache:7777'
         LOCALIZATION_API_URL                                                         = 'http://localizer-api:8888'
@@ -242,11 +242,12 @@ if ($Docker -and $masterValues.Count -eq 0) {
         OIDC_ADMIN_USERNAME                                                          = 'admin'
         OIDC_ADMIN_PASSWORD                                                          = $adminPwd
         Oidc__Realm                                                                  = 'nudges'
-        Oidc__ServerUrl                                                              = 'https://keycloak:8443'
+        Oidc__ServerUrl                                                              = 'https://keycloak.local:8443'
         OIDC_SERVER_AUTH_URL                                                         = 'https://keycloak.local:8443'
         Oidc__AdminCredentials__AdminClientId                                        = 'admin-cli'
         Oidc__AdminCredentials__Username                                             = 'admin'
         Oidc__AdminCredentials__Password                                             = $adminPwd
+        Otlp__Endpoint                                                               = 'http://otel-collector:4317'
         IGNORE_SSL_CERT_VALIDATION                                                   = 'true'
         Authentication__Schemes__Bearer__RequireHttpsMetadata                        = 'true'
         Authentication__Schemes__Bearer__Authority                                   = 'https://keycloak.local:8443/realms/nudges'

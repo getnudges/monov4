@@ -24,13 +24,6 @@
     <GraphQL Remove="GraphQL\Mutations\PatchPlan.graphql" />
     <GraphQL Remove="GraphQL\Mutations\PatchPriceTier.graphql" />
     <GraphQL Remove="GraphQL\Mutations\UpdateClient.graphql" />
-    <GraphQL Remove="GraphQL\Queries\GetClient.graphql" />
-    <GraphQL Remove="GraphQL\Queries\GetPlan.graphql" />
-    <GraphQL Remove="GraphQL\Queries\GetPlanSubscription.graphql" />
-    <GraphQL Remove="GraphQL\Queries\GetPlanSubscriptionById.graphql" />
-    <GraphQL Remove="GraphQL\Queries\GetPriceTier.graphql" />
-    <GraphQL Remove="GraphQL\Queries\GetPriceTierByForeignId.graphql" />
-    <GraphQL Remove="GraphQL\Queries\SubscribeToPlan.graphql" />
   </ItemGroup>
 
   <ItemGroup>
@@ -50,6 +43,7 @@
     <ProjectReference Include="..\Monads\Monads.csproj" />
     <ProjectReference Include="..\Nudges.Configuration\Nudges.Configuration.csproj" />
     <ProjectReference Include="..\Nudges.Contracts\Nudges.Contracts.csproj" />
+    <ProjectReference Include="..\Nudges.Core\Nudges.Core.csproj" />
     <ProjectReference Include="..\Nudges.Kafka.Events\Nudges.Kafka.Events.csproj" />
     <ProjectReference Include="..\Nudges.Telemetry\Nudges.Telemetry.csproj" />
     <ProjectReference Include="..\Precision.WarpCache\Precision.WarpCache.Grpc.Client\Precision.WarpCache.Grpc.Client.csproj" />

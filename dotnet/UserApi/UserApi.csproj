@@ -10,6 +10,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Nudges.Configuration\Nudges.Configuration.csproj" />
+    <ProjectReference Include="..\Nudges.Core\Nudges.Core.csproj" />
     <ProjectReference Include="..\Nudges.Data.Security\Nudges.Data.Security.csproj" />
     <ProjectReference Include="..\Nudges.Kafka.Events\Nudges.Kafka.Events.csproj" />
     <ProjectReference Include="..\Nudges.Security\Nudges.Security.csproj" />

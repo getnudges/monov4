@@ -11,8 +11,6 @@ internal static class AppConfiguration {
     [ConfigurationKey]
     public const string RedisUrl = "REDIS_URL";
     [ConfigurationKey]
-    public const string CacheServerAddress = "WarpCache__Url";
-    [ConfigurationKey]
     public const string TwilioAccountSid = "TWILIO_ACCOUNT_SID";
     [ConfigurationKey]
     public const string TwilioAuthToken = "TWILIO_AUTH_TOKEN";
@@ -31,8 +29,6 @@ internal static class AppConfiguration {
     [ConfigurationKey]
     public const string ClientLinkBaseUri = "ClientLinkBaseUri";
     [ConfigurationKey]
-    public const string KafkaBrokerList = "Kafka__BrokerList";
-    [ConfigurationKey]
     public const string GraphQLApiUrl = "GRAPHQL_API_URL";
     [ConfigurationKey]
     public const string AuthApiUrl = "AUTH_API_URL";
@@ -40,12 +36,6 @@ internal static class AppConfiguration {
     public const string AuthApiKey = "AUTH_API_KEY";
     [ConfigurationKey]
     public const string LocalizationApiUrl = "LOCALIZATION_API_URL";
-    [ConfigurationKey]
-    public const string OidcServerUrl = "Oidc:ServerUrl";
-    [ConfigurationKey]
-    public const string OidcRealm = "Oidc:Realm";
-    [ConfigurationKey]
-    public const string OidcClientSercret = "Oidc:ClientSecret";
     [ConfigurationKey]
     public const string AuthApikey = "AUTH_API_KEY";
 }

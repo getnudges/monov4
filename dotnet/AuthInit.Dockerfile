@@ -1,3 +1,10 @@
+FROM mcr.microsoft.com/dotnet/runtime:10.0 AS base
+
+# Install Kerberos library
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+    libgssapi-krb5-2
+
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 
 WORKDIR /src
@@ -33,7 +40,7 @@ FROM build AS publish
 WORKDIR /src/Nudges.AuthInit
 RUN dotnet publish Nudges.AuthInit.csproj -c Release -o /src/publish /p:UseAppHost=true
 
-FROM mcr.microsoft.com/dotnet/runtime:10.0 AS final
+FROM base AS final
 WORKDIR /app
 COPY --from=publish /src/publish .
 

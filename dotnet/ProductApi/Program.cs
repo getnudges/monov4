@@ -14,18 +14,20 @@ using Nudges.Kafka.Events;
 using Nudges.Telemetry;
 using OpenTelemetry.Trace;
 using ProductApi;
-using ProductApi.Telemetry;
 using StackExchange.Redis;
 
 var builder = WebApplication.CreateBuilder(args);
+
+var settings = new Settings();
+builder.Configuration.Bind(settings);
 
 builder.Logging.AddSimpleConsole(static o => o.SingleLine = true);
 
 builder.Configuration.AddEnvironmentVariables().AddUserSecrets<Program>(optional: true);
 
-if (builder.Configuration.GetOtlpEndpointUrl() is string url) {
+if (settings.Otlp.Endpoint is string url && !string.IsNullOrEmpty(url)) {
 
-    builder.Services.AddOpenTelemetryConfiguration(
+    builder.Services.AddOpenTelemetryConfiguration<Program>(
         url,
         builder.Environment.ApplicationName, [
             "Microsoft.AspNetCore.Hosting",
@@ -69,23 +71,23 @@ builder.Services.AddPooledDbContextFactory<ProductDbContext>((s, o) =>
 builder.Services
     .AddSingleton<KafkaMessageProducer<NotificationKey, NotificationEvent>>(sp =>
         new NotificationEventProducer(Topics.Notifications, new ProducerConfig {
-            BootstrapServers = sp.GetRequiredService<IConfiguration>().GetKafkaBrokerList()
+            BootstrapServers = settings.Kafka.BrokerList
         }))
     .AddSingleton<KafkaMessageProducer<PlanEventKey, PlanChangeEvent>>(sp =>
         new PlanChangeEventProducer(Topics.Plans, new ProducerConfig {
-           BootstrapServers = sp.GetRequiredService<IConfiguration>().GetKafkaBrokerList()
+            BootstrapServers = settings.Kafka.BrokerList
         }))
     .AddSingleton<KafkaMessageProducer<PriceTierEventKey, PriceTierChangeEvent>>(sp =>
         new PriceTierChangeEventProducer(Topics.PriceTiers, new ProducerConfig {
-            BootstrapServers = sp.GetRequiredService<IConfiguration>().GetKafkaBrokerList()
+            BootstrapServers = settings.Kafka.BrokerList
         }))
     .AddSingleton<KafkaMessageProducer<PlanSubscriptionKey, PlanSubscriptionEvent>>(sp =>
         new PlanSubscriptionEventProducer(Topics.PlanSubscriptions, new ProducerConfig {
-            BootstrapServers = sp.GetRequiredService<IConfiguration>().GetKafkaBrokerList()
+            BootstrapServers = settings.Kafka.BrokerList
         }))
     .AddSingleton<KafkaMessageProducer<DiscountCodeKey, DiscountCodeEvent>>(sp =>
         new DiscountCodeEventProducer(Topics.DiscountCodes, new ProducerConfig {
-            BootstrapServers = sp.GetRequiredService<IConfiguration>().GetKafkaBrokerList()
+            BootstrapServers = settings.Kafka.BrokerList
         }));
 
 builder.Services.AddAuthorizationBuilder()
@@ -184,8 +186,7 @@ var app = builder.Build();
 
 app.UseHealthChecks("/health");
 
-if (builder.Configuration.GetValue<string>("Otlp__Endpoint") is not null)
-{
+if (settings.Otlp.Endpoint is not null) {
     app.MapPrometheusScrapingEndpoint();
 }
 

@@ -11,15 +11,14 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Logging.AddSimpleConsole(o => o.SingleLine = true);
 
-// -----------------------------------------------------------------------------
-// OpenTelemetry: Traces + Metrics + Logs
-// -----------------------------------------------------------------------------
 builder.Configuration
     .AddEnvironmentVariables()
     .AddUserSecrets(typeof(Program).Assembly);
 
-if (builder.Configuration.GetValue<string>("Otlp__Endpoint") is string url)
-{
+var settings = new Settings();
+builder.Configuration.Bind(settings);
+
+if (settings.Otlp.Endpoint is string url) {
     builder.Services.AddOpenTelemetry()
         .ConfigureResource(resource =>
             resource
@@ -133,7 +132,7 @@ builder.Services.AddHttpClient("Fusion")
 // WarpCache client
 // -----------------------------------------------------------------------------
 builder.Services.AddWarpCacheClient(
-    builder.Configuration.GetValue<string>("WarpCache__Url")!,
+    settings.WarpCache,
     StringMessageSerializerContext.Default.String);
 
 // -----------------------------------------------------------------------------
@@ -224,8 +223,7 @@ app.Use(async (context, next) => {
     await next();
 });
 
-if (builder.Configuration.GetValue<string>("Otlp__Endpoint") is not null)
-{
+if (builder.Configuration.GetValue<string>("Otlp__Endpoint") is not null) {
     app.MapPrometheusScrapingEndpoint();
 }
 

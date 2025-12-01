@@ -30,13 +30,17 @@ public class ClientType : ObjectType<Client> {
         descriptor.Ignore(f => f.IdNavigation);
         descriptor.Field("subscriberCount")
             .ResolveWith<ClientResolvers>(r => r.GetSubscriberCount(default!, default!));
-        descriptor.Field(f => f.Subscribers).Ignore();
-        descriptor.Field("subscribers")
-            .ResolveWith<ClientResolvers>(r => r.GetSubscribers(default!, default!))
+        descriptor.Field(f => f.Subscribers)
             .UsePaging()
             .UseProjection()
             .UseFiltering()
             .UseSorting();
+        //descriptor.Field("subscribers")
+        //    .ResolveWith<ClientResolvers>(r => r.GetSubscribers(default!, default!))
+        //    .UsePaging()
+        //    .UseProjection()
+        //    .UseFiltering()
+        //    .UseSorting();
         //descriptor.Field("subscribeLink")
         //    .Type<NonNullType<StringType>>()
         //    .Resolve(context => {
@@ -54,6 +58,26 @@ public class ClientType : ObjectType<Client> {
                 string.IsNullOrEmpty(p.Parent<Client>().SubscriptionId)
                     ? null
                     : new PlanSubscription(Guid.Parse(p.Parent<Client>().SubscriptionId!)));
+        descriptor.Field("phoneNumberHash").Resolve(async p => {
+            var client = p.Parent<Client>();
+            if (client.IdNavigation is null) {
+                var factory = p.Service<IDbContextFactory<UserDbContext>>();
+                await using var dbContext = await factory.CreateDbContextAsync(p.RequestAborted);
+                await dbContext.Entry(client).Reference(c => c.IdNavigation).LoadAsync();
+            }
+
+            return client.IdNavigation!.PhoneNumberHash;
+        }).Type<NonNullType<StringType>>();
+        descriptor.Field("locale").Resolve(async p => {
+            var client = p.Parent<Client>();
+            if (client.IdNavigation is null) {
+                var factory = p.Service<IDbContextFactory<UserDbContext>>();
+                await using var dbContext = await factory.CreateDbContextAsync(p.RequestAborted);
+                await dbContext.Entry(client).Reference(c => c.IdNavigation).LoadAsync();
+            }
+
+            return client.IdNavigation!.Locale;
+        }).Type<NonNullType<StringType>>();
     }
 }
 

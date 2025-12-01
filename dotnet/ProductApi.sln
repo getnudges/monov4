@@ -29,6 +29,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Nudges.Kafka.Events", "Nudg
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Nudges.Contracts", "Nudges.Contracts\Nudges.Contracts.csproj", "{89F6D328-18BF-4165-B1DC-41F9528877F0}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Nudges.Core", "Nudges.Core\Nudges.Core.csproj", "{DE9C8CDB-51A6-4C1C-EA16-583779F292EA}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Nudges.Configuration", "Nudges.Configuration\Nudges.Configuration.csproj", "{7C641EF9-4E3B-D2C4-01D4-309E455DB67B}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -79,6 +83,14 @@ Global
 		{89F6D328-18BF-4165-B1DC-41F9528877F0}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{89F6D328-18BF-4165-B1DC-41F9528877F0}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{89F6D328-18BF-4165-B1DC-41F9528877F0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DE9C8CDB-51A6-4C1C-EA16-583779F292EA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DE9C8CDB-51A6-4C1C-EA16-583779F292EA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DE9C8CDB-51A6-4C1C-EA16-583779F292EA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DE9C8CDB-51A6-4C1C-EA16-583779F292EA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7C641EF9-4E3B-D2C4-01D4-309E455DB67B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7C641EF9-4E3B-D2C4-01D4-309E455DB67B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7C641EF9-4E3B-D2C4-01D4-309E455DB67B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7C641EF9-4E3B-D2C4-01D4-309E455DB67B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

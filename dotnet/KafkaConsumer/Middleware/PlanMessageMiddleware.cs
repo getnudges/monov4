@@ -75,7 +75,7 @@ internal class PlanMessageMiddleware(ILogger<PlanMessageMiddleware> logger,
     //    }, err => err.Exception?.GetBaseException() ?? new GraphQLException(err.Message));
     //}
 
-    private async Task<Result<bool, Exception>> UpdateForeignProduct(IGetPlan_Plan plan, CancellationToken cancellationToken) {
+    private async Task<Result<bool, Exception>> UpdateForeignProduct(Nudges.Contracts.Products.Plan plan, CancellationToken cancellationToken) {
         var foreignUpdateResult = await foreignProductService.UpdateForeignProduct(plan, cancellationToken);
         return foreignUpdateResult.Match(success => {
             logger.LogPlanUpdated(plan.Id);

@@ -18,7 +18,7 @@ internal sealed class CheckoutSessionCompletedCommand(INudgesClient nudgesClient
                 MerchantServiceId = 1, // TODO: this is a placeholder
             }, cancellationToken).Map(async confirmation =>
                 await nudgesClient.CreatePlanSubscription(new CreatePlanSubscriptionInput {
-                    ClientId = client.ClientId,
+                    ClientId = client.Id,
                     PaymentConfirmationId = confirmation.PaymentConfirmationId,
                     // TODO: First() is not safe here, obviously
                     PriceTierForeignServiceId = invoice.Lines.First().Id,

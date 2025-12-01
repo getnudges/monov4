@@ -37,7 +37,7 @@ internal static partial class PlanMessageMiddlewareLogs {
     public static partial void LogPlanNotFoundError(this ILogger<PlanMessageMiddleware> logger, string message);
 
     [LoggerMessage(Level = LogLevel.Information, Message = "Plan {planId} updated")]
-    public static partial void LogPlanUpdated(this ILogger<PlanMessageMiddleware> logger, string planId);
+    public static partial void LogPlanUpdated(this ILogger<PlanMessageMiddleware> logger, int planId);
 
     [LoggerMessage(Level = LogLevel.Information, Message = "Plan {planId} deleted")]
     public static partial void LogPlanDeleted(this ILogger<PlanMessageMiddleware> logger, string planId);
