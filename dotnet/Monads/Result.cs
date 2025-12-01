@@ -147,30 +147,6 @@ public class Result<T, TError> {
         return Result<TResult, TError>.Failure(Error!);
     }
 
-    public async Task<Result<T, TError>> Catch(Func<T, Task<TError>> failureTransform) {
-        if (IsSuccess) {
-            return Result.Success<T, TError>(Value!);
-        }
-
-        return Result.Failure<T, TError>(await failureTransform(Value!).ConfigureAwait(false));
-    }
-
-    public Result<T, TException> Catch<TException>(Func<TError, TException> failureTransform) {
-        if (IsSuccess) {
-            return Result.Success<T, TException>(Value!);
-        }
-
-        return Result.Failure<T, TException>(failureTransform(Error!));
-    }
-
-    public async Task<Result<T, TException>> Catch<TException>(Func<T, Task<TException>> failureTransform) {
-        if (IsSuccess) {
-            return Result.Success<T, TException>(Value!);
-        }
-
-        return Result.Failure<T, TException>(await failureTransform(Value!).ConfigureAwait(false));
-    }
-
     /// <summary>
     /// Executes one of two functions based on the result being a success or a failure.
     /// </summary>

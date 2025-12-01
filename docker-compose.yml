@@ -11,6 +11,10 @@ services:
       - Nudges
     ports:
       - "1080:1080"
+    deploy:
+      resources:
+        limits:
+          memory: 256M
 
   keycloak:
     hostname: keycloak
@@ -37,6 +41,10 @@ services:
     ports:
       - "9000:9000"
       - "8443:8443"
+    deploy:
+      resources:
+        limits:
+          memory: 1G
     healthcheck:
       test:
         ["CMD-SHELL", "timeout 1 bash -c '</dev/tcp/localhost/9000' || exit 1"]
@@ -60,6 +68,10 @@ services:
     ports:
       - "4317:4317"
       - "4318:4318"
+    deploy:
+      resources:
+        limits:
+          memory: 512M
     depends_on:
       - prometheus
       - tempo
@@ -90,6 +102,10 @@ services:
       - "3200"
       - "4317"
       - "4318"
+    deploy:
+      resources:
+        limits:
+          memory: 512M
 
   loki:
     image: grafana/loki:latest
@@ -102,6 +118,10 @@ services:
     command: -config.file=/etc/loki/config.yaml
     volumes:
       - ./telemetry/loki-config.yaml:/etc/loki/config.yaml
+    deploy:
+      resources:
+        limits:
+          memory: 512M
 
   promtail:
     image: grafana/promtail:latest
@@ -114,6 +134,10 @@ services:
     volumes:
       - ./telemetry/promtail-config.yaml:/etc/promtail/config.yaml
       - ./telemetry/promtail:/tmp/promtail
+    deploy:
+      resources:
+        limits:
+          memory: 256M
 
   prometheus:
     hostname: prometheus
@@ -128,6 +152,10 @@ services:
     ports:
       - "9090:9090"
       - "9464:9464"
+    deploy:
+      resources:
+        limits:
+          memory: 1G
 
   grafana:
     hostname: grafana
@@ -141,6 +169,10 @@ services:
       - "3000:3000"
     networks:
       - Nudges
+    deploy:
+      resources:
+        limits:
+          memory: 512M
     depends_on:
       - otel-collector
 
@@ -152,6 +184,10 @@ services:
       - Nudges
     ports:
       - 6379:6379
+    deploy:
+      resources:
+        limits:
+          memory: 512M
 
   postgres:
     hostname: postgres
@@ -164,6 +200,10 @@ services:
       - "5432:5432"
     env_file:
       - ./db/.env.docker
+    deploy:
+      resources:
+        limits:
+          memory: 1G
 
   stripe-cli:
     hostname: stripe-cli
@@ -174,6 +214,10 @@ services:
       context: ./stripe
       dockerfile: cli.Dockerfile
     command: listen --forward-to host.docker.internal:7071/api/StripeWebhookHandler?code=test
+    deploy:
+      resources:
+        limits:
+          memory: 128M
 
   warp-cache:
     hostname: warp-cache
@@ -187,6 +231,10 @@ services:
       - "7777:7777"
     env_file:
       - ./dotnet/Precision.WarpCache/Precision.WarpCache.Grpc/.env.docker
+    deploy:
+      resources:
+        limits:
+          memory: 512M
     # depends_on:
     #   - redis
 
@@ -200,6 +248,10 @@ services:
       dockerfile: api.Dockerfile
     ports:
       - "4243:4243"
+    deploy:
+      resources:
+        limits:
+          memory: 256M
 
   db-migrator:
     build:
@@ -209,6 +261,10 @@ services:
       - Nudges
     env_file:
       - ./dotnet/tools/Nudges.Data.Migrator/.env.docker
+    deploy:
+      resources:
+        limits:
+          memory: 256M
     # depends_on:
     #   - postgres
 
@@ -220,6 +276,10 @@ services:
       - Nudges
     env_file:
       - ./dotnet/tools/DbSeeder/.env.docker
+    deploy:
+      resources:
+        limits:
+          memory: 256M
     # depends_on:
     #   - postgres
 
@@ -233,6 +293,10 @@ services:
       - "keycloak.local:host-gateway"
     env_file:
       - ./dotnet/Nudges.AuthInit/.env.docker
+    deploy:
+      resources:
+        limits:
+          memory: 256M
     # depends_on:
     #   keycloak:
     #       condition: service_healthy
@@ -252,6 +316,10 @@ services:
       - HTTP_PORTS=5145
     env_file:
       - ./dotnet/GraphMonitor/.env.docker
+    deploy:
+      resources:
+        limits:
+          memory: 512M
     # depends_on:
     #   - warp-cache
 
@@ -267,6 +335,10 @@ services:
       - ./certs/aspnetapp.key:/etc/nginx/certs/aspnetapp.key:ro
     ports:
       - "6060:6060"
+    deploy:
+      resources:
+        limits:
+          memory: 256M
     # depends_on:
     #   - graphql-gateway
     #   - auth-api
@@ -284,6 +356,10 @@ services:
       - ./certs/aspnetapp.key:/etc/nginx/certs/aspnetapp.key:ro
     ports:
       - "5050:5050"
+    deploy:
+      resources:
+        limits:
+          memory: 256M
     # depends_on:
     #   - graphql-gateway
     #   - auth-api
@@ -302,6 +378,10 @@ services:
       - "5050:5050"
     environment:
       PORT: 5050
+    deploy:
+      resources:
+        limits:
+          memory: 256M
     # depends_on:
     #   - graphql-gateway
     #   - auth-api
@@ -330,6 +410,10 @@ services:
     env_file:
       - ./dotnet/UserApi/.env.docker
       - ./keycloak/.env.user-api
+    deploy:
+      resources:
+        limits:
+          memory: 512M
     # depends_on:
     #   - postgres
     #   - redis
@@ -347,6 +431,10 @@ services:
       - "8888:8888"
     env_file:
       - ./dotnet/LocalizationApi/.env.docker
+    deploy:
+      resources:
+        limits:
+          memory: 512M
     healthcheck:
       test:
         ["CMD-SHELL", "timeout 1 bash -c '</dev/tcp/localhost/8888' || exit 1"]
@@ -374,6 +462,10 @@ services:
       - ./dotnet/KafkaConsumer/.env.docker
       - ./keycloak/.env.kafka-consumer
     command: notifications
+    deploy:
+      resources:
+        limits:
+          memory: 256M
     # depends_on:
     #   - kafka
     #   - warp-cache
@@ -398,6 +490,10 @@ services:
       - ./dotnet/KafkaConsumer/.env.docker
       - ./keycloak/.env.kafka-consumer
     command: payments
+    deploy:
+      resources:
+        limits:
+          memory: 256M
     # depends_on:
     #   - kafka
     #   - warp-cache
@@ -423,6 +519,10 @@ services:
       - ./dotnet/KafkaConsumer/.env.docker
       - ./keycloak/.env.kafka-consumer
     command: plan-subscriptions
+    deploy:
+      resources:
+        limits:
+          memory: 256M
     # depends_on:
     #   - kafka
     #   - warp-cache
@@ -447,6 +547,10 @@ services:
       - ./dotnet/KafkaConsumer/.env.docker
       - ./keycloak/.env.kafka-consumer
     command: plans
+    deploy:
+      resources:
+        limits:
+          memory: 256M
     # depends_on:
     #   - kafka
     #   - warp-cache
@@ -472,6 +576,10 @@ services:
       - ./dotnet/KafkaConsumer/.env.docker
       - ./keycloak/.env.kafka-consumer
     command: price-tiers
+    deploy:
+      resources:
+        limits:
+          memory: 256M
     # depends_on:
     #   - kafka
     #   - warp-cache
@@ -497,6 +605,10 @@ services:
       - ./dotnet/KafkaConsumer/.env.docker
       - ./keycloak/.env.kafka-consumer
     command: clients
+    deploy:
+      resources:
+        limits:
+          memory: 256M
     # depends_on:
     #   - kafka
     #   - warp-cache
@@ -521,6 +633,10 @@ services:
       - ./dotnet/KafkaConsumer/.env.docker
       - ./keycloak/.env.kafka-consumer
     command: user-authentication
+    deploy:
+      resources:
+        limits:
+          memory: 256M
     # depends_on:
     #   - kafka
     #   - warp-cache
@@ -545,6 +661,10 @@ services:
       - ./dotnet/KafkaConsumer/.env.docker
       - ./keycloak/.env.kafka-consumer
     command: foreign-products
+    deploy:
+      resources:
+        limits:
+          memory: 256M
     # depends_on:
     #   - kafka
     #   - warp-cache
@@ -570,6 +690,10 @@ services:
     env_file:
       - ./dotnet/ProductApi/.env.docker
       - ./keycloak/.env.product-api
+    deploy:
+      resources:
+        limits:
+          memory: 512M
     # depends_on:
     #   - postgres
     #   - warp-cache
@@ -594,6 +718,10 @@ services:
     env_file:
       - ./dotnet/PaymentApi/.env.docker
       - ./keycloak/.env.payment-api
+    deploy:
+      resources:
+        limits:
+          memory: 512M
     # depends_on:
     #   - postgres
     #   - redis
@@ -622,6 +750,10 @@ services:
       - ./certs/aspnetapp.pfx:/https/aspnetapp.pfx:ro
     env_file:
       - ./dotnet/GraphQLGateway/GraphQLGateway/.env.docker
+    deploy:
+      resources:
+        limits:
+          memory: 512M
     # depends_on:
     #   - warp-cache
 
@@ -646,6 +778,10 @@ services:
       ASPNETCORE_Kestrel__Certificates__Default__Password: pass
     volumes:
       - ./certs/aspnetapp.pfx:/https/aspnetapp.pfx:ro
+    deploy:
+      resources:
+        limits:
+          memory: 512M
     # depends_on:
     # - kafka
     # - warp-cache
@@ -669,6 +805,10 @@ services:
       - ./ngrok/ngrok.yml:/etc/ngrok.yml
     ports:
       - 4040:4040
+    deploy:
+      resources:
+        limits:
+          memory: 128M
 
   webhooks:
     hostname: webhooks
@@ -690,6 +830,10 @@ services:
     env_file:
       - ./dotnet/Nudges.Webhooks/.env.docker
       - ./keycloak/.env.webhooks
+    deploy:
+      resources:
+        limits:
+          memory: 512M
     # depends_on:
     #   - warp-cache
     #   - graphql-gateway
@@ -725,6 +869,10 @@ services:
       KAFKA_REST_BOOTSTRAP_SERVERS: "kafka:29092"
       KAFKA_REST_LISTENERS: "http://0.0.0.0:8082"
       CLUSTER_ID: "4L6g3nShT-eMCtK--X86sw"
+    deploy:
+      resources:
+        limits:
+          memory: 1G
 
   kafka-init-topics:
     networks:
@@ -734,6 +882,10 @@ services:
       - ./message.json:/data/message.json
     depends_on:
       - kafka
+    deploy:
+      resources:
+        limits:
+          memory: 256M
     command: "bash -c 'echo Waiting for Kafka to be ready... && \
       until kafka-broker-api-versions --bootstrap-server kafka:29092 > /dev/null 2>&1; do echo \"Waiting for Kafka...\"; sleep 2; done && \
       echo \"Kafka is ready. Creating topics...\" && \
@@ -763,6 +915,10 @@ services:
       KAFKA_CLUSTERS_0_NAME: local
       KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:29092
       DYNAMIC_CONFIG_ENABLED: "true"
+    deploy:
+      resources:
+        limits:
+          memory: 512M
     depends_on:
       - kafka
 

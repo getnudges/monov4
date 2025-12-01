@@ -72,16 +72,16 @@ curl -sSf @headers http://localhost:5145/payment-api -d "http://host.docker.inte
 
 Invoke-CommandLine { docker compose up -d graphql-gateway }
 
+# setup the UIs
+docker compose up -d new-admin
+# docker compose up -d new-signup
+
 # setup the proxy to Stripe
 docker compose up -d payment-processor-proxy
 
 # setup the webhook handler
 docker compose up -d ngrok
 docker compose up -d webhooks
-
-# setup the UIs
-docker compose up -d new-admin
-# docker compose up -d new-signup
 
 # OTEL stuff
 docker compose up -d grafana

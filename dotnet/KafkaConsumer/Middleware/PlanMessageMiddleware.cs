@@ -1,4 +1,3 @@
-using System.Globalization;
 using Confluent.Kafka;
 using KafkaConsumer.GraphQL;
 using KafkaConsumer.Services;
@@ -15,48 +14,47 @@ internal class PlanMessageMiddleware(ILogger<PlanMessageMiddleware> logger,
                                      IForeignProductService foreignProductService) : IMessageMiddleware<PlanEventKey, PlanChangeEvent> {
 
     public async Task<MessageContext<PlanEventKey, PlanChangeEvent>> InvokeAsync(MessageContext<PlanEventKey, PlanChangeEvent> context, MessageHandler<PlanEventKey, PlanChangeEvent> next) {
-        var result = await HandleMessageAsync(context.ConsumeResult, context.CancellationToken);
-        result.Match(
-            _ => logger.LogMessageHandled(context.ConsumeResult.Message.Key),
-            err => logger.LogMessageUhandled(context.ConsumeResult.Message.Key, err));
-        if (result.Error is not null) {
-            throw result.Error;
-        }
-
+        await HandleMessageAsync(context.ConsumeResult, context.CancellationToken);
+        logger.LogMessageHandled(context.ConsumeResult.Message.Key);
         return context with { Failure = FailureType.None };
     }
 
-    public async Task<Result<bool, Exception>> HandleMessageAsync(ConsumeResult<PlanEventKey, PlanChangeEvent> cr, CancellationToken cancellationToken) {
+    public async Task HandleMessageAsync(ConsumeResult<PlanEventKey, PlanChangeEvent> cr, CancellationToken cancellationToken) {
         logger.LogMessageReceived(cr.Message.Key);
-        return await (cr.Message.Value switch {
-            PlanCreatedEvent created => HandlePlanCreated(created, cancellationToken),
-            PlanUpdatedEvent updated => HandlePlanUpdated(updated, cancellationToken),
-            _ => Result.ExceptionTask(new UnhandledMessageException($"No handler registered for event {cr.Message.Key}.")),
-        });
+
+        switch (cr.Message.Value) {
+            case PlanCreatedEvent planCreatedEvent:
+                await HandlePlanCreated(planCreatedEvent, cancellationToken);
+                break;
+            case PlanUpdatedEvent planUpdatedEvent:
+                await HandlePlanUpdated(planUpdatedEvent, cancellationToken);
+                break;
+            //case PlanDeletedEvent planDeletedEvent:
+            //    await HandlePlanDeleted(planDeletedEvent.PlanForeignServiceId, cancellationToken);
+            //    break;
+            default:
+                throw new GraphQLException($"Unknown Plan event type: {cr.Message.Value?.GetType().FullName ?? "null"}");
+        }
     }
 
-    private async Task<Result<bool, Exception>> HandlePlanCreated(PlanCreatedEvent planCreatedEvent, CancellationToken cancellationToken) {
+    private async Task HandlePlanCreated(PlanCreatedEvent planCreatedEvent, CancellationToken cancellationToken) {
         using var client = new DisposableWrapper<INudgesClient>(nudgesClientFactory);
 
-        return await CreateForeignProduct(planCreatedEvent.ToShopifyProductCreateOptions(), cancellationToken);
+        await CreateForeignProduct(planCreatedEvent.ToShopifyProductCreateOptions(), cancellationToken);
     }
 
-    private async Task<Result<bool, Exception>> CreateForeignProduct(ProductCreateOptions plan, CancellationToken cancellationToken) {
+    private async Task CreateForeignProduct(ProductCreateOptions plan, CancellationToken cancellationToken) {
         using var client = new DisposableWrapper<INudgesClient>(nudgesClientFactory);
 
         var foreignCreateResult = await foreignProductService.CreateForeignProduct(plan, cancellationToken);
 
-        return await foreignCreateResult.Map(async foreignId =>
-            await client.Instance.PatchPlan(new PatchPlanInput {
-                Id = Convert.ToInt32(plan.Metadata["planId"], CultureInfo.InvariantCulture),
-                ForeignServiceId = foreignId,
-            }, cancellationToken), err => {
-                logger.LogPlanUpdateError(err.Exception?.Message ?? err.Message);
-                return err.Exception?.GetBaseException() ?? new GraphQLException(err.Message);
-            });
+        if (foreignCreateResult.Error is { } err) {
+            throw err.Exception?.GetBaseException() ?? new GraphQLException(err.Message);
+        }
+        logger.LogPlanCreated(plan.Metadata["plan_id"]);
     }
 
-    private Task<Result<bool, Exception>> HandlePlanUpdated(PlanUpdatedEvent data, CancellationToken cancellationToken) {
+    private Task HandlePlanUpdated(PlanUpdatedEvent data, CancellationToken cancellationToken) {
         throw new HttpRequestException("Simulated Stripe outage");
         return Task.FromResult(Result.Success<bool, Exception>(true));
         //using var client = new DisposableWrapper<INudgesClient>(nudgesClientFactory);
