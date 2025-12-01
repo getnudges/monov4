@@ -74,9 +74,12 @@ After cloning the repo and completing the steps above:
 
 1. Open a terminal and navigate to the repo root.
 2. Run:
-  1. `dotnet dev-certs https -ep ./certs/aspnetapp.pfx` ([details](https://learn.microsoft.com/en-us/dotnet/core/tools/dotnet-dev-certs))
-  2. `./certs/generate-certs.ps1`
-  3. `./start-dev.ps1`
+    
+    `dotnet dev-certs https -ep ./certs/aspnetapp.pfx` ([details](https://learn.microsoft.com/en-us/dotnet/core/tools/dotnet-dev-certs))
+    
+    `./certs/generate-certs.ps1`
+    
+    `./start-dev.ps1`
 3. Wait for all services to build and start (can take up to 20 minutes on first run).
 4. Open `https://localhost:5050` in your browser.
 5. Log in with:
@@ -108,6 +111,35 @@ If the "Foreign Service ID" field updates, everything is working.
 6. Webhooks service emits ForeignProductSynchronizedEvent
 7. foreign-product-listener consumes event, updates DB with Stripe product ID
 8. GraphQL subscription updates React UI with Foreign Service ID
+
+
+```mermaid
+sequenceDiagram
+    participant Client
+    participant Gateway
+    participant ProductApi
+    participant Kafka
+    participant PlansListener
+    participant Stripe
+    participant Webhooks
+    
+    Client->>Gateway: CreatePlan mutation
+    Gateway->>ProductApi: createPlan
+    ProductApi->>ProductApi: Save to DB
+    ProductApi->>Kafka: PlanChangeEvent
+    ProductApi-->>Gateway: Plan created
+    Gateway-->>Client: 200 OK (31ms)
+    
+    Note over Client,Kafka: User has response, async flow continues
+    
+    Kafka->>PlansListener: Consume PlanChangeEvent
+    PlansListener->>Stripe: Create Product
+    Stripe-->>PlansListener: Product created
+    Stripe->>Webhooks: product.created webhook
+    Webhooks->>ProductApi: GetPlanByForeignId
+    ProductApi-->>Webhooks: Plan details
+    Webhooks->>Kafka: ForeignProductEvent
+```
 
 ---
 
