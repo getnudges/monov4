@@ -16,7 +16,7 @@ scrape_configs:
 
   - job_name: "graphql-gateway"
     static_configs:
-      - targets: ["host.docker.internal:5900"]
+      - targets: ["host.docker.internal:5443"]
 
   - job_name: "webhooks"
     static_configs:

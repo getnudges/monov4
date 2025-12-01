@@ -233,7 +233,7 @@ if ($Docker -and $masterValues.Count -eq 0) {
         AUTH_API_KEY                                                                 = New-RandomString -length 32
         MONITOR_API_KEY                                                              = New-RandomString -length 32
         AUTH_API_URL                                                                 = 'https://auth-api:5555'
-        GRAPHQL_API_URL                                                              = 'https://host.docker.internal:5900/graphql'
+        GRAPHQL_API_URL                                                              = 'https://host.docker.internal:5443/graphql'
         STRIPE_API_URL                                                               = 'http://payment-processor-proxy:4243'
         WarpCache__Url                                                               = 'http://warp-cache:7777'
         LOCALIZATION_API_URL                                                         = 'http://localizer-api:8888'

@@ -91,8 +91,7 @@ internal class StripeService(IStripeClient stripeClient, ILogger<StripeService> 
 
     public async Task<Result<string, ProductCreationError>> CreateForeignProduct(ProductCreateOptions plan, CancellationToken cancellationToken) {
         using var activity = ActivitySource.StartActivity(nameof(CreateForeignProduct), ActivityKind.Client, Activity.Current?.Context ?? default);
-        activity?.SetTag("planId", plan.Id);
-        activity?.Start();
+        activity?.SetTag("plan.id", plan.Id);
         try {
             var product = await _productService.CreateAsync(plan, new RequestOptions {
                 IdempotencyKey = Activity.Current?.Id,

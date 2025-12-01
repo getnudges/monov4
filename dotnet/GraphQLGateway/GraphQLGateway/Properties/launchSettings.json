@@ -3,7 +3,7 @@
     "http": {
       "commandName": "Project",
       "launchUrl": "graphql",
-      "applicationUrl": "https://::5900",
+      "applicationUrl": "https://::5443",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development",
         "Otlp__Endpoint": "http://localhost:4317"

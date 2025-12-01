@@ -1,7 +1,9 @@
 using System.Diagnostics;
 using HotChocolate.Authorization;
 using HotChocolate.Subscriptions;
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Nudges.Auth;
 using Nudges.Data.Products;
 using Nudges.Data.Products.Models;
@@ -78,21 +80,35 @@ public partial class Mutation {
     public async Task<Plan> CreatePlan(ProductDbContext context,
                                        KafkaMessageProducer<PlanEventKey, PlanChangeEvent> productProducer,
                                        CreatePlanInput input,
+                                       HttpContext httpContext,
                                        CancellationToken cancellationToken) {
+
+        using var activity = ActivitySource.StartActivity(nameof(CreatePlan), ActivityKind.Server, httpContext.Request.GetActivityContext());
+        activity?.AddBaggage("plan.name", input.Name);
+        activity?.SetTag("plan.priceTierCount", input.PriceTiers?.Count ?? 0);
+        activity?.AddBaggage("user.name", httpContext.User.Identity?.Name ?? "anonymous");
 
         var newPlan = context.Plans.Add(input.ToPlan());
 
         await using var transaction = await context.Database.BeginTransactionAsync(cancellationToken);
         try {
+            var sw = Stopwatch.StartNew();
             await context.SaveChangesAsync(cancellationToken);
+            sw.Stop();
+            logger.LogPlanCreated(newPlan.Entity.Id, sw.Elapsed.TotalMilliseconds);
+            activity?.SetTag("plan.id", newPlan.Entity.Id);
+            activity?.SetTag("db.save_duration_ms", sw.Elapsed.TotalMilliseconds);
 
-            logger.LogPlanCreated(newPlan.Entity.Id, newPlan.Entity.Name);
-
-            await productProducer.ProducePlanCreated(newPlan.Entity.ToPlanCreatedEvent(), cancellationToken);
+            var delivery = await productProducer.ProducePlanCreated(newPlan.Entity.ToPlanCreatedEvent(), cancellationToken);
+            logger.LogPlanCreatedEventProduced(newPlan.Entity.Id, delivery.TopicPartitionOffset.Topic, delivery.TopicPartitionOffset.Offset);
 
             await transaction.CommitAsync(cancellationToken);
+            activity?.SetStatus(ActivityStatusCode.Ok);
             return newPlan.Entity;
         } catch (Exception ex) {
+            activity?.AddException(ex);
+            activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
+            logger.LogPlanCreationFailed(input.Name, ex);
             await transaction.RollbackAsync(cancellationToken);
             throw new PlanCreationException(ex.GetBaseException().Message);
         }
@@ -556,4 +572,19 @@ public class PlanNotFoundException(int planId) : Exception($"Plan with ID {planI
 
 public class PriceTierUpdateException(int priceTierId, string message) : Exception($"Price Tier with ID {priceTierId} not found: {message}") {
     public int PriceTierId => priceTierId;
+}
+
+
+internal static partial class PlanMutationLogs {
+    [LoggerMessage(Level = LogLevel.Information,
+        Message = "Plan created in database {PlanId} in {DurationMs}ms")]
+    public static partial void LogPlanCreated(this ILogger logger, int planId, double durationMs);
+
+    [LoggerMessage(Level = LogLevel.Information,
+        Message = "Produced PlanCreated event for Plan {PlanId} to {Topic} @ {Offset}")]
+    public static partial void LogPlanCreatedEventProduced(this ILogger logger, int planId, string topic, long offset);
+
+    [LoggerMessage(Level = LogLevel.Error,
+        Message = "CreatePlan failed for name={PlanName}: {Exception}")]
+    public static partial void LogPlanCreationFailed(this ILogger logger, string planName, Exception exception);
 }

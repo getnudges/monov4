@@ -15,7 +15,6 @@ public class TracingMiddleware(FieldDelegate next) {
         activity?.SetTag("graphql.field", context.Selection.Field.Name);
         activity?.SetTag("graphql.path", context.Path.ToString());
         activity?.SetTag("graphql.selectionSet", context.Selection.SyntaxNode.ToString());
-        activity?.Start();
 
         try {
             await next(context);

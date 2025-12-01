@@ -33,7 +33,7 @@ Before running anything locally, there is at least one file needed:  `dotnet/.en
     TWILIO_MESSAGE_SERVICE_SID="MGcf6c611882037368d846157e252d7dc5"
 
     Kafka__BrokerList="kafka:29092"
-    GRAPHQL_API_URL="http://graphql-gateway:5900/graphql"
+    GRAPHQL_API_URL="http://graphql-gateway:5443/graphql"
 
     COGNITO_CLIENT_ID="7o8na736debi5u11kutaoao4qr"
     COGNITO_CLIENT_SECRET=""
