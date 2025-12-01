@@ -27,8 +27,7 @@ public sealed class MessageProcessor<TKey, TValue>(
     : IMessageProcessor<TKey, TValue>, IAsyncDisposable {
 
     // How many times we’re willing to retry before giving up
-    private const int MaxRetryAttempts = 3;
-
+    private const int MaxRetryAttempts = 5;
     private async IAsyncEnumerable<ConsumeResult<TKey, TValue>> ReadMessagesAsync(
         [EnumeratorCancellation] CancellationToken cancellationToken) {
 
@@ -41,38 +40,34 @@ public sealed class MessageProcessor<TKey, TValue>(
 
     public async Task ProcessMessages(CancellationToken cancellationToken) {
         await foreach (var cr in ReadMessagesAsync(cancellationToken)) {
-
             var context = new MessageContext<TKey, TValue>(cr, cancellationToken);
 
-            while (!cancellationToken.IsCancellationRequested) {
-                // 1) Track how many times we've tried this message
-                context = context with { AttemptCount = context.AttemptCount + 1 };
+            // Pipeline handles ALL retry/circuit-breaking/error handling
+            context = await ProcessMessageAsync(context);
 
-                // 2) Run the middleware pipeline once
-                context = await ProcessMessageAsync(context);
-
-                // 3) Success → commit and move on
-                if (context.Failure == FailureType.None) {
+            // Just handle the final outcome
+            switch (context.Failure) {
+                case FailureType.None:
                     consumer.Commit(cr);
                     break;
-                }
 
-                // 4) Permanent failure → DLQ + commit + stop retrying
-                if (context.Failure == FailureType.Permanent) {
+                case FailureType.Permanent:
+                case FailureType.Fatal:
                     RouteToDlq(cr, context);
                     consumer.Commit(cr);
                     break;
-                }
-
-                // 5) Too many attempts → treat as poison and DLQ
-                if (context.AttemptCount >= MaxRetryAttempts) {
-                    RouteToDlq(cr, context);
-                    consumer.Commit(cr);
+                case FailureType.Transient:
                     break;
-                }
+                case FailureType.DependencyDown:
+                    break;
 
-                // 6) Transient or DependencyDown → backoff and retry
-                await ApplyBackoff(context.AttemptCount, cancellationToken);
+                // Transient/DependencyDown that exhausted retries
+                default:
+                    if (context.AttemptCount >= MaxRetryAttempts) {
+                        RouteToDlq(cr, context);
+                        consumer.Commit(cr);
+                    }
+                    break;
             }
         }
     }

@@ -76,15 +76,14 @@ static IHostBuilder CreateBaseHost(string[] args, string name) =>
                     url,
                     $"{name}-{hostContext.HostingEnvironment.ApplicationName}", [
                         "Microsoft.AspNetCore.Hosting",
-                                "Microsoft.AspNetCore.Server.Kestrel",
-                                "System.Net.Http",
-                                $"{typeof(TracingMiddleware<,>).Namespace}.TracingMiddleware",
+                        "Microsoft.AspNetCore.Server.Kestrel",
+                        "System.Net.Http",
+                        $"{typeof(TracingMiddleware<,>).Namespace}.TracingMiddleware",
                     ], [
                         $"{typeof(TracingMiddleware<,>).Namespace}.TracingMiddleware",
-                                $"{typeof(StripeService).Namespace}.StripeService",
-                                $"{typeof(TracingMiddleware<,>).Namespace}.TracingMiddleware",
-                                $"{typeof(RetryMiddleware<,>).Namespace}.RetryMiddleware",
-                                $"{typeof(CircuitBreakerMiddleware<,>).Namespace}.CircuitBreaker",
+                        $"{typeof(StripeService).Namespace}.{nameof(StripeService)}",
+                        $"{typeof(RetryMiddleware<,>).Namespace}.RetryMiddleware",
+                        $"{typeof(CircuitBreakerMiddleware<,>).Namespace}.CircuitBreaker",
                     ], null, null, o => o.Filter = ctx => ctx.Request.Method == "POST");
             }
 
