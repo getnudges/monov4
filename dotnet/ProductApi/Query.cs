@@ -1,8 +1,8 @@
 using Microsoft.EntityFrameworkCore;
-using ProductApi.Models;
 using Nudges.Auth;
 using Nudges.Data.Products;
 using Nudges.Data.Products.Models;
+using ProductApi.Models;
 
 namespace ProductApi;
 
@@ -52,16 +52,11 @@ public class Query {
     public IQueryable<DiscountCode> GetDiscountCodes(ProductDbContext context) => context.DiscountCodes;
 
     public async ValueTask<Plan?> GetPlanByForeignId(ProductDbContext context, string id, CancellationToken cancellationToken) {
-        try {
-            var plan = await context.Plans
-                .Include(p => p.PriceTiers)
-                .Include(p => p.PlanFeature)
-                .FirstOrDefaultAsync(p => p.ForeignServiceId == id, cancellationToken);
-            return plan;
-        } catch (Exception ex) {
-            Console.WriteLine(ex.Message);
-            return null;
-        }
+        var plan = await context.Plans
+            .Include(p => p.PriceTiers)
+            .Include(p => p.PlanFeature)
+            .FirstOrDefaultAsync(p => p.ForeignServiceId == id, cancellationToken);
+        return plan;
     }
 
     public async ValueTask<PriceTier?> GetPriceTierByForeignId(ProductDbContext context, string id, CancellationToken cancellationToken) {

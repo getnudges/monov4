@@ -86,20 +86,6 @@ public sealed class MessageProcessor<TKey, TValue>(
         return await next(context);
     }
 
-    private static async Task ApplyBackoff(int attempt, CancellationToken ct) {
-        // Exponential backoff with jitter:
-        // 1s, 2s, 4s + up to 250ms random jitter
-        var baseDelay = Math.Pow(2, attempt - 1); // attempt starts at 1
-        var jitter = Random.Shared.Next(0, 250);
-        var delay = TimeSpan.FromSeconds(baseDelay) + TimeSpan.FromMilliseconds(jitter);
-
-        Activity.Current?.AddEvent(new ActivityEvent("Backoff delay",
-            tags: new ActivityTagsCollection {
-                        { "retry.backoff_ms", delay.TotalMilliseconds }
-            }));
-        await Task.Delay(delay, ct);
-    }
-
     private void RouteToDlq(ConsumeResult<TKey, TValue> cr, MessageContext<TKey, TValue> ctx) {
         //Debugger.Break();
         // TODO: real DLQ implementation

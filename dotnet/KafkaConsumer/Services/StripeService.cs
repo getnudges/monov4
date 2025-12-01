@@ -184,22 +184,25 @@ internal class StripeService(IStripeClient stripeClient, ILogger<StripeService> 
 internal static partial class StripeProductServiceLogs {
     [LoggerMessage(Level = LogLevel.Error, Message = "Delete of product {ProductId} failed")]
     public static partial void LogProductDeleteFailed(this ILogger<StripeService> logger, string productId, Exception exception);
+
     [LoggerMessage(Level = LogLevel.Error, Message = "An exception has occurred.")]
     public static partial void LogException(this ILogger<StripeService> logger, Exception exception);
+
     [LoggerMessage(Level = LogLevel.Error, Message = "An exception has occurred while creating a foreign product.")]
     public static partial void LogProductCreatedException(this ILogger<StripeService> logger, Exception exception);
 
     [LoggerMessage(Level = LogLevel.Error, Message = "No Product returned from Stripe")]
     public static partial void LogNoProductReturned(this ILogger<StripeService> logger);
 
-    // log foreign product created
-    [LoggerMessage(Level = LogLevel.Error, Message = "Foreign Product with ID {ProductId} created")]
+    [LoggerMessage(Level = LogLevel.Information, Message = "Foreign Product with ID {ProductId} created")]
     public static partial void LogForeignProductCreated(this ILogger<StripeService> logger, string productId);
 
     [LoggerMessage(Level = LogLevel.Error, Message = "Delete of price tier {PriceTierId} failed")]
     public static partial void LogPriceTierDeleteFailed(this ILogger<StripeService> logger, string priceTierId, Exception exception);
+
     [LoggerMessage(Level = LogLevel.Error, Message = "Lookup of price tier {PriceTierId} failed")]
     public static partial void LogPriceTierLookupFailed(this ILogger<StripeService> logger, string priceTierId, Exception exception);
+
     [LoggerMessage(Level = LogLevel.Error, Message = "Customer creation failed.")]
     public static partial void LogCustomerCreationFailed(this ILogger<StripeService> logger, Exception exception);
 }
