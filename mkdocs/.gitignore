@@ -1,5 +1,2 @@
-Lib/
-Scripts/
-Include/
-pyvenv.cfg
-.cache
+.cache/
+.venv/
