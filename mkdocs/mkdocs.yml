@@ -1,23 +1,31 @@
 site_name: Nudges System Documentation
-site_url: https://docs.Nudges.io/
+site_url: https://docs.nudges.dev/
 remote_branch: docs
 
 nav:
   - "Introduction": "index.md"
-  - "AWS Account Access": "aws-access.md"
   - "Developer Setup": "dev-machine-setup.md"
+  - "Getting Started": "getting-started.md"
   - "Scripts": "scripts.md"
   - "Docker": "docker.md"
   - "infrastructure.md"
   - Integrations:
     - "Stripe": "integrations/stripe.md"
     - "Twilio": "integrations/twilio.md"
-  - Terraform:
-    - "Terraform": "terraform/index.md"
-    - "Terraform Modules": "terraform/modules.md"
-  - AWS Services:
-    - "S3": "aws/s3.md"
-    - "ECS": "aws/ecs.md"
+  - Services:
+    - "AuthApi": "services/auth-api.md"
+    - "AuthInit": "services/auth-init.md"
+    - "Database Migrator": "services/db-migrator.md"
+    - "Database Seeder": "services/db-seeder.md"
+    - "GraphMonitor": "services/graph-monitor.md"
+    - "GraphQL Gateway": "services/graphql-gateway.md"
+    - "KafkaConsumer": "services/kafka-consumer.md"
+    - "LocalizationApi": "services/localization-api.md"
+    - "PaymentApi": "services/payment-api.md"
+    - "ProductApi": "services/product-api.md"
+    - "UserApi": "services/user-api.md"
+    - "WarpCache": "services/warpcache.md"
+    - "Webhooks": "services/webhooks.md"
   - Database:
     - "Overview": "data/index.md"
     - "Users": "data/userdb.md"
@@ -26,18 +34,22 @@ nav:
 
 
 extra_css: [css/docs.css]
+extra_javascript:
+  - https://unpkg.com/mermaid@10/dist/mermaid.min.js
 
 plugins:
-  - d2:
-      dark_theme: 200
-      theme: 0
   - search
   - exclude:
       glob:
         - snippets/*
 
+repo_url: https://github.com/getnudges/monov4
+repo_name: getnudges/monov4
+
 theme:
   name: material
+  icon:
+    repo: fontawesome/brands/github
   palette:
     - media: "(prefers-color-scheme: light)"
       scheme: default
@@ -51,11 +63,18 @@ theme:
         name: Switch to light mode
 
 markdown_extensions:
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
   - pymdownx.snippets
   - pymdownx.highlight:
       anchor_linenums: true
   - pymdownx.inlinehilite
-  - pymdownx.superfences
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
   - pymdownx.details
   - admonition
   - footnotes

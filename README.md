@@ -30,7 +30,7 @@ You will need:
     webhooks:
     proto: http
     addr: host.docker.internal:7071
-    domain: <your_domain_here>.ngrok-free.dev
+    domain: <your_domain_here>
   ```
   - Replace `<your_auth_token_here>` and `<your_domain_here>` with your ngrok credentials.
 
@@ -40,7 +40,7 @@ You will need:
 
 1. Create a Stripe account.
 2. In the Stripe dashboard, go to **Developers > Webhooks** and add a new endpoint:
-  - URL: `https://<your_domain_here>.ngrok-free.dev/api/StripeWebhookHandler?code=<your_choice>`
+  - URL: `https://<your_domain_here>/api/StripeWebhookHandler?code=<your_choice>`
   - Events to send: `product.created`
   - Copy the **Signing secret** (you'll need it below).
 
