@@ -5,14 +5,6 @@
          <lastmod>2025-12-10</lastmod>
     </url>
     <url>
-         <loc>https://docs.nudges.dev/aws-access/</loc>
-         <lastmod>2025-12-10</lastmod>
-    </url>
-    <url>
-         <loc>https://docs.nudges.dev/cognito/</loc>
-         <lastmod>2025-12-10</lastmod>
-    </url>
-    <url>
          <loc>https://docs.nudges.dev/docker/</loc>
          <lastmod>2025-12-10</lastmod>
     </url>
@@ -30,14 +22,6 @@
     </url>
     <url>
          <loc>https://docs.nudges.dev/terraform/</loc>
-         <lastmod>2025-12-10</lastmod>
-    </url>
-    <url>
-         <loc>https://docs.nudges.dev/aws/ecs/</loc>
-         <lastmod>2025-12-10</lastmod>
-    </url>
-    <url>
-         <loc>https://docs.nudges.dev/aws/s3/</loc>
          <lastmod>2025-12-10</lastmod>
     </url>
     <url>
@@ -114,14 +98,6 @@
     </url>
     <url>
          <loc>https://docs.nudges.dev/services/webhooks/</loc>
-         <lastmod>2025-12-10</lastmod>
-    </url>
-    <url>
-         <loc>https://docs.nudges.dev/terraform/</loc>
-         <lastmod>2025-12-10</lastmod>
-    </url>
-    <url>
-         <loc>https://docs.nudges.dev/terraform/modules/</loc>
          <lastmod>2025-12-10</lastmod>
     </url>
 </urlset>
