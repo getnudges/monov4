@@ -211,5 +211,3 @@ All services run as containers in **AWS ECS** (Fargate), with:
 - **S3** for static site hosting and Terraform state
 - **Route 53** for DNS
 - **ACM** for SSL certificates
-
-Infrastructure is managed via **Terraform** - see [Terraform documentation](/terraform/index.md).

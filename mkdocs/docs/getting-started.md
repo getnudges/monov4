@@ -10,7 +10,24 @@ This guide walks you through setting up and running the Nudges system locally.
 - [ngrok](https://ngrok.com/) account (free)
 - PowerShell
 
-## 1. Setup ngrok
+## 1. Add Hosts Entry
+
+Keycloak requires a consistent hostname for OIDC token validation. Add this to your hosts file:
+
+=== "Windows"
+
+    Edit `C:\Windows\System32\drivers\etc\hosts` as Administrator:
+    ```
+    127.0.0.1    keycloak.local
+    ```
+
+=== "macOS / Linux"
+
+    ```bash
+    sudo sh -c 'echo "127.0.0.1    keycloak.local" >> /etc/hosts'
+    ```
+
+## 2. Setup ngrok
 
 1. Create an ngrok account and follow their [setup instructions](https://ngrok.com/docs/getting-started)
 2. Create `ngrok/ngrok.yml`:
@@ -28,7 +45,7 @@ tunnels:
 
 Replace `<your_auth_token>` and `<your_domain>` with your ngrok credentials.
 
-## 2. Setup Stripe Webhooks
+## 3. Setup Stripe Webhooks
 
 1. In the Stripe Dashboard, go to **Developers > Webhooks**
 2. Add a new endpoint:
@@ -36,7 +53,7 @@ Replace `<your_auth_token>` and `<your_domain>` with your ngrok credentials.
    - **Events**: `product.created`
 3. Copy the **Signing secret** (you'll need it below)
 
-## 3. Configure Environment
+## 4. Configure Environment
 
 Create `.env.external` at the repository root:
 
@@ -57,7 +74,7 @@ TWILIO_MESSAGE_SERVICE_SID=xxx
 | `STRIPE_WEBHOOKS_SECRET` | Generated when creating the webhook endpoint |
 | `WEBHOOKS_API_KEY` | Any value you choose (must match URL above) |
 
-## 4. Generate Certificates
+## 5. Generate Certificates
 
 ```powershell
 # Create the PFX certificate
@@ -67,7 +84,7 @@ dotnet dev-certs https -ep ./certs/aspnetapp.pfx
 ./certs/generate-certs.ps1
 ```
 
-## 5. Start the System
+## 6. Start the System
 
 ```powershell
 ./start-dev.ps1
