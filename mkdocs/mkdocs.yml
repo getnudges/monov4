@@ -4,7 +4,6 @@ remote_branch: docs
 
 nav:
   - "Introduction": "index.md"
-  - "Developer Setup": "dev-machine-setup.md"
   - "Getting Started": "getting-started.md"
   - "Scripts": "scripts.md"
   - "Docker": "docker.md"
