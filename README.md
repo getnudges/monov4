@@ -1,6 +1,8 @@
 
 # Nudges System POC Repository
 
+[![View the Docs](https://img.shields.io/badge/📚_View_the_Docs-blue?style=for-the-badge)](https://docs.nudges.dev)
+
 Welcome! This repository contains all components for the Nudges system proof-of-concept (POC), including backend, frontend, database, and infrastructure code.
 
 ---
