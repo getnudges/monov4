@@ -51,7 +51,7 @@ internal class PlanMessageMiddleware(ILogger<PlanMessageMiddleware> logger,
         if (foreignCreateResult.Error is { } err) {
             throw err.Exception?.GetBaseException() ?? new GraphQLException(err.Message);
         }
-        logger.LogPlanCreated(plan.Metadata["plan_id"]);
+        logger.LogPlanCreated(plan.Metadata["planId"]);
     }
 
     private Task HandlePlanUpdated(PlanUpdatedEvent data, CancellationToken cancellationToken) {
