@@ -29,6 +29,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Nudges.Kafka.Events", "Nudg
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Nudges.Telemetry", "Nudges.Telemetry\Nudges.Telemetry.csproj", "{813277CD-C9FB-C096-1FD1-BF5D467AF411}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Nudges.Core", "D:\monov5\dotnet\Nudges.Core\Nudges.Core.csproj", "{3ABC8009-477D-F67E-6A8A-13D6D6E9C28C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -87,6 +89,10 @@ Global
 		{813277CD-C9FB-C096-1FD1-BF5D467AF411}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{813277CD-C9FB-C096-1FD1-BF5D467AF411}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{813277CD-C9FB-C096-1FD1-BF5D467AF411}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3ABC8009-477D-F67E-6A8A-13D6D6E9C28C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3ABC8009-477D-F67E-6A8A-13D6D6E9C28C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3ABC8009-477D-F67E-6A8A-13D6D6E9C28C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3ABC8009-477D-F67E-6A8A-13D6D6E9C28C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

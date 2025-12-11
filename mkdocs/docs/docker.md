@@ -1,53 +1,203 @@
-# Considerations for Docker
+# Docker
 
-Each component in this system that is designed to be run in a container has an associated `Dockerfile` within it's project directory (or in a nearby directory, such as with the .NET code).  This file is used to construct the images that will be deployed to their respective containers in ECS.
+The system runs entirely in Docker for local development. All services are defined in `docker-compose.yml`.
 
-## Conventions
+## Quick Start
 
-Each deployable component of the system should have a Dockerfile, and depending on it's build dependency requirements, it may or may not live in the same directory as the component itself.  In general, if a component has dependencies on other parts of the system, that Dockerfile should live at the highest possible place in the directory structure without (ideally), making it all the way to the root.  Also, if the Dockerfile does not live alongside it's component, it should be named after the component.  For example, many of the .NET projects rely on other .NET projects, so many of those Dockerfiles live in the `dotnet` directly.  `DbSeeder.Dockerfile`, for instance, lives in `dotnet` because it depends on `Nudges.Redis`, `Nudges.Data` and others, and referencing those projects with relative paths from that directory is far less messy than the mass of `../../../.......` that would be necessary otherwise.
+```powershell
+# Generate certificates
+dotnet dev-certs https -ep ./certs/aspnetapp.pfx
+./certs/generate-certs.ps1
 
-## Local Development
+# Start everything
+./start-dev.ps1
+```
 
-I've tried hard to make development of the entire system locally as easy as possible.  For convenience, there are a few scripts at the root of the project to get things running locally.
+First run takes ~20 minutes to build. Once ready, open `https://localhost:5050`.
 
-### Prerequisites
+## Services Overview
 
-Before running anything locally, there is at least one file needed:  `dotnet/.env.docker`.  The base template looks like this:
+### Infrastructure
 
-??? note "Example `.env.docker`"
-    ```ini
-    REDIS_URL="redis:6379"
+| Service | Port | Description |
+|---------|------|-------------|
+| `postgres` | 5432 | PostgreSQL database |
+| `redis` | 6379 | Redis cache |
+| `kafka` | 9092, 29092 | Kafka message broker |
+| `kafka-ui` | 8080 | Kafka management UI |
+| `keycloak` | 8443 | OIDC identity provider |
 
-    ConnectionStrings__UserDb="Host=postgres;Port=5432;Database=userdb;Username=userdb;Password=userdb;"
-    ConnectionStrings__ProductDb="Host=postgres;Port=5432;Database=productdb;Username=productdb;Password=productdb;"
-    ConnectionStrings__PaymentDb="Host=postgres;Port=5432;Database=paymentdb;Username=paymentdb;Password=paymentdb;"
+### Observability
 
-    API_KEY="test"
+| Service | Port | Description |
+|---------|------|-------------|
+| `grafana` | 3000 | Dashboards and visualization |
+| `prometheus` | 9090 | Metrics collection |
+| `tempo` | 3200 | Distributed tracing |
+| `loki` | 3100 | Log aggregation |
+| `otel-collector` | 4317, 4318 | OpenTelemetry collector |
 
-    GRAPH_MONITOR_URL="http://graph-monitor:5145"
+### Application Services
 
-    STRIPE_API_KEY="sk_test_51MtKShE8A2efFCQSK8cxjP720Ya7fl0JFpvrPc1pUR1dqiOEhuOjC07cn9YLNBxPH38a1vZLMkGGhuApBQr90E3J00aqS8IsGu"
+| Service | Port | Description |
+|---------|------|-------------|
+| `graphql-gateway` | 5443 | GraphQL federation gateway (HTTPS) |
+| `user-api` | 5300 | User/Client/Subscriber API |
+| `product-api` | 5200 | Plans/Pricing API |
+| `payment-api` | 5400 | Payments/Checkout API |
+| `auth-api` | 5555 | Authentication API (HTTPS) |
+| `webhooks` | 7071 | Stripe/Twilio webhook handler |
+| `warp-cache` | 7777 | gRPC caching service |
+| `localization-api` | 8888 | i18n string service |
+| `graph-monitor` | 5145 | GraphQL schema registry |
 
-    TWILIO_ACCOUNT_SID="AC61b60bdd31061ba49d77f3dfaa2f925e"
-    TWILIO_AUTH_TOKEN="b1086b84b834deb3741387906e8d2eb8"
-    TWILIO_MESSAGE_SERVICE_SID="MGcf6c611882037368d846157e252d7dc5"
+### Kafka Consumers
 
-    Kafka__BrokerList="kafka:29092"
-    GRAPHQL_API_URL="http://graphql-gateway:5443/graphql"
+All consumers use the same Docker image with different commands:
 
-    COGNITO_CLIENT_ID="7o8na736debi5u11kutaoao4qr"
-    COGNITO_CLIENT_SECRET=""
-    COGNITO_POOL_DOMAIN="nudges-development"
-    COGNITO_POOL_DOMAIN_ID="nudges-development"
-    COGNITO_POOL_ENDPOINT="cognito-idp.us-east-2.amazonaws.com/us-east-2_xD41Z0dWM"
-    COGNITO_USER_POOL_ID="us-east-2_xD41Z0dWM"
+| Container | Topic | Description |
+|-----------|-------|-------------|
+| `notifications-listener` | Notifications | SMS delivery |
+| `plans-listener` | Plans | Stripe product sync |
+| `price-tiers-listener` | PriceTiers | Stripe price sync |
+| `clients-listener` | Clients | Customer creation |
+| `payments-listener` | Payments | Payment processing |
+| `plan-subscription-listener` | PlanSubscriptions | Subscription lifecycle |
+| `user-authentication-listener` | UserAuthentication | Login events |
+| `foreign-products-listener` | ForeignProducts | External product sync |
 
-    ```
+### Web UIs
 
-Not all projects need all of these values, but for convenience, they all live in one place.
+| Service | Port | Description |
+|---------|------|-------------|
+| `new-admin` | 5050 | Admin dashboard (HTTPS) |
+| `new-signup` | 6060 | Subscriber signup site (HTTPS) |
 
-### `start-dev`
+### External Service Proxies
 
-The `start-dev.ps1` script is the basic "get me going" script for most development.  It initiates all of the services and UIs in Docker.
+| Service | Port | Description |
+|---------|------|-------------|
+| `ngrok` | 4040 | Tunnel for webhooks |
+| `stripe-cli` | - | Forwards Stripe webhooks |
+| `payment-processor-proxy` | 4243 | Local Stripe API mock |
+| `maildev` | 1080 | Email testing UI |
 
+## Dockerfile Conventions
 
+Dockerfiles live in the `dotnet/` directory, named after their service:
+
+```
+dotnet/
+├── AuthApi.Dockerfile
+├── AuthInit.Dockerfile
+├── DbSeeder.Dockerfile
+├── GraphMonitor.Dockerfile
+├── GraphQLGateway.Dockerfile
+├── KafkaConsumer.Dockerfile
+├── LocalizationApi.Dockerfile
+├── Migrator.Dockerfile
+├── Nudges.Webhooks.Dockerfile
+├── PaymentApi.Dockerfile
+├── ProductApi.Dockerfile
+├── UserApi.Dockerfile
+└── WarpCache.Dockerfile
+```
+
+This placement allows Dockerfiles to reference shared projects without excessive `../` paths.
+
+## Environment Files
+
+Each service has its own `.env.docker` file:
+
+```
+dotnet/
+├── AuthApi/.env.docker
+├── ProductApi/.env.docker
+├── UserApi/.env.docker
+├── PaymentApi/.env.docker
+├── KafkaConsumer/.env.docker
+├── GraphQLGateway/GraphQLGateway/.env.docker
+└── ...
+```
+
+Generate these with:
+
+```powershell
+./configure.ps1 -Mode Docker
+```
+
+## Running Individual Services
+
+Start specific services:
+
+```powershell
+docker compose up postgres redis kafka -d
+docker compose up user-api product-api -d
+```
+
+Rebuild a single service:
+
+```powershell
+docker compose build user-api
+docker compose up user-api -d
+```
+
+View logs:
+
+```powershell
+docker compose logs -f user-api
+docker compose logs -f plans-listener
+```
+
+## Resource Limits
+
+All services have memory limits defined:
+
+| Category | Memory |
+|----------|--------|
+| Infrastructure (Kafka, Postgres, Keycloak) | 1GB |
+| APIs and Gateway | 512MB |
+| Kafka Consumers | 256MB |
+| Web UIs | 256MB |
+| Utilities (ngrok, stripe-cli) | 128MB |
+
+## Network
+
+All services join the `Nudges` bridge network and communicate using container hostnames (e.g., `kafka:29092`, `postgres:5432`).
+
+Services that need to reach the host machine (for Keycloak) use:
+
+```yaml
+extra_hosts:
+  - "keycloak.local:host-gateway"
+```
+
+## Volumes
+
+Certificate mounts for HTTPS services:
+
+```yaml
+volumes:
+  - ./certs/aspnetapp.pfx:/https/aspnetapp.pfx:ro
+  - ./certs/aspnetapp.crt:/etc/nginx/certs/aspnetapp.crt:ro
+  - ./certs/aspnetapp.key:/etc/nginx/certs/aspnetapp.key:ro
+```
+
+## Healthchecks
+
+Critical services have healthchecks:
+
+- **Keycloak**: TCP check on port 9000
+- **LocalizationApi**: TCP check on port 8888
+
+Other services rely on Docker's restart policy.
+
+## Secrets
+
+The `graph-monitor-headers` secret is used during API builds to register schemas:
+
+```yaml
+secrets:
+  graph-monitor-headers:
+    file: ./dotnet/GraphMonitor/headers
+```

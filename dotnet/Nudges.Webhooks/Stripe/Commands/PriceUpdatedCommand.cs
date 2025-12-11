@@ -1,3 +1,4 @@
+using ErrorOr;
 using Monads;
 using Stripe;
 using Nudges.Webhooks.GraphQL;
@@ -9,14 +10,20 @@ internal sealed class PriceUpdatedCommand(INudgesClient nudgesClient) : IEventCo
         if (context.StripeEvent.Data.Object is not Price price) {
             return new MissingDataException("Could not find price in event data");
         }
-        var result = await nudgesClient.GetPriceTierByForeignId(price.Id, cancellationToken).Map(async tier =>
-            await nudgesClient.PatchPriceTier(new PatchPriceTierInput {
-                Id = tier.Id,
-                Price = price.UnitAmountDecimal / 100,
-                // TODO: more fields
-            }, cancellationToken)
-        );
+        
+        var tierResult = await nudgesClient.GetPriceTierByForeignId(price.Id, cancellationToken);
+        
+        if (tierResult.IsError) {
+            return new GraphQLException(tierResult.FirstError.Description);
+        }
 
-        return result.Match<Maybe<Exception>>(e => Maybe<Exception>.None, e => e.GetBaseException());
+        var patchResult = await nudgesClient.PatchPriceTier(new PatchPriceTierInput {
+            Id = tierResult.Value.Id,
+            Price = price.UnitAmountDecimal / 100,
+        }, cancellationToken);
+
+        return patchResult.IsError 
+            ? new GraphQLException(patchResult.FirstError.Description)
+            : Maybe<Exception>.None;
     }
 }

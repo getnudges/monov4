@@ -35,7 +35,7 @@ public sealed class ServerTokenClient(HttpClient client, IOptions<OidcConfig> co
             logger.LogRequestError(ex);
             Activity.Current?.AddException(ex);
             Activity.Current?.SetStatus(ActivityStatusCode.Error, ex.Message);
-            return Error.Unexpected("SendRequestAsync.Exception", ex.Message, new Dictionary<string,object>([
+            return Error.Unexpected("SendRequestAsync.Exception", ex.Message, new Dictionary<string, object>([
                 new KeyValuePair<string, object>("StackTrace", ex.StackTrace ?? string.Empty),
             ]));
         }

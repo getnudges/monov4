@@ -1,4 +1,5 @@
 using System.Text.RegularExpressions;
+using ErrorOr;
 using Monads;
 using Twilio.TwiML;
 using Nudges.Localization.Client;
@@ -12,15 +13,20 @@ internal sealed partial class UnsubscribeCommand(INudgesClient nudgesClient, ILo
     [GeneratedRegex(@"^UNSUBCRIBE$", RegexOptions.IgnoreCase | RegexOptions.Compiled, "en-US")]
     private static partial Regex RegexMatcher();
 
-    public async Task<Result<MessagingResponse, Exception>> InvokeAsync(TwilioEventContext context, CancellationToken cancellationToken) {
+    public async Task<Monads.Result<MessagingResponse, Exception>> InvokeAsync(TwilioEventContext context, CancellationToken cancellationToken) {
         if (!int.TryParse(context.Match.Groups[1].Value, out var num)) {
             return new MessageException("Invalid selection");
         }
 
-        return await nudgesClient.SmsLocaleLookup(context.From, cancellationToken).Map<string, MessagingResponse, Exception>(async locale => {
-            var body = await localizer.GetLocalizedStringAsync("Unsubscribe", locale, cancellationToken);
-            var message = new MessagingResponse().Message(body);
-            return message;
-        });
+        var result = await nudgesClient.SmsLocaleLookup(context.From, cancellationToken);
+        
+        if (result.IsError) {
+            return new GraphQLException(result.FirstError.Description);
+        }
+
+        var locale = result.Value;
+        var body = await localizer.GetLocalizedStringAsync("Unsubscribe", locale, cancellationToken);
+        var message = new MessagingResponse().Message(body);
+        return Monads.Result.Success<MessagingResponse, Exception>(message);
     }
 }

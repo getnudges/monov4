@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.Diagnostics.Metrics;
 
 namespace Nudges.Kafka.Middleware;
+
 public class TracingMiddleware<TKey, TValue> : IMessageMiddleware<TKey, TValue> {
 
     private static readonly ActivitySource ActivitySource = new($"{typeof(TracingMiddleware<,>).Namespace}.TracingMiddleware");

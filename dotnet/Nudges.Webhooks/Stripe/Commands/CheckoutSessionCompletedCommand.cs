@@ -1,3 +1,4 @@
+using ErrorOr;
 using Monads;
 using Stripe;
 using Nudges.Webhooks.GraphQL;
@@ -11,20 +12,32 @@ internal sealed class CheckoutSessionCompletedCommand(INudgesClient nudgesClient
             return new MissingDataException("Could not find Session in event data");
         }
 
-        var result = await nudgesClient.GetClientByCustomerId(session.CustomerId, cancellationToken: cancellationToken).Map(async client => {
-            var invoice = await _invoiceService.GetAsync(session.InvoiceId, cancellationToken: cancellationToken);
-            return await nudgesClient.CreatePaymentConfirmation(new CreatePaymentConfirmationInput {
-                ConfirmationId = invoice.Id,
-                MerchantServiceId = 1, // TODO: this is a placeholder
-            }, cancellationToken).Map(async confirmation =>
-                await nudgesClient.CreatePlanSubscription(new CreatePlanSubscriptionInput {
-                    ClientId = client.Id,
-                    PaymentConfirmationId = confirmation.PaymentConfirmationId,
-                    // TODO: First() is not safe here, obviously
-                    PriceTierForeignServiceId = invoice.Lines.First().Id,
-                }, cancellationToken));
-        });
+        var result = await nudgesClient.GetClientByCustomerId(session.CustomerId, cancellationToken: cancellationToken);
+        
+        if (result.IsError) {
+            return new GraphQLException(result.FirstError.Description);
+        }
 
-        return result.Match<Maybe<Exception>>(e => Maybe<Exception>.None, e => e.GetBaseException());
+        var client = result.Value;
+        var invoice = await _invoiceService.GetAsync(session.InvoiceId, cancellationToken: cancellationToken);
+        
+        var confirmationResult = await nudgesClient.CreatePaymentConfirmation(new CreatePaymentConfirmationInput {
+            ConfirmationId = invoice.Id,
+            MerchantServiceId = 1,
+        }, cancellationToken);
+
+        if (confirmationResult.IsError) {
+            return new GraphQLException(confirmationResult.FirstError.Description);
+        }
+
+        var subscriptionResult = await nudgesClient.CreatePlanSubscription(new CreatePlanSubscriptionInput {
+            ClientId = client.Id,
+            PaymentConfirmationId = confirmationResult.Value.PaymentConfirmationId,
+            PriceTierForeignServiceId = invoice.Lines.First().Id,
+        }, cancellationToken);
+
+        return subscriptionResult.IsError 
+            ? new GraphQLException(subscriptionResult.FirstError.Description)
+            : Maybe<Exception>.None;
     }
 }

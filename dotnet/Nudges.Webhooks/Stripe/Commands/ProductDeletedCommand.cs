@@ -1,3 +1,4 @@
+using ErrorOr;
 using Monads;
 using Stripe;
 using Nudges.Webhooks.GraphQL;
@@ -9,12 +10,19 @@ internal sealed class ProductDeletedCommand(INudgesClient nudgesClient) : IEvent
         if (context.StripeEvent.Data.Object is not Product product) {
             return new MissingDataException("Could not find product in event data");
         }
-        var result = await nudgesClient.GetPlanByForeignId(product.Id, cancellationToken).Map(async maybePlan =>
-            // TODO: this should be an event rather than a direct delete.
-            maybePlan.Map(async plan => await nudgesClient.DeletePlan(new DeletePlanInput {
-                Id = plan.Id
-            }, cancellationToken)));
+        
+        var planResult = await nudgesClient.GetPlanByForeignId(product.Id, cancellationToken);
+        
+        if (planResult.IsError) {
+            return new GraphQLException(planResult.FirstError.Description);
+        }
 
-        return result.Match<Maybe<Exception>>(e => Maybe<Exception>.None, e => e);
+        var deleteResult = await nudgesClient.DeletePlan(new DeletePlanInput {
+            Id = planResult.Value.Id
+        }, cancellationToken);
+
+        return deleteResult.IsError 
+            ? new GraphQLException(deleteResult.FirstError.Description)
+            : Maybe<Exception>.None;
     }
 }

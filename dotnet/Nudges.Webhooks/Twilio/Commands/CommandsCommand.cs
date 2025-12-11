@@ -1,4 +1,5 @@
 using System.Text.RegularExpressions;
+using ErrorOr;
 using Monads;
 using Twilio.TwiML;
 using Nudges.Localization.Client;
@@ -15,10 +16,16 @@ internal sealed partial class CommandsCommand(INudgesClient nudgesClient, ILocal
     [GeneratedRegex(@"^help$", RegexOptions.IgnoreCase | RegexOptions.Compiled, "en-US")]
     private static partial Regex HelpRegexMatcher();
 
-    public async Task<Result<MessagingResponse, Exception>> InvokeAsync(TwilioEventContext context, CancellationToken cancellationToken) =>
-        await nudgesClient.SmsLocaleLookup(context.From, cancellationToken).Map<string, MessagingResponse, Exception>(async locale => {
-            var body = await localizer.GetLocalizedStringAsync("ClientHelpMessage", locale, cancellationToken);
-            var message = new MessagingResponse().Message(body);
-            return message;
-        });
+    public async Task<Monads.Result<MessagingResponse, Exception>> InvokeAsync(TwilioEventContext context, CancellationToken cancellationToken) {
+        var result = await nudgesClient.SmsLocaleLookup(context.From, cancellationToken);
+        
+        if (result.IsError) {
+            return new GraphQLException(result.FirstError.Description);
+        }
+
+        var locale = result.Value;
+        var body = await localizer.GetLocalizedStringAsync("ClientHelpMessage", locale, cancellationToken);
+        var message = new MessagingResponse().Message(body);
+        return Monads.Result.Success<MessagingResponse, Exception>(message);
+    }
 }

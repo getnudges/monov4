@@ -69,7 +69,13 @@ static IHostBuilder CreateBaseHost(string[] args, string name) =>
             services.Configure<OidcConfig>(hostContext.Configuration.GetSection(nameof(Settings.Oidc)));
             services.Configure<KafkaSettings>(hostContext.Configuration.GetSection(nameof(Settings.Kafka)));
             services.Configure<OtlpSettings>(hostContext.Configuration.GetSection(nameof(Settings.Otlp)));
-            services.AddLogging(configure => configure.AddSimpleConsole(o => o.SingleLine = true));
+            services.AddLogging(configure =>
+                configure
+                    .AddSimpleConsole(o => o.SingleLine = true)
+                    .AddConfiguration(hostContext.Configuration.GetSection("Logging"))
+                    // because I'm tired of fighting it.
+                    .AddFilter("Microsoft.AspNetCore.Hosting.Diagnostics", logLevel => logLevel > LogLevel.Information)
+                    .AddFilter("Microsoft.AspNetCore.Routing.EndpointMiddleware", logLevel => logLevel > LogLevel.Information));
 
             if (settings.Otlp.Endpoint is string url) {
                 services.AddOpenTelemetryConfiguration<Program>(

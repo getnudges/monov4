@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
@@ -48,6 +48,7 @@
     <ProjectReference Include="..\Nudges.Auth\Nudges.Auth.csproj" />
     <ProjectReference Include="..\Nudges.Kafka\Nudges.Kafka.csproj" />
     <ProjectReference Include="..\Nudges.Localization.Client\Nudges.Localization.Client.csproj" />
+    <ProjectReference Include="..\Nudges.Core\Nudges.Core.csproj" />
   </ItemGroup>
 
   <ItemGroup>
