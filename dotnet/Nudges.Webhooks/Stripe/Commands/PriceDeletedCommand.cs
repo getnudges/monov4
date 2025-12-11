@@ -1,3 +1,4 @@
+using ErrorOr;
 using Monads;
 using Stripe;
 using Nudges.Webhooks.GraphQL;
@@ -9,11 +10,19 @@ internal sealed class PriceDeletedCommand(INudgesClient nudgesClient) : IEventCo
         if (context.StripeEvent.Data.Object is not Price price) {
             return new MissingDataException("Could not find price in event data");
         }
-        var result = await nudgesClient.GetPriceTierByForeignId(price.Id, cancellationToken).Map(async tier =>
-            await nudgesClient.DeletePriceTier(new DeletePriceTierInput {
-                Id = tier.Id
-            }, cancellationToken));
+        
+        var tierResult = await nudgesClient.GetPriceTierByForeignId(price.Id, cancellationToken);
+        
+        if (tierResult.IsError) {
+            return new GraphQLException(tierResult.FirstError.Description);
+        }
 
-        return result.Match<Maybe<Exception>>(e => Maybe<Exception>.None, e => e.GetBaseException());
+        var deleteResult = await nudgesClient.DeletePriceTier(new DeletePriceTierInput {
+            Id = tierResult.Value.Id
+        }, cancellationToken);
+
+        return deleteResult.IsError 
+            ? new GraphQLException(deleteResult.FirstError.Description)
+            : Maybe<Exception>.None;
     }
 }

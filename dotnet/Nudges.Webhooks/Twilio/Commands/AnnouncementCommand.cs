@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Text.RegularExpressions;
+using ErrorOr;
 using Monads;
 using Precision.WarpCache.Grpc.Client;
 using Twilio.TwiML;
@@ -21,19 +22,25 @@ internal sealed partial class AnnouncementCommand(INudgesClient nudgesClient,
     [GeneratedRegex(@".*", RegexOptions.IgnoreCase | RegexOptions.Compiled, "en-US")]
     private static partial Regex RegexMatcher();
 
-    public async Task<Result<MessagingResponse, Exception>> InvokeAsync(TwilioEventContext context, CancellationToken cancellationToken) =>
-        await nudgesClient.GetClientByPhoneNumber(context.From, cancellationToken).Map<IGetClientByPhoneNumber_ClientByPhoneNumber, MessagingResponse, Exception>(async client => {
-            if (client.Subscription?.Status != "ACTIVE") {
-                return new NotCustomerException();
-            }
-            await cache.SetAsync($"announcement:{context.From}", context.SmsBody);
-            var body = await localizer.GetLocalizedStringAsync("AnnouncementConfirm", client.Locale, new Dictionary<string, string>() {
-                    { "smsBody", context.SmsBody }
-                });
-            // TODO: KafkaConsumer should handle this
-            var message = new MessagingResponse().Message(body);
-            return message;
-        });
+    public async Task<Monads.Result<MessagingResponse, Exception>> InvokeAsync(TwilioEventContext context, CancellationToken cancellationToken) {
+        var result = await nudgesClient.GetClientByPhoneNumber(context.From, cancellationToken);
+        
+        if (result.IsError) {
+            return new GraphQLException(result.FirstError.Description);
+        }
+
+        var client = result.Value;
+        if (client.Subscription?.Status != "ACTIVE") {
+            return new NotCustomerException();
+        }
+        
+        await cache.SetAsync($"announcement:{context.From}", context.SmsBody);
+        var body = await localizer.GetLocalizedStringAsync("AnnouncementConfirm", client.Locale, new Dictionary<string, string>() {
+                { "smsBody", context.SmsBody }
+            });
+        var message = new MessagingResponse().Message(body);
+        return Monads.Result.Success<MessagingResponse, Exception>(message);
+    }
 }
 
 internal sealed partial class AnnouncementConfirmCommand(INudgesClient nudgesClient,
@@ -46,50 +53,39 @@ internal sealed partial class AnnouncementConfirmCommand(INudgesClient nudgesCli
     [GeneratedRegex(@"^CONFIRM$", RegexOptions.IgnoreCase | RegexOptions.Compiled, "en-US")]
     private static partial Regex RegexMatcher();
 
-    public async Task<Result<MessagingResponse, Exception>> InvokeAsync(TwilioEventContext context, CancellationToken cancellationToken) =>
-        await nudgesClient.GetClientByPhoneNumber(context.From, cancellationToken).Map(async client => {
-            if (client.Subscription?.Status != "ACTIVE") {
-                return new NotCustomerException();
-            }
-            var announcement = await cache.GetAsync($"announcement:{context.From}");
+    public async Task<Monads.Result<MessagingResponse, Exception>> InvokeAsync(TwilioEventContext context, CancellationToken cancellationToken) {
+        var result = await nudgesClient.GetClientByPhoneNumber(context.From, cancellationToken);
+        
+        if (result.IsError) {
+            return new GraphQLException(result.FirstError.Description);
+        }
 
-            if (announcement is null) {
-                var errBody = await localizer.GetLocalizedStringAsync("NoPendingAnnouncement", client.Locale);
-                return new MessagingResponse().Message(errBody);
-            }
+        var client = result.Value;
+        if (client.Subscription?.Status != "ACTIVE") {
+            return new NotCustomerException();
+        }
+        
+        var announcement = await cache.GetAsync($"announcement:{context.From}");
 
-            return await SendMessages(context.From, new Dictionary<string, string> {
-                        { "body", announcement.ToString() }
-                    }, cancellationToken).Map<int, MessagingResponse, Exception>(async sent => {
-                        await cache.RemoveAsync($"announcement:{context.From}");
-                        var body = await localizer.GetLocalizedStringAsync("AnnouncementSent", client.Locale, new Dictionary<string, string> {
-                            { "count", sent.ToString(CultureInfo.CurrentCulture) }
-                        });
-                        var message = new MessagingResponse().Message(body);
-                        return message;
-                    });
-        });
+        if (announcement is null) {
+            var errBody = await localizer.GetLocalizedStringAsync("NoPendingAnnouncement", client.Locale);
+            return Monads.Result.Success<MessagingResponse, Exception>(new MessagingResponse().Message(errBody));
+        }
 
-    private Task<Result<int, Exception>> SendMessages(string clientPhone, Dictionary<string, string> replacements, CancellationToken cancellationToken) =>
-        Task.FromResult(Result.Success<int, Exception>(0));
+        var sendResult = await SendMessages(context.From, new Dictionary<string, string> {
+                    { "body", announcement.ToString() }
+                }, cancellationToken);
 
-        //await nudgesClient.GetClientByPhoneNumber(clientPhone, cancellationToken).Map<IGetClientByPhoneNumber_ClientByPhoneNumber, int, Exception>(async client => {
-        //    var subs = client.Subscribers?.Nodes?.Select(n => new {
-        //        n.FullPhone,
-        //        n.Locale,
-        //    })?.Where(n => !string.IsNullOrEmpty(n.FullPhone)) ?? [];
-        //    var totalSent = 0;
-        //    foreach (var sub in subs) {
-        //        try {
-        //            await notificationProducer.Produce(
-        //                NotificationKey.SendSms(sub.FullPhone!),
-        //                new SendSmsNotificationEvent("Anything", sub.Locale, replacements),
-        //                cancellationToken);
-        //            totalSent++;
-        //        } catch (Exception e) {
-        //            logger.LogSendFailure(e);
-        //        }
-        //    }
-        //    return totalSent;
-        //});
+        return sendResult.Match(async sent => {
+            await cache.RemoveAsync($"announcement:{context.From}");
+            var body = await localizer.GetLocalizedStringAsync("AnnouncementSent", client.Locale, new Dictionary<string, string> {
+                { "count", sent.ToString(CultureInfo.CurrentCulture) }
+            });
+            var message = new MessagingResponse().Message(body);
+            return Monads.Result.Success<MessagingResponse, Exception>(message);
+        }, error => Monads.Result.Failure<MessagingResponse, Exception>(error)).Result;
+    }
+
+    private Task<Monads.Result<int, Exception>> SendMessages(string clientPhone, Dictionary<string, string> replacements, CancellationToken cancellationToken) =>
+        Task.FromResult(Monads.Result.Success<int, Exception>(0));
 }

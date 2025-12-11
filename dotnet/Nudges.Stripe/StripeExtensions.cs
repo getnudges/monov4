@@ -1,6 +1,7 @@
 using Stripe;
 
 namespace Nudges.Stripe;
+
 internal static class StripeExtensions {
     private static readonly string[] ActiveSubscriptionStatuses = ["active", "trialing"];
 

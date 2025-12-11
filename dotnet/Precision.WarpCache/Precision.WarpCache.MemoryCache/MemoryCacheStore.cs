@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Caching.Memory;
 
 namespace Precision.WarpCache.MemoryCache;
+
 public sealed class MemoryCacheStore<TKey, TValue> : ICacheStore<TKey, TValue>, IDisposable where TKey : notnull {
     private readonly Microsoft.Extensions.Caching.Memory.MemoryCache _cache;
     private readonly MemoryCacheEntryOptions _defaultOptions;

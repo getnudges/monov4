@@ -2,6 +2,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 
 namespace Nudges.Auth;
+
 public static class WellKnownClaims {
     public const string Role = ClaimTypes.Role;
     public const string Username = JwtRegisteredClaimNames.PreferredUsername;

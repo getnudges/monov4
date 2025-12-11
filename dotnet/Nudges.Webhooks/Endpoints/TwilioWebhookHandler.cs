@@ -3,6 +3,7 @@ using System.Diagnostics.Metrics;
 using System.Globalization;
 using System.Net;
 using System.Text;
+using ErrorOr;
 using Monads;
 using Twilio.TwiML;
 using Nudges.Localization.Client;
@@ -32,10 +33,6 @@ public partial class TwilioWebhookHandler(INudgesClient nudgesClient,
             pair => WebUtility.UrlDecode(pair[..pair.IndexOf('=')]),
             pair => WebUtility.UrlDecode(pair[(pair.IndexOf('=') + 1)..]));
 
-    /**
-     * TODO: Create a new HTTP trigger that will handle the callback for status of messages.
-     * https://www.twilio.com/docs/messaging/guides/track-outbound-message-status
-     */
     public async Task<IResult> Endpoint(HttpRequest request, CancellationToken cancellationToken) {
         using var activity = ActivitySource.CreateActivity("TODO", ActivityKind.Consumer, request.GetActivityContext());
         using var streamReader = new StreamReader(request.Body);
@@ -49,22 +46,32 @@ public partial class TwilioWebhookHandler(INudgesClient nudgesClient,
         }
 
         WebhooksReceived.Add(1, [
-            new("body", smsBody)  // TODO: probably don't log the full body
+            new("body", smsBody)
         ]);
 
         activity?.Start();
 
-        // NOTE: MessagingServiceSid and AccountSid are available in the form data
-        var processResult = await nudgesClient.SmsLocaleLookup(smsFrom, cancellationToken).Map(async locale => {
-            var result = await messageProcessor.ProcessEvent(smsBody, smsFrom, locale, cancellationToken);
-            return result.Map(response => response.ToTextResult());
-        });
+        var localeResult = await nudgesClient.SmsLocaleLookup(smsFrom, cancellationToken);
+        
+        if (localeResult.IsError) {
+            var firstError = localeResult.FirstError;
+            if (firstError.Type == ErrorType.NotFound) {
+                var message = await localizer.GetLocalizedStringAsync("NotCustomer", CultureInfo.CurrentCulture.Name);
+                return new MessagingResponse().Message(message).ToTextResult();
+            }
+            activity?.SetStatus(ActivityStatusCode.Error, firstError.Description);
+            WebhooksProcessed.Add(1, [new("status", "error")]);
+            return Results.Problem(firstError.Description);
+        }
+
+        var locale = localeResult.Value;
+        var processResult = await messageProcessor.ProcessEvent(smsBody, smsFrom, locale, cancellationToken);
 
         try {
-            return await processResult.Match<IResult>(processResult => {
+            return await processResult.Match<IResult>(result => {
                 activity?.SetStatus(ActivityStatusCode.Ok);
                 WebhooksProcessed.Add(1, [new("status", "success")]);
-                return processResult;
+                return result.ToTextResult();
             }, async ex => {
                 if (ex is NotCustomerException) {
                     var message = await localizer.GetLocalizedStringAsync("NotCustomer", CultureInfo.CurrentCulture.Name);

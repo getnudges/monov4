@@ -1,3 +1,4 @@
+using ErrorOr;
 using Monads;
 using Stripe;
 using Nudges.Webhooks.GraphQL;
@@ -14,9 +15,16 @@ internal sealed class ProductUpdatedCommand(INudgesClient nudgesClient) : IEvent
             return new MissingDataException($"Could not find planId in product {product.Id} metadata");
         }
 
-        var result = await nudgesClient.GetPlanByForeignId(product.Id, cancellationToken).Map(async plan =>
-            await nudgesClient.PatchPlan(product.ToPatchPlanInput(), cancellationToken));
+        var planResult = await nudgesClient.GetPlanByForeignId(product.Id, cancellationToken);
+        
+        if (planResult.IsError) {
+            return new GraphQLException(planResult.FirstError.Description);
+        }
 
-        return result.Match<Maybe<Exception>>(e => Maybe<Exception>.None, e => e.GetBaseException());
+        var patchResult = await nudgesClient.PatchPlan(product.ToPatchPlanInput(), cancellationToken);
+
+        return patchResult.IsError 
+            ? new GraphQLException(patchResult.FirstError.Description)
+            : Maybe<Exception>.None;
     }
 }

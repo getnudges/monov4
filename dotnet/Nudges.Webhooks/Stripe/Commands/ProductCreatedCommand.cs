@@ -1,4 +1,5 @@
 using System.Globalization;
+using ErrorOr;
 using Monads;
 using Nudges.Kafka;
 using Nudges.Kafka.Events;
@@ -17,34 +18,27 @@ internal sealed class ProductCreatedCommand(INudgesClient nudgesClient,
             return new MissingDataException("Could not find product in event data");
         }
 
-        var result = await nudgesClient.GetPlanByForeignId(product.Id, cancellationToken).Map(async maybePlan =>
-            await maybePlan.Match(async () => {
-                // Plan doesn't exist - this was created manually in Stripe
-                // Ignore it
+        var result = await nudgesClient.GetPlanByForeignId(product.Id, cancellationToken);
+        
+        if (result.IsError) {
+            var error = result.FirstError;
+            if (error.Type == ErrorType.NotFound) {
                 logger.LogNewPlanFromStripe(product.Id);
-                //try {
-                //    await foreignProductProducer.ProduceForeignProductCreated(
-                //    product.ToForeignProductCreatedEvent(),
-                //    cancellationToken);
-                //} catch (Exception ex) {
-                //    return ex;
-                //}
                 return Maybe<Exception>.None;
-            }, async plan => {
-                // Plan exists - this was created by OUR UI, not manually in Stripe
-                // Produce a SYNC event to update our DB with any Stripe changes
-                logger.LogPlanAlreadyExists(plan.Id, product.Id);
-                try {
-                    await foreignProductProducer.ProduceForeignProductSynchronized(
-                            product.ToForeignProductSynchronizedEvent(),
-                            cancellationToken);
-                } catch (Exception ex) {
-                    return ex;
-                }
-                return Maybe<Exception>.None;
-            }));
+            }
+            return new GraphQLException(error.Description);
+        }
 
-        return result.Match<Maybe<Exception>>(e => Maybe<Exception>.None, e => e);
+        var plan = result.Value;
+        logger.LogPlanAlreadyExists(plan.Id, product.Id);
+        try {
+            await foreignProductProducer.ProduceForeignProductSynchronized(
+                    product.ToForeignProductSynchronizedEvent(),
+                    cancellationToken);
+        } catch (Exception ex) {
+            return ex;
+        }
+        return Maybe<Exception>.None;
     }
 }
 
