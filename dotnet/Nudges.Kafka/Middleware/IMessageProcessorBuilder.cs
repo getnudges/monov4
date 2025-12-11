@@ -4,6 +4,7 @@ namespace Nudges.Kafka.Middleware;
 
 public interface IMessageProcessorBuilder<TKey, TValue> {
     public IMessageProcessorBuilder<TKey, TValue> Use(IMessageMiddleware<TKey, TValue> middleware);
+    public IMessageProcessorBuilder<TKey, TValue> UseDlq(DlqHandler<TKey, TValue> dlqHandler);
     public MessageProcessorOptions Options { get; }
     public IMessageProcessor<TKey, TValue> Build();
 }
@@ -15,7 +16,8 @@ public interface IMessageProcessorBuilder<TKey, TValue> {
 /// <param name="BootstrapServers">URI(s) of servers to connect to</param>
 /// <param name="AllowAutoCreateTopics">(See <seealso cref="Confluent.Kafka.ClientConfig.AllowAutoCreateTopics"/>)</param>
 /// <param name="StoppingToken">Token used to stop underlying consumer from blocking.</param>
-public record class MessageProcessorOptions(string Topic, string BootstrapServers, bool AllowAutoCreateTopics, CancellationToken? StoppingToken = default);
+/// <param name="MaxRetryAttempts">Maximum number of retry attempts before routing to DLQ</param>
+public record class MessageProcessorOptions(string Topic, string BootstrapServers, bool AllowAutoCreateTopics, CancellationToken? StoppingToken = default, int MaxRetryAttempts = 5);
 
 public static class MessageProcessorBuilderExtensions {
 

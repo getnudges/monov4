@@ -12,4 +12,5 @@ public static class Topics {
     public const string DiscountCodes = "discount-codes";
     public const string UserAuthentication = "user-authentication";
     public const string ForeignProducts = "foreign-products";
+    public const string StripeWebhooks = "stripe-webhooks";
 };

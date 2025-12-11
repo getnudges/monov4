@@ -1,5 +1,3 @@
-using Microsoft.Extensions.Logging;
-
 namespace KafkaConsumer.Middleware;
 
 internal static partial class PlanSubscriptionMiddlewareLogs {

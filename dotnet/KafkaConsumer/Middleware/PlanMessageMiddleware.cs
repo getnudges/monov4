@@ -1,8 +1,6 @@
 using Confluent.Kafka;
 using KafkaConsumer.GraphQL;
 using KafkaConsumer.Services;
-using Microsoft.Extensions.Logging;
-using Monads;
 using Nudges.Kafka.Events;
 using Nudges.Kafka.Middleware;
 using Stripe;
@@ -46,18 +44,13 @@ internal class PlanMessageMiddleware(ILogger<PlanMessageMiddleware> logger,
     private async Task CreateForeignProduct(ProductCreateOptions plan, CancellationToken cancellationToken) {
         using var client = new DisposableWrapper<INudgesClient>(nudgesClientFactory);
 
-        var foreignCreateResult = await foreignProductService.CreateForeignProduct(plan, cancellationToken);
-
-        if (foreignCreateResult.Error is { } err) {
-            throw err.Exception?.GetBaseException() ?? new GraphQLException(err.Message);
-        }
+        await foreignProductService.CreateForeignProduct(plan, cancellationToken);
         logger.LogPlanCreated(plan.Metadata["planId"]);
 
     }
 
     private Task HandlePlanUpdated(PlanUpdatedEvent data, CancellationToken cancellationToken) {
         throw new HttpRequestException("Simulated Stripe outage");
-        return Task.FromResult(Result.Success<bool, Exception>(true));
         //using var client = new DisposableWrapper<INudgesClient>(nudgesClientFactory);
 
         //    return await UpdateForeignProduct(data.Plan.ToForeignProduct(), cancellationToken);
@@ -74,11 +67,8 @@ internal class PlanMessageMiddleware(ILogger<PlanMessageMiddleware> logger,
     //    }, err => err.Exception?.GetBaseException() ?? new GraphQLException(err.Message));
     //}
 
-    private async Task<Result<bool, Exception>> UpdateForeignProduct(Nudges.Contracts.Products.Plan plan, CancellationToken cancellationToken) {
-        var foreignUpdateResult = await foreignProductService.UpdateForeignProduct(plan, cancellationToken);
-        return foreignUpdateResult.Match(success => {
-            logger.LogPlanUpdated(plan.Id);
-            return true;
-        }, err => err.Exception?.GetBaseException() ?? new GraphQLException(err.Message));
+    private async Task UpdateForeignProduct(Nudges.Contracts.Products.Plan plan, CancellationToken cancellationToken) {
+        await foreignProductService.UpdateForeignProduct(plan, cancellationToken);
+        logger.LogPlanUpdated(plan.Id);
     }
 }

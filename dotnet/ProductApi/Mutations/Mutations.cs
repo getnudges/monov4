@@ -35,7 +35,7 @@ public class MutationObjectType : ObjectType<Mutation> {
             .UseMutationConvention();
 
         descriptor
-            .Field(f => f.UpdatePlan(default!, default!, default!, default!, default!, default!))
+            .Field(f => f.UpdatePlan(default!, default!, default!, default!, default!, default!, default!))
             .Use<TracingMiddleware>()
             .Authorize(PolicyNames.Admin)
             .Argument("input", a => a.Type<NonNullType<UpdatePlanInputType>>())

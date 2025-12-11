@@ -22,7 +22,7 @@ public sealed class ErrorHandlingMiddleware<TKey, TValue>(
                 context.ConsumeResult.Offset.Value,
                 failureType);
 
-            return context with { Failure = failureType };
+            return context with { Failure = failureType, Exception = ex };
         }
     }
 

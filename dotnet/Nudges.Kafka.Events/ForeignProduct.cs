@@ -21,7 +21,7 @@ public partial record ForeignProductCreatedEvent(
     string? IconUrl) : ForeignProductEvent;
 
 public partial record ForeignProductSynchronizedEvent(
-    int PlanId,
+    string PlanNodeId,
     string ForeignProductId,
     string Name,
     string? Description,

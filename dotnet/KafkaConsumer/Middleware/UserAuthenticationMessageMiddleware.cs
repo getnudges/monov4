@@ -1,38 +1,35 @@
 using Confluent.Kafka;
-using Microsoft.Extensions.Logging;
-using Monads;
+using KafkaConsumer.GraphQL;
 using Nudges.Kafka;
 using Nudges.Kafka.Events;
 using Nudges.Kafka.Middleware;
 
 namespace KafkaConsumer.Middleware;
 
-internal class UserAuthenticationMessageMiddleware(ILogger<UserAuthenticationMessageMiddleware> logger, KafkaMessageProducer<NotificationKey, NotificationEvent> notificationProducer)
+internal class UserAuthenticationMessageMiddleware(ILogger<UserAuthenticationMessageMiddleware> logger,
+                                                   KafkaMessageProducer<NotificationKey, NotificationEvent> notificationProducer)
     : IMessageMiddleware<UserAuthenticationEventKey, UserAuthenticationEvent> {
 
     public async Task<MessageContext<UserAuthenticationEventKey, UserAuthenticationEvent>> InvokeAsync(MessageContext<UserAuthenticationEventKey, UserAuthenticationEvent> context, MessageHandler<UserAuthenticationEventKey, UserAuthenticationEvent> next) {
-        var result = await HandleMessageAsync(context.ConsumeResult, context.CancellationToken);
-        result.Match(
-            _ => logger.LogAction($"Message {context.ConsumeResult.Message.Key} handled successfully."),
-            err => logger.LogMessageUhandled(context.ConsumeResult.Message.Key.ToString(), err));
-        return context;
+        await HandleMessageAsync(context.ConsumeResult, context.CancellationToken);
+        logger.LogMessageHandled(context.ConsumeResult.Message.Key);
+        return context with { Failure = FailureType.None };
     }
 
-    public async Task<Result<bool, Exception>> HandleMessageAsync(ConsumeResult<UserAuthenticationEventKey, UserAuthenticationEvent> cr, CancellationToken cancellationToken) {
-        logger.LogAction($"Received message {cr.Message.Key}");
-        return await (cr.Message.Value switch {
-            UserLoggedInEvent loggedIn => HandleUserLoggedIn(loggedIn, cancellationToken),
-            UserLoggedOutEvent loggedOut => Result.SuccessTask<bool, Exception>(true), // No-op for now
-            _ => Result.ExceptionTask(new UnhandledMessageException($"No handler registered for event {cr.Message.Key}.")),
-        });
-    }
+    public async Task HandleMessageAsync(ConsumeResult<UserAuthenticationEventKey, UserAuthenticationEvent> cr, CancellationToken cancellationToken) {
+        logger.LogMessageReceived(cr.Message.Key);
 
-    private async Task<Result<bool, Exception>> HandleUserLoggedIn(UserLoggedInEvent userData, CancellationToken cancellationToken) {
-        try {
-            var result = await notificationProducer.ProduceSendSms(userData.PhoneNumber, "UserLoggedIn", userData.Locale, [], cancellationToken);
-            return true;
-        } catch (Exception e) {
-            return e;
+        switch (cr.Message.Value) {
+            case UserLoggedInEvent userLoggedInEvent:
+                await HandleUserLoggedIn(userLoggedInEvent, cancellationToken);
+                break;
+            default:
+                throw new GraphQLException($"Unknown UserAuthentication event type: {cr.Message.Value?.GetType().FullName ?? "null"}");
         }
+    }
+
+    private async Task HandleUserLoggedIn(UserLoggedInEvent userData, CancellationToken cancellationToken) {
+        throw new Exception("Simulated Notification Service outage");
+        await notificationProducer.ProduceSendSms(userData.PhoneNumber, "UserLoggedIn", userData.Locale, [], cancellationToken);
     }
 }

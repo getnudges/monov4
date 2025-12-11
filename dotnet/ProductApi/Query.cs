@@ -7,13 +7,26 @@ using ProductApi.Models;
 namespace ProductApi;
 
 public class Query {
+    public async ValueTask<Plan?> GetPlan(ProductDbContext context, int? id, CancellationToken cancellationToken) {
+        // TODO: make id non-nullable
+        try {
+            var plan = await context.Plans
+                .Include(p => p.PriceTiers)
+                .Include(p => p.PlanFeature)
+                .FirstOrDefaultAsync(p => p.Id == id, cancellationToken);
+            return plan;
+        } catch (Exception ex) {
+            Console.WriteLine(ex.Message);
+            return null;
+        }
+    }
     /// <summary>
     /// Return a plan by id. If the id is null, return null.
     /// </summary>
     /// <remarks>
     /// This nullablility feels gross, but it makes the schema easier to work with. I'm not sure if there's a better way to do this.
     /// </remarks>
-    public async ValueTask<Plan?> GetPlan(ProductDbContext context, int? id, CancellationToken cancellationToken) {
+    public async ValueTask<Plan?> GetPlanById(ProductDbContext context, int? id, CancellationToken cancellationToken) {
         // TODO: make id non-nullable
         try {
             var plan = await context.Plans
@@ -97,6 +110,10 @@ public sealed class QueryObjectType : ObjectType<Query> {
         descriptor.Field(f => f.GetPlan(default!, default!, default!))
             .Authorize(ClaimValues.Roles.Admin, ClaimValues.Roles.Client)
             .Argument("id", a => a.Type<IdType>().ID(nameof(Plan)))
+            .Type<PlanType>();
+        descriptor.Field(f => f.GetPlanById(default!, default!, default!))
+            .Authorize(ClaimValues.Roles.Admin, ClaimValues.Roles.Service)
+            .Argument("id", a => a.Type<NonNullType<IntType>>())
             .Type<PlanType>();
         descriptor.Field(f => f.GetPlans(default!, default))
             .Authorize(ClaimValues.Roles.Admin, ClaimValues.Roles.Client)

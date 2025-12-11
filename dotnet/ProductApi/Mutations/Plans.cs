@@ -1,9 +1,7 @@
 using System.Diagnostics;
 using HotChocolate.Authorization;
 using HotChocolate.Subscriptions;
-using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Nudges.Auth;
 using Nudges.Data.Products;
 using Nudges.Data.Products.Models;
@@ -122,7 +120,6 @@ public partial class Mutation {
                                                                 CancellationToken cancellationToken) {
 
         using var activity = ActivitySource.StartActivity(nameof(CreatePlanSubscription), ActivityKind.Server, httpContext.Request.GetActivityContext());
-        activity?.Start();
 
         var priceTier = await context.PriceTiers.Include(t => t.Plan).FirstOrDefaultAsync(pt => pt.ForeignServiceId == input.PriceTierForeignServiceId, cancellationToken)
             ?? throw new PlanCreationException($"Price tier with PriceTierForeignServiceId {input.PriceTierForeignServiceId} not found");
@@ -168,7 +165,9 @@ public partial class Mutation {
                                        UpdatePlanInput input,
                                        KafkaMessageProducer<PlanEventKey, PlanChangeEvent> productProducer,
                                        KafkaMessageProducer<PriceTierEventKey, PriceTierChangeEvent> priceTierEventProducer,
+                                       HttpContext httpContext,
                                        CancellationToken cancellationToken) {
+        using var activity = ActivitySource.StartActivity(nameof(UpdatePlan), ActivityKind.Server, httpContext.Request.GetActivityContext());
 
         var plan = await context.Plans.FindAsync([input.Id], cancellationToken)
             ?? throw new PlanNotFoundException(input.Id);
@@ -200,6 +199,8 @@ public partial class Mutation {
             await context.SaveChangesAsync(cancellationToken);
         } catch (Exception ex) {
             logger.LogException(ex);
+            activity?.AddException(ex);
+            activity?.SetStatus(ActivityStatusCode.Error, ex.GetBaseException().Message);
             throw new PlanUpdateException(plan.Id, ex.InnerException?.Message ?? ex.Message);
         }
 
@@ -233,7 +234,6 @@ public partial class Mutation {
                                       CancellationToken cancellationToken) {
 
         using var activity = ActivitySource.StartActivity(nameof(PatchPlan), ActivityKind.Server, httpContext.Request.GetActivityContext());
-        activity?.Start();
 
         var plan = await context.Plans.FindAsync([input.Id], cancellationToken)
             ?? throw new PlanNotFoundException(input.Id);
@@ -269,6 +269,7 @@ public partial class Mutation {
             activity?.SetStatus(ActivityStatusCode.Ok);
         } catch (Exception ex) {
             logger.LogException(ex);
+            activity?.AddException(ex);
             activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
             throw new PlanUpdateException(plan.Id, ex.InnerException?.Message ?? ex.Message);
         }
@@ -358,7 +359,6 @@ public partial class Mutation {
                                             CancellationToken cancellationToken) {
 
         using var activity = ActivitySource.StartActivity(nameof(PatchPriceTier), ActivityKind.Server, httpContext.Request.GetActivityContext());
-        activity?.Start();
         var tier = await context.PriceTiers.FindAsync([input.Id], cancellationToken) ?? throw new PriceTierNotFoundException(input.Id);
 
         tier.Name = input.Name ?? tier.Name;
@@ -375,6 +375,8 @@ public partial class Mutation {
             tier.Plan!.PriceTiers = null!;
         } catch (Exception ex) {
             logger.LogException(ex);
+            activity?.AddException(ex);
+            activity?.SetStatus(ActivityStatusCode.Error, ex.GetDeepestInnerException().Message);
             throw new PriceTierUpdateException(tier.Id, ex.GetDeepestInnerException().Message);
         }
         if (tier.Plan.PriceTiers is not null) {
@@ -525,7 +527,7 @@ public record class PatchPlanInput(int Id,
                                    bool? IsActive);
 public class PatchPlanInputType : InputObjectType<PatchPlanInput> {
     protected override void Configure(IInputObjectTypeDescriptor<PatchPlanInput> descriptor) {
-        descriptor.Field(f => f.Id).Type<NonNullType<IntType>>();
+        descriptor.Field(f => f.Id).ID<Plan>();
         descriptor.Field(f => f.PriceTiers).Type<ListType<NonNullType<PatchPlanPriceTierInputType>>>();
         descriptor.Field(f => f.Features).Type<PatchPlanFeatureInputType>();
     }

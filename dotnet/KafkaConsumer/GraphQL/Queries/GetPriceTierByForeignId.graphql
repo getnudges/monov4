@@ -1,0 +1,5 @@
+query GetPriceTierByForeignId($id: String!) {
+  priceTierByForeignId(id: $id) {
+    id
+  }
+}

@@ -1,4 +1,3 @@
-using Microsoft.Extensions.Hosting;
 using Nudges.Kafka.Middleware;
 
 namespace KafkaConsumer;
