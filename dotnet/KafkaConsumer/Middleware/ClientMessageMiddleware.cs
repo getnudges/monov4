@@ -1,7 +1,6 @@
 using Confluent.Kafka;
 using KafkaConsumer.Services;
 using Microsoft.Extensions.Logging;
-using Monads;
 using Nudges.Kafka;
 using Nudges.Kafka.Events;
 using Nudges.Kafka.Middleware;
@@ -13,53 +12,52 @@ internal class ClientMessageMiddleware(ILogger<ClientMessageMiddleware> logger,
                                        IForeignProductService foreignProductService,
                                        KafkaMessageProducer<NotificationKey, NotificationEvent> notificationProducer) : IMessageMiddleware<ClientKey, ClientEvent> {
     public async Task<MessageContext<ClientKey, ClientEvent>> InvokeAsync(MessageContext<ClientKey, ClientEvent> context, MessageHandler<ClientKey, ClientEvent> next) {
-        var result = await HandleMessageAsync(context.ConsumeResult, context.CancellationToken);
-        result.Match(
-            _ => logger.LogAction($"Message {context.ConsumeResult.Message.Key} handled successfully."),
-            err => logger.LogMessageUhandled(context.ConsumeResult.Message.Key.ToString(), err)); // TODO: handle errors better (maybe retry?)
-        return context;
+        await HandleMessageAsync(context.ConsumeResult, context.CancellationToken);
+        logger.LogAction($"Message {context.ConsumeResult.Message.Key} handled successfully.");
+        return context with { Failure = FailureType.None };
     }
 
-    public async Task<Result<bool, Exception>> HandleMessageAsync(ConsumeResult<ClientKey, ClientEvent> cr, CancellationToken cancellationToken) {
+    public async Task HandleMessageAsync(ConsumeResult<ClientKey, ClientEvent> cr, CancellationToken cancellationToken) {
         logger.LogAction($"Received message {cr.Message.Key}");
-        return await (cr.Message.Value switch {
-            ClientCreatedEvent created => HandleClientCreated(created, cancellationToken),
-            ClientUpdatedEvent updated => HandleClientUpdated(updated, cancellationToken),
-            _ => Result.ExceptionTask(new UnhandledMessageException($"No handler registered for event {cr.Message.Key}.")),
-        });
-    }
 
-    private async Task<Result<bool, Exception>> HandleClientCreated(ClientCreatedEvent data, CancellationToken cancellationToken) {
-        using var client = new DisposableWrapper<INudgesClient>(nudgesClientFactory);
-
-        return await foreignProductService.CreateCustomer(
-            data.Id, data.PhoneNumber, data.Name, cancellationToken).Map(async customerId =>
-                await client.Instance.UpdateClient(new UpdateClientInput {
-                    Id = data.Id,
-                    CustomerId = customerId,
-                }, cancellationToken)).Map(async _ =>
-                    // TODO: include link to the client to set up their Keycloak-based account
-                    await SendSms(data.PhoneNumber, "ClientCreated", data.Locale, [], cancellationToken));
-    }
-
-    private async Task<Result<bool, Exception>> SendSms(string phoneNumber,
-                                                        string resourceKey,
-                                                        string locale,
-                                                        Dictionary<string, string> replacements,
-                                                        CancellationToken cancellationToken) {
-        try {
-            var result = await notificationProducer.ProduceSendSms(phoneNumber, resourceKey, locale, replacements, cancellationToken);
-            return result.Status == PersistenceStatus.Persisted;
-        } catch (Exception e) {
-            return e;
+        switch (cr.Message.Value) {
+            case ClientCreatedEvent created:
+                await HandleClientCreated(created, cancellationToken);
+                break;
+            case ClientUpdatedEvent updated:
+                await HandleClientUpdated(updated, cancellationToken);
+                break;
+            default:
+                throw new UnhandledMessageException($"No handler registered for event {cr.Message.Key}.");
         }
     }
 
-    private Task<Result<bool, Exception>> HandleClientUpdated(ClientUpdatedEvent data, CancellationToken cancellationToken) {
-        //using var client = new DisposableWrapper<INudgesClient>(nudgesClientFactory);
-        //var result = await client.Instance.GetClient.ExecuteAsync(clientId, cancellationToken);
+    private async Task HandleClientCreated(ClientCreatedEvent data, CancellationToken cancellationToken) {
+        using var client = new DisposableWrapper<INudgesClient>(nudgesClientFactory);
 
+        var customerId = await foreignProductService.CreateCustomer(data.Id, data.PhoneNumber, data.Name, cancellationToken);
+
+        await client.Instance.UpdateClient(new UpdateClientInput {
+            Id = data.Id,
+            CustomerId = customerId,
+        }, cancellationToken);
+
+        await SendSms(data.PhoneNumber, "ClientCreated", data.Locale, [], cancellationToken);
+    }
+
+    private async Task SendSms(string phoneNumber,
+                               string resourceKey,
+                               string locale,
+                               Dictionary<string, string> replacements,
+                               CancellationToken cancellationToken) {
+        var result = await notificationProducer.ProduceSendSms(phoneNumber, resourceKey, locale, replacements, cancellationToken);
+        if (result.Status != PersistenceStatus.Persisted) {
+            throw new Exception($"Failed to send SMS to {phoneNumber}");
+        }
+    }
+
+    private Task HandleClientUpdated(ClientUpdatedEvent data, CancellationToken cancellationToken) {
         // TODO: send off a notification about the updated data
-        return Result.SuccessTask<bool, Exception>(true);
+        return Task.CompletedTask;
     }
 }

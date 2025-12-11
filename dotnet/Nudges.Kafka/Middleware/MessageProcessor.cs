@@ -8,7 +8,8 @@ public record MessageContext<TKey, TValue>(
     ConsumeResult<TKey, TValue> ConsumeResult,
     CancellationToken CancellationToken,
     int AttemptCount = 0,
-    FailureType Failure = FailureType.None);
+    FailureType Failure = FailureType.None,
+    Exception? Exception = null);
 
 public enum FailureType {
     None,           // No failure, message processed successfully
@@ -20,14 +21,19 @@ public enum FailureType {
 
 
 public delegate Task<MessageContext<TKey, TValue>> MessageHandler<TKey, TValue>(MessageContext<TKey, TValue> context);
+public delegate Task DlqHandler<TKey, TValue>(ConsumeResult<TKey, TValue> consumeResult, MessageContext<TKey, TValue> context);
 
 public sealed class MessageProcessor<TKey, TValue>(
     IAsyncConsumer<TKey, TValue> consumer,
-    IEnumerable<IMessageMiddleware<TKey, TValue>> middlewares)
+    IEnumerable<IMessageMiddleware<TKey, TValue>> middlewares,
+    int maxRetryAttempts = 5,
+    DlqHandler<TKey, TValue>? dlqHandler = null)
     : IMessageProcessor<TKey, TValue>, IAsyncDisposable {
 
-    // How many times we’re willing to retry before giving up
-    private const int MaxRetryAttempts = 5;
+    // How many times we're willing to retry before giving up
+    private readonly int _maxRetryAttempts = maxRetryAttempts;
+    private readonly DlqHandler<TKey, TValue>? _dlqHandler = dlqHandler;
+
     private async IAsyncEnumerable<ConsumeResult<TKey, TValue>> ReadMessagesAsync(
         [EnumeratorCancellation] CancellationToken cancellationToken) {
 
@@ -63,7 +69,7 @@ public sealed class MessageProcessor<TKey, TValue>(
 
                 // Transient/DependencyDown that exhausted retries
                 default:
-                    if (context.AttemptCount >= MaxRetryAttempts) {
+                    if (context.AttemptCount >= _maxRetryAttempts) {
                         RouteToDlq(cr, context);
                         consumer.Commit(cr);
                     }
@@ -86,13 +92,22 @@ public sealed class MessageProcessor<TKey, TValue>(
         return await next(context);
     }
 
-    private void RouteToDlq(ConsumeResult<TKey, TValue> cr, MessageContext<TKey, TValue> ctx) {
-        //Debugger.Break();
-        // TODO: real DLQ implementation
-        // This is where you'd:
-        //  - publish to a DLQ topic
-        //  - log payload and error details
-        //  - tag in OTEL as a DLQ event
+    private async void RouteToDlq(ConsumeResult<TKey, TValue> cr, MessageContext<TKey, TValue> ctx) {
+        if (_dlqHandler is null) {
+            // No DLQ configured - just return
+            return;
+        }
+
+        try {
+            await _dlqHandler(cr, ctx);
+
+            // Tag in OpenTelemetry
+            Activity.Current?.SetTag("message.routed_to_dlq", true);
+        } catch (Exception ex) {
+            // DLQ routing failed - log but don't throw (we still need to commit the message)
+            Activity.Current?.AddException(ex);
+            Activity.Current?.SetTag("dlq.routing_failed", true);
+        }
     }
 
     public void Dispose() => consumer.Close();

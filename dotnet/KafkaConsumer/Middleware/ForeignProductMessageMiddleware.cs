@@ -1,7 +1,6 @@
 using Confluent.Kafka;
 using KafkaConsumer.Services;
 using Microsoft.Extensions.Logging;
-using Monads;
 using Nudges.Kafka.Events;
 using Nudges.Kafka.Middleware;
 
@@ -12,36 +11,33 @@ internal class ForeignProductMessageMiddleware(ILogger<ForeignProductMessageMidd
     : IMessageMiddleware<ForeignProductEventKey, ForeignProductEvent> {
 
     public async Task<MessageContext<ForeignProductEventKey, ForeignProductEvent>> InvokeAsync(MessageContext<ForeignProductEventKey, ForeignProductEvent> context, MessageHandler<ForeignProductEventKey, ForeignProductEvent> next) {
-        var result = await HandleMessageAsync(context.ConsumeResult, context.CancellationToken);
-        result.Match(
-            _ => logger.LogMessageHandled(context.ConsumeResult.Message.Key),
-            err => logger.LogMessageUhandled(context.ConsumeResult.Message.Key, err));
-        return context;
+        await HandleMessageAsync(context.ConsumeResult, context.CancellationToken);
+        logger.LogMessageHandled(context.ConsumeResult.Message.Key);
+        return context with { Failure = FailureType.None };
     }
 
-    public async Task<Result<bool, Exception>> HandleMessageAsync(ConsumeResult<ForeignProductEventKey, ForeignProductEvent> cr, CancellationToken cancellationToken) {
+    public async Task HandleMessageAsync(ConsumeResult<ForeignProductEventKey, ForeignProductEvent> cr, CancellationToken cancellationToken) {
         logger.LogMessageReceived(cr.Message.Key);
-        return await (cr.Message.Value switch {
-            ForeignProductCreatedEvent created =>
-                HandleForeignProductCreated(created, cancellationToken),
-            ForeignProductSynchronizedEvent synced =>
-                HandleForeignProductSynchronized(synced, cancellationToken),
-            _ => Result.ExceptionTask(new UnhandledMessageException($"No handler registered for event {cr.Message.Key}.")),
-        });
+        switch (cr.Message.Value) {
+            case ForeignProductCreatedEvent created:
+                await HandleForeignProductCreated(created, cancellationToken);
+                break;
+            case ForeignProductSynchronizedEvent synced:
+                await HandleForeignProductSynchronized(synced, cancellationToken);
+                break;
+            default:
+                throw new UnhandledMessageException($"No handler registered for event {cr.Message.Key}.");
+        }
     }
 
-    private async Task<Result<bool, Exception>> HandleForeignProductCreated(ForeignProductCreatedEvent createdEvent, CancellationToken cancellationToken) {
-
+    private async Task HandleForeignProductCreated(ForeignProductCreatedEvent createdEvent, CancellationToken cancellationToken) {
         using var client = new DisposableWrapper<INudgesClient>(nudgesClientFactory);
-
-        return await client.Instance.CreatePlan(createdEvent.ToCreatePlanInput(), cancellationToken);
+        await client.Instance.CreatePlan(createdEvent.ToCreatePlanInput(), cancellationToken);
     }
 
-    private async Task<Result<bool, Exception>> HandleForeignProductSynchronized(ForeignProductSynchronizedEvent syncEvent, CancellationToken cancellationToken) {
-
+    private async Task HandleForeignProductSynchronized(ForeignProductSynchronizedEvent syncEvent, CancellationToken cancellationToken) {
         using var client = new DisposableWrapper<INudgesClient>(nudgesClientFactory);
-
-        return await client.Instance.PatchPlan(syncEvent.ToPatchPlanInput(), cancellationToken);
+        await client.Instance.PatchPlan(syncEvent.ToPatchPlanInput(), cancellationToken);
     }
 }
 

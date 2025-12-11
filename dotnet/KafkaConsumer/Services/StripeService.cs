@@ -17,7 +17,7 @@ internal class StripeService(IStripeClient stripeClient, ILogger<StripeService> 
     private readonly PaymentIntentService _paymentService = new(stripeClient);
     private readonly CustomerService _customerService = new(stripeClient);
 
-    public async Task<Result<string, Exception>> CreateCustomer(Guid id, string phone, string name, CancellationToken cancellationToken) {
+    public async Task<string> CreateCustomer(Guid id, string phone, string name, CancellationToken cancellationToken) {
         try {
             var newCustomer = await _customerService.CreateAsync(new CustomerCreateOptions {
                 Name = name,
@@ -29,7 +29,7 @@ internal class StripeService(IStripeClient stripeClient, ILogger<StripeService> 
             return newCustomer.Id;
         } catch (Exception ex) {
             logger.LogCustomerCreationFailed(ex);
-            return ex;
+            throw new ProductCreationException("Failed to create customer", ex);
         }
     }
 
@@ -48,50 +48,8 @@ internal class StripeService(IStripeClient stripeClient, ILogger<StripeService> 
         }
     }
 
-    public async Task<Result<string, Exception>> DeleteProduct(string priceTierId, CancellationToken cancellationToken) {
-        try {
-            var existing = await _productService.DeleteAsync(priceTierId, cancellationToken: cancellationToken);
-            return existing.Id;
-        } catch (StripeException e) {
-            logger.LogPriceTierDeleteFailed(priceTierId, e);
-            return e;
-        }
-    }
-
-    public async Task<Result<bool, Exception>> VerifyPayment(string paymentIntentId, CancellationToken cancellationToken) {
-
-        try {
-            var existing = await _paymentService.GetAsync(paymentIntentId, cancellationToken: cancellationToken);
-            return string.IsNullOrEmpty(existing.Id);
-        } catch (Exception e) {
-            logger.LogException(e);
-            return e;
-        }
-    }
-
-    public async Task<Result<string, PriceTierCreationError>> CreateForeignPrice(Nudges.Contracts.Products.PriceTier tier, CancellationToken cancellationToken) {
-        using var activity = ActivitySource.StartActivity(nameof(CreateForeignPrice), ActivityKind.Internal, Activity.Current?.Context ?? default);
-        activity?.SetTag("priceTierId", tier.Id);
-        activity?.Start();
-        try {
-            var price = await _priceService.CreateAsync(tier.ToShopifyPriceCreateOptions(""), cancellationToken: cancellationToken);
-            if (price is not null) {
-                activity?.SetTag("foreignServiceId", price.Id);
-                activity?.SetStatus(ActivityStatusCode.Ok);
-                return price.Id;
-            } else {
-                return new PriceTierCreationError("No product returned");
-            }
-        } catch (Exception ex) {
-            activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
-            activity?.AddException(ex);
-            return new PriceTierCreationError(ex.Message, ex);
-        }
-    }
-
-    public async Task<Result<string, ProductCreationError>> CreateForeignProduct(ProductCreateOptions plan, CancellationToken cancellationToken) {
+    public async Task<string> CreateForeignProduct(ProductCreateOptions plan, CancellationToken cancellationToken) {
         using var activity = ActivitySource.StartActivity(nameof(CreateForeignProduct), ActivityKind.Client, Activity.Current?.Context ?? default);
-        //activity?.SetTag("plan.id", plan.Id);
         try {
             var sw = Stopwatch.StartNew();
             var product = await _productService.CreateAsync(plan, new RequestOptions {
@@ -102,7 +60,7 @@ internal class StripeService(IStripeClient stripeClient, ILogger<StripeService> 
             if (product is null) {
                 activity?.SetStatus(ActivityStatusCode.Error, "No product returned");
                 logger.LogNoProductReturned();
-                return new ProductCreationError("No product returned");
+                throw new ProductCreationException("No product returned from Stripe");
             } else {
                 activity?.SetTag("product.id", product.Id);
                 activity?.SetStatus(ActivityStatusCode.Ok);
@@ -113,70 +71,103 @@ internal class StripeService(IStripeClient stripeClient, ILogger<StripeService> 
             activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
             activity?.AddException(ex);
             logger.LogProductCreatedException(ex);
-            return new ProductCreationError(ex.Message, ex);
+            throw new ProductCreationException(ex.Message, ex);
         }
     }
 
-    public async Task<Result<bool, PriceTierUpdateError>> UpdateForeignPrice(Nudges.Contracts.Products.PriceTier tier, CancellationToken cancellationToken) {
+    public async Task<string> CreateForeignPrice(Nudges.Contracts.Products.PriceTier tier, CancellationToken cancellationToken) {
+        using var activity = ActivitySource.StartActivity(nameof(CreateForeignPrice), ActivityKind.Internal, Activity.Current?.Context ?? default);
+        activity?.SetTag("priceTierId", tier.Id);
+        activity?.Start();
+        try {
+            var price = await _priceService.CreateAsync(tier.ToShopifyPriceCreateOptions(""), cancellationToken: cancellationToken);
+            if (price is not null) {
+                activity?.SetTag("foreignServiceId", price.Id);
+                activity?.SetStatus(ActivityStatusCode.Ok);
+                return price.Id;
+            } else {
+                throw new PriceTierCreationException("No price returned from Stripe");
+            }
+        } catch (Exception ex) {
+            activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
+            activity?.AddException(ex);
+            throw new PriceTierCreationException(ex.Message, ex);
+        }
+    }
+
+    public async Task UpdateForeignPrice(Nudges.Contracts.Products.PriceTier tier, CancellationToken cancellationToken) {
         using var activity = ActivitySource.StartActivity(nameof(UpdateForeignPrice), ActivityKind.Client, Activity.Current?.Context ?? default);
         activity?.SetTag("priceTierId", tier.Id);
 
         try {
             var price = await _priceService.UpdateAsync(tier.ForeignServiceId, tier.ToShopifyPriceUpdateOptions(), cancellationToken: cancellationToken);
             if (price is null) {
-                return new PriceTierUpdateError("No product returned");
+                throw new PriceTierUpdateException("No price returned from Stripe");
             } else {
                 activity?.SetStatus(ActivityStatusCode.Ok);
-                return true;
+                return;
             }
         } catch (Exception ex) {
             activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
             activity?.AddException(ex);
-            return new PriceTierUpdateError(ex.Message, ex);
+            throw new PriceTierUpdateException(ex.Message, ex);
         }
     }
 
-    public async Task<Result<bool, ProductUpdateError>> UpdateForeignProduct(Nudges.Contracts.Products.Plan plan, CancellationToken cancellationToken) {
+    public async Task UpdateForeignProduct(Nudges.Contracts.Products.Plan plan, CancellationToken cancellationToken) {
         try {
             var product = await _productService.UpdateAsync(plan.ForeignServiceId, plan.ToShopifyProductUpdateOptions(), new RequestOptions {
                 IdempotencyKey = Activity.Current?.Id,
             }, cancellationToken);
             if (product is null) {
-                return new ProductUpdateError("No product returned");
+                throw new ProductUpdateException("No product returned from Stripe");
             } else {
-                return true;
+                return;
             }
         } catch (StripeException ex) {
-            return new ProductUpdateError(ex.Message, ex);
+            throw new ProductUpdateException(ex.Message, ex);
         }
     }
 
-    public async Task<Result<bool, ProductDeleteError>> DeleteForeignProduct(string id, CancellationToken cancellationToken) {
+    public async Task DeleteForeignProduct(string id, CancellationToken cancellationToken) {
         try {
             var product = await _productService.DeleteAsync(id, cancellationToken: cancellationToken);
-            return product is null
-                ? new ProductDeleteError("No product returned")
-                : true;
+            if (product is null) {
+                throw new ProductDeleteException("No product returned from Stripe");
+            }
+            return;
         } catch (StripeException ex) {
-            return ex.HttpStatusCode is System.Net.HttpStatusCode.NotFound
-                ? true
-                : new ProductDeleteError(ex.Message, ex);
+            if (ex.HttpStatusCode is System.Net.HttpStatusCode.NotFound) {
+                return;
+            }
+            throw new ProductDeleteException(ex.Message, ex);
         }
     }
 
-    public async Task<Result<bool, PriceTierDeleteError>> DeleteForeignPrice(string id, CancellationToken cancellationToken) {
-        // https://github.com/stripe/stripe-python/issues/658#issuecomment-634106645
+    public async Task DeleteForeignPrice(string id, CancellationToken cancellationToken) {
         try {
             var price = await _priceService.UpdateAsync(id, new PriceUpdateOptions {
                 Active = false,
             }, new RequestOptions(), cancellationToken);
-            return price is null
-                ? new PriceTierDeleteError("No price returned")
-                : true;
+            if (price is null) {
+                throw new PriceTierDeleteException("No price returned from Stripe");
+            }
+            return;
         } catch (StripeException e) {
-            return e.HttpStatusCode is System.Net.HttpStatusCode.NotFound
-                ? true
-                : new PriceTierDeleteError(e.Message, e);
+            if (e.HttpStatusCode is System.Net.HttpStatusCode.NotFound) {
+                return;
+            }
+            throw new PriceTierDeleteException(e.Message, e);
+        }
+    }
+
+    public async Task<bool> VerifyPayment(string paymentIntentId, CancellationToken cancellationToken) {
+        try {
+            var existing = await _paymentService.GetAsync(paymentIntentId, cancellationToken: cancellationToken);
+            return string.IsNullOrEmpty(existing.Id);
+        } catch (Exception e) {
+            logger.LogException(e);
+            throw;
         }
     }
 }

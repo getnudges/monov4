@@ -132,7 +132,12 @@ internal static class HandlerBuilders {
                             Topics.UserAuthentication,
                             sp.GetRequiredService<IOptions<KafkaSettings>>().Value.BrokerList,
                             cancellationToken: sp.GetRequiredService<IHostApplicationLifetime>().ApplicationStopping)
-                        .Use(new TracingMiddleware<UserAuthenticationEventKey, UserAuthenticationEvent>())
+                        .UseCircuitBreaker(TimeProvider.System)
+                        .UseRetry(TimeProvider.System)
+                        .UseTracing()
+                        .UseErrorHandling(sp.GetRequiredService<ILogger<ErrorHandlingMiddleware<UserAuthenticationEventKey, UserAuthenticationEvent>>>())
+                        .UseDlq(DlqHelper.CreateDlqHandler<UserAuthenticationEventKey, UserAuthenticationEvent>(
+                            sp.GetRequiredService<KafkaMessageProducer<DeadLetterEventKey, DeadLetterEvent>>()))
                         .Use(sp.GetRequiredService<IMessageMiddleware<UserAuthenticationEventKey, UserAuthenticationEvent>>())
                         .Build());
 

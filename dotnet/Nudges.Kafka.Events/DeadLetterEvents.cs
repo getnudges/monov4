@@ -1,4 +1,5 @@
 using Confluent.Kafka;
+using Nudges.Kafka.Middleware;
 
 namespace Nudges.Kafka.Events;
 
@@ -21,17 +22,41 @@ public sealed record DeadLetterEventKey {
 
 [EventModel(typeof(DeadLetterEventKey))]
 public sealed class DeadLetterEvent {
-    public required Exception Exception { get; init; }
+    // Exception details (structured)
+    public required string ExceptionType { get; init; }
+    public required string ExceptionMessage { get; init; }
+    public string? StackTrace { get; init; }
+    public string? InnerExceptionType { get; init; }
+    public string? InnerExceptionMessage { get; init; }
+    public string? InnerExceptionStackTrace { get; init; }
+
+    // Original message context
     public required string Topic { get; init; }
-    public DateTimeOffset Timestamp { get; init; } = DateTimeOffset.UtcNow;
     public required EventKey EventKey { get; init; }
+    public DateTimeOffset Timestamp { get; init; } = DateTimeOffset.UtcNow;
+
+    // Original message payload (for replay)
+    public string? OriginalKeyJson { get; init; }
+    public string? OriginalValueJson { get; init; }
+
+    // Headers (including trace context)
+    public Dictionary<string, string>? OriginalHeaders { get; init; }
+
+    // Additional metadata
+    public int AttemptCount { get; init; }
+    public FailureType FailureType { get; init; }
 
     public static (DeadLetterEventKey, DeadLetterEvent) MessageFailed(string topic, EventKey failedKey, Exception exception) {
         var key = DeadLetterEventKey.MessageFailed(failedKey);
         var evt = new DeadLetterEvent {
             EventKey = key.EventKey,
             Topic = topic,
-            Exception = exception
+            ExceptionType = exception.GetType().FullName ?? exception.GetType().Name,
+            ExceptionMessage = exception.Message,
+            StackTrace = exception.StackTrace,
+            InnerExceptionType = exception.InnerException?.GetType().FullName,
+            InnerExceptionMessage = exception.InnerException?.Message,
+            InnerExceptionStackTrace = exception.InnerException?.StackTrace,
         };
         return (key, evt);
     }
