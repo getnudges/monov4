@@ -1,0 +1,12 @@
+mutation DeletePriceTier($input: DeletePriceTierInput!) {
+  deletePriceTier(input: $input) {
+    errors {
+      ... on Error {
+        message
+      }
+    }
+    plan {
+      id
+    }
+  }
+}

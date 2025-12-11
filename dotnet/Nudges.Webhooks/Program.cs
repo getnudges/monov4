@@ -74,6 +74,10 @@ builder.Services.AddSingleton<KafkaMessageProducer<ForeignProductEventKey, Forei
     new ForeignProductEventProducer(Topics.ForeignProducts, new ProducerConfig {
         BootstrapServers = settings.Kafka.BrokerList
     }));
+builder.Services.AddSingleton<KafkaMessageProducer<StripeWebhookKey, StripeWebhookEvent>>(sp =>
+    new StripeWebhookEventProducer(Topics.StripeWebhooks, new ProducerConfig {
+        BootstrapServers = settings.Kafka.BrokerList
+    }));
 
 // configure Stripe client
 builder.Services.AddSingleton<IStripeClient>(s =>

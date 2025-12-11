@@ -1,7 +1,6 @@
 using System.Diagnostics;
 using System.Globalization;
 using HotChocolate.Utilities;
-using Microsoft.Extensions.Logging;
 using Monads;
 using Nudges.Kafka.Events;
 using Nudges.Models;

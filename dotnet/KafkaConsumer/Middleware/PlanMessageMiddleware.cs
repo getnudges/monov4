@@ -1,7 +1,6 @@
 using Confluent.Kafka;
 using KafkaConsumer.GraphQL;
 using KafkaConsumer.Services;
-using Microsoft.Extensions.Logging;
 using Nudges.Kafka.Events;
 using Nudges.Kafka.Middleware;
 using Stripe;
@@ -45,11 +44,7 @@ internal class PlanMessageMiddleware(ILogger<PlanMessageMiddleware> logger,
     private async Task CreateForeignProduct(ProductCreateOptions plan, CancellationToken cancellationToken) {
         using var client = new DisposableWrapper<INudgesClient>(nudgesClientFactory);
 
-        var productId = await foreignProductService.CreateForeignProduct(plan, cancellationToken);
-
-        if (foreignCreateResult.Error is { } err) {
-            throw err.Exception?.GetBaseException() ?? new GraphQLException(err.Message);
-        }
+        await foreignProductService.CreateForeignProduct(plan, cancellationToken);
         logger.LogPlanCreated(plan.Metadata["planId"]);
 
     }

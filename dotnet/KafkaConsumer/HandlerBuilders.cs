@@ -4,11 +4,6 @@ using KafkaConsumer.Middleware;
 using KafkaConsumer.Notifications;
 using KafkaConsumer.Services;
 using Keycloak.AuthServices.Sdk;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Nudges.Configuration;
 using Nudges.Configuration.Extensions;
@@ -236,5 +231,31 @@ internal static class HandlerBuilders {
                         .Build());
 
                 services.AddHostedService<MessageHandlerService<PriceTierEventKey, PriceTierChangeEvent>>();
+            });
+
+    public static IHostBuilder ConfigureStripeWebhookEventHandler(this IHostBuilder builder) =>
+        builder
+            .ConfigureServices(static (hostContext, services) => {
+                services.AddSingleton<KafkaMessageProducer<ForeignProductEventKey, ForeignProductEvent>>(static sp =>
+                    new ForeignProductEventProducer(Topics.ForeignProducts, new ProducerConfig {
+                        BootstrapServers = sp.GetRequiredService<IOptions<KafkaSettings>>().Value.BrokerList,
+                        AllowAutoCreateTopics = true,
+                    }));
+
+                services.AddTransient<IMessageMiddleware<StripeWebhookKey, StripeWebhookEvent>, StripeWebhookMessageMiddleware>();
+                services.AddTransient(static sp =>
+                    KafkaMessageProcessorBuilder
+                        .For<StripeWebhookKey, StripeWebhookEvent>(
+                            Topics.StripeWebhooks,
+                            sp.GetRequiredService<IOptions<KafkaSettings>>().Value.BrokerList,
+                            cancellationToken: sp.GetRequiredService<IHostApplicationLifetime>().ApplicationStopping)
+                        .UseCircuitBreaker(TimeProvider.System)
+                        .UseRetry(TimeProvider.System)
+                        .UseTracing()
+                        .UseErrorHandling(sp.GetRequiredService<ILogger<ErrorHandlingMiddleware<StripeWebhookKey, StripeWebhookEvent>>>())
+                        .Use(sp.GetRequiredService<IMessageMiddleware<StripeWebhookKey, StripeWebhookEvent>>())
+                        .Build());
+
+                services.AddHostedService<MessageHandlerService<StripeWebhookKey, StripeWebhookEvent>>();
             });
 }

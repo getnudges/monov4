@@ -1,6 +1,5 @@
 using Confluent.Kafka;
 using KafkaConsumer.Services;
-using Microsoft.Extensions.Logging;
 using Nudges.Kafka.Events;
 using Nudges.Kafka.Middleware;
 
@@ -37,7 +36,8 @@ internal class ForeignProductMessageMiddleware(ILogger<ForeignProductMessageMidd
 
     private async Task HandleForeignProductSynchronized(ForeignProductSynchronizedEvent syncEvent, CancellationToken cancellationToken) {
         using var client = new DisposableWrapper<INudgesClient>(nudgesClientFactory);
-        await client.Instance.PatchPlan(syncEvent.ToPatchPlanInput(), cancellationToken);
+        var input = syncEvent.ToPatchPlanInput();
+        await client.Instance.PatchPlan(input, cancellationToken);
     }
 }
 
@@ -53,7 +53,7 @@ public static class EventMappingExtensions {
 
     public static PatchPlanInput ToPatchPlanInput(this ForeignProductSynchronizedEvent @event) =>
         new() {
-            Id = @event.PlanId,
+            Id = @event.PlanNodeId,
             ForeignServiceId = @event.ForeignProductId,
             Name = @event.Name,
             Description = @event.Description,

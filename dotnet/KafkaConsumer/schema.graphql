@@ -42,11 +42,12 @@ type CheckoutSessionError implements Error {
 type Client implements Node {
   customerId: String
   id: ID!
-  locale: String @cost(weight: "10")
+  locale: String! @cost(weight: "10")
   name: String!
-  phoneNumberHash: String @cost(weight: "10")
+  phoneNumberHash: String! @cost(weight: "10")
   slug: String!
   subscriberCount: Int! @cost(weight: "10")
+  subscribers("Returns the elements in the list that come after the specified cursor." after: String "Returns the elements in the list that come before the specified cursor." before: String "Returns the first _n_ elements from the list." first: Int "Returns the last _n_ elements from the list." last: Int order: [SubscriberSortInput!] @cost(weight: "10") where: SubscriberFilterInput @cost(weight: "10")): SubscribersConnection @listSize(assumedSize: 50, slicingArguments: [ "first", "last" ], slicingArgumentDefaultValue: 10, sizedFields: [ "edges", "nodes" ], requireOneSlicingArgument: false)
   subscription: PlanSubscription @cost(weight: "10")
   subscriptionId: ID @cost(weight: "10")
 }
@@ -403,6 +404,7 @@ type Query {
   paymentConfirmationByCode(confirmationCode: String!): PaymentConfirmation @authorize(roles: [ "admin" ]) @cost(weight: "10")
   plan(id: ID): Plan @authorize(roles: [ "admin", "client" ]) @cost(weight: "10")
   planByForeignId(id: String!): Plan @authorize(roles: [ "admin", "service" ]) @cost(weight: "10")
+  planById(id: Int!): Plan @authorize(roles: [ "admin", "service" ]) @cost(weight: "10")
   plans("Returns the elements in the list that come after the specified cursor." after: String "Returns the elements in the list that come before the specified cursor." before: String duration: TimeSpan "Returns the first _n_ elements from the list." first: Int "Returns the last _n_ elements from the list." last: Int order: [PlanSortInput!] @cost(weight: "10") where: PlanFilterInput @cost(weight: "10")): PlansConnection @authorize(roles: [ "admin", "client" ]) @listSize(assumedSize: 50, slicingArguments: [ "first", "last" ], slicingArgumentDefaultValue: 10, sizedFields: [ "edges", "nodes" ], requireOneSlicingArgument: false) @cost(weight: "10")
   planSubscription(id: ID!): PlanSubscription @authorize(roles: [ "admin", "client" ]) @cost(weight: "10")
   planSubscriptionById(id: UUID!): PlanSubscription @authorize(roles: [ "admin", "client" ]) @cost(weight: "10")
@@ -430,6 +432,8 @@ type SubscribeToPlanPayload {
 type Subscriber implements Node {
   clients("Returns the elements in the list that come after the specified cursor." after: String "Returns the elements in the list that come before the specified cursor." before: String "Returns the first _n_ elements from the list." first: Int "Returns the last _n_ elements from the list." last: Int order: [ClientSortInput!] @cost(weight: "10") where: ClientFilterInput @cost(weight: "10")): ClientsConnection @listSize(assumedSize: 50, slicingArguments: [ "first", "last" ], slicingArgumentDefaultValue: 10, sizedFields: [ "edges", "nodes" ], requireOneSlicingArgument: false) @cost(weight: "10")
   id: ID!
+  locale: String! @cost(weight: "10")
+  phoneNumberHash: String! @cost(weight: "10")
   subscriptionCount: Int! @cost(weight: "10")
 }
 
@@ -724,7 +728,7 @@ input DiscountFilterInput {
 }
 
 input EndSubscriptionInput {
-  id: ID!
+  id: UUID!
 }
 
 input IntOperationFilterInput {
@@ -843,7 +847,7 @@ input PatchPlanInput {
   features: PatchPlanFeatureInput
   foreignServiceId: String
   iconUrl: String
-  id: Int!
+  id: ID!
   isActive: Boolean
   name: String
   priceTiers: [PatchPlanPriceTierInput!]
@@ -1005,9 +1009,9 @@ input SubscribeToClientInput {
 }
 
 input SubscribeToPlanInput {
-  clientId: ID!
+  clientId: UUID!
   paymentConfirmationId: UUID!
-  priceTierId: ID!
+  priceTierId: Int!
 }
 
 input SubscriberFilterInput {

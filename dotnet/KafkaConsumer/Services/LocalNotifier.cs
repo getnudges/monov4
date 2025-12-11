@@ -1,5 +1,4 @@
 using KafkaConsumer.Services;
-using Microsoft.Extensions.Logging;
 
 namespace KafkaConsumer.Notifications;
 

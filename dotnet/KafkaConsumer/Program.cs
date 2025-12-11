@@ -1,13 +1,6 @@
 using System.CommandLine;
-using System.Net.Http.Headers;
 using KafkaConsumer;
 using KafkaConsumer.Services;
-using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Nudges.Auth;
 using Nudges.Configuration;
@@ -28,6 +21,7 @@ var paymentsCmd = new Command(Topics.Payments);
 var clientsCmd = new Command(Topics.Clients);
 var userAuthCmd = new Command(Topics.UserAuthentication);
 var foreignProductCmd = new Command(Topics.ForeignProducts);
+var stripeWebhooksCmd = new Command(Topics.StripeWebhooks);
 
 notificationsCmd.SetAction(r => CreateBaseHost(args, Topics.Notifications).ConfigureNotificationHandler().Build().RunAsync());
 plansCmd.SetAction(r => CreateBaseHost(args, Topics.Plans).ConfigurePlanEventHandler().Build().RunAsync());
@@ -37,6 +31,7 @@ planSubscriptionsCmd.SetAction(r => CreateBaseHost(args, Topics.PlanSubscription
 clientsCmd.SetAction(r => CreateBaseHost(args, Topics.Clients).ConfigureClientHandler().Build().RunAsync());
 userAuthCmd.SetAction(r => CreateBaseHost(args, Topics.UserAuthentication).ConfigureUserAuthenticationHandler().Build().RunAsync());
 foreignProductCmd.SetAction(r => CreateBaseHost(args, Topics.ForeignProducts).ConfigureForeignProductEventHandler().Build().RunAsync());
+stripeWebhooksCmd.SetAction(r => CreateBaseHost(args, Topics.StripeWebhooks).ConfigureStripeWebhookEventHandler().Build().RunAsync());
 
 var rootCommand = new RootCommand {
     notificationsCmd,
@@ -47,6 +42,7 @@ var rootCommand = new RootCommand {
     clientsCmd,
     userAuthCmd,
     foreignProductCmd,
+    stripeWebhooksCmd,
 };
 await rootCommand.Parse(args).InvokeAsync();
 

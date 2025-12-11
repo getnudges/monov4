@@ -1,0 +1,10 @@
+query GetPlanById($id: Int!) {
+  planById(id: $id) {
+    id
+    foreignServiceId
+    priceTiers {
+      id
+      foreignServiceId
+    }
+  }
+}

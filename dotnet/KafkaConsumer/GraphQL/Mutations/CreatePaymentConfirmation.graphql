@@ -1,0 +1,7 @@
+mutation CreatePaymentConfirmation($input: CreatePaymentConfirmationInput!) {
+  createPaymentConfirmation(input: $input) {
+    paymentConfirmation {
+      paymentConfirmationId
+    }
+  }
+}

@@ -1,4 +1,3 @@
-using Microsoft.Extensions.Logging;
 using Nudges.Kafka.Events;
 using Stripe;
 

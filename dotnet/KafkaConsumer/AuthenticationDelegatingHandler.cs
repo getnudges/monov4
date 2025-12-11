@@ -1,5 +1,4 @@
 using System.Net.Http.Headers;
-using Microsoft.AspNetCore.Http;
 using Nudges.Auth;
 using Precision.WarpCache;
 
