@@ -70,6 +70,7 @@ curl -sSf @headers http://localhost:5145/user-api -d "http://host.docker.interna
 curl -sSf @headers http://localhost:5145/product-api -d "http://host.docker.internal:5200/graphql"
 curl -sSf @headers http://localhost:5145/payment-api -d "http://host.docker.internal:5400/graphql"
 
+# fail if the gateway can't build/run
 Invoke-CommandLine { docker compose up -d graphql-gateway }
 
 # setup the UIs
