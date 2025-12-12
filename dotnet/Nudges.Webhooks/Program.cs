@@ -265,11 +265,16 @@ internal partial class Program {
     /// <summary>
     /// Retry policy that works with Result-based error handling.
     /// Retries on server errors (500+) and exceptions, but not on client errors (400-499).
+    /// 
+    /// Note: HandleInner<Exception>() is intentionally broad because:
+    /// - Handlers catch and wrap most exceptions in Result types (returns 500 for retryable errors, 400 for permanent errors)
+    /// - Only uncaught exceptions are transient infrastructure failures (network, Kafka, etc.)
+    /// - Permanent failures (validation, business logic) are already handled and return 400 (no retry)
     /// </summary>
     private static readonly ResiliencePipeline<IResult> ResultAwareRetryPolicy = new ResiliencePipelineBuilder<IResult>()
         .AddRetry(new RetryStrategyOptions<IResult> {
             ShouldHandle = new PredicateBuilder<IResult>()
-                // Retry on exceptions
+                // Retry on uncaught exceptions (typically transient infrastructure failures)
                 .HandleInner<Exception>()
                 // Retry on IResult that represents a server error (5xx status code)
                 .HandleResult(result => result is IStatusCodeHttpResult statusResult &&
