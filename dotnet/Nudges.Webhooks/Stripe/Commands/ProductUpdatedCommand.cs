@@ -1,4 +1,3 @@
-using System.Globalization;
 using Monads;
 using Nudges.Kafka;
 using Nudges.Kafka.Events;

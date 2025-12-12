@@ -193,23 +193,6 @@ internal static class HandlerBuilders {
                 services.AddHostedService<MessageHandlerService<PlanEventKey, PlanChangeEvent>>();
             });
 
-    public static IHostBuilder ConfigureForeignProductEventHandler(this IHostBuilder builder) =>
-        builder
-            .ConfigureServices(static (hostContext, services) => {
-                services.AddTransient<IMessageMiddleware<ForeignProductEventKey, ForeignProductEvent>, ForeignProductMessageMiddleware>();
-                services.AddTransient(static sp =>
-                    KafkaMessageProcessorBuilder
-                        .For<ForeignProductEventKey, ForeignProductEvent>(
-                            Topics.ForeignProducts,
-                            sp.GetRequiredService<IOptions<KafkaSettings>>().Value.BrokerList,
-                            cancellationToken: sp.GetRequiredService<IHostApplicationLifetime>().ApplicationStopping)
-                        .Use(new TracingMiddleware<ForeignProductEventKey, ForeignProductEvent>())
-                        .Use(sp.GetRequiredService<IMessageMiddleware<ForeignProductEventKey, ForeignProductEvent>>())
-                        .Build());
-
-                services.AddHostedService<MessageHandlerService<ForeignProductEventKey, ForeignProductEvent>>();
-            });
-
     public static IHostBuilder ConfigurePriceTierEventHandler(this IHostBuilder builder) =>
         builder
             .ConfigureServices(static (hostContext, services) => {
@@ -236,12 +219,6 @@ internal static class HandlerBuilders {
     public static IHostBuilder ConfigureStripeWebhookEventHandler(this IHostBuilder builder) =>
         builder
             .ConfigureServices(static (hostContext, services) => {
-                services.AddSingleton<KafkaMessageProducer<ForeignProductEventKey, ForeignProductEvent>>(static sp =>
-                    new ForeignProductEventProducer(Topics.ForeignProducts, new ProducerConfig {
-                        BootstrapServers = sp.GetRequiredService<IOptions<KafkaSettings>>().Value.BrokerList,
-                        AllowAutoCreateTopics = true,
-                    }));
-
                 services.AddTransient<IMessageMiddleware<StripeWebhookKey, StripeWebhookEvent>, StripeWebhookMessageMiddleware>();
                 services.AddTransient(static sp =>
                     KafkaMessageProcessorBuilder

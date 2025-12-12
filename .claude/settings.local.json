@@ -5,7 +5,9 @@
       "Bash(cat:*)",
       "Bash(git fetch:*)",
       "Bash(git rebase:*)",
-      "Bash(dir:*)"
+      "Bash(dir:*)",
+      "Bash(dotnet build:*)",
+      "Bash(dotnet restore:*)"
     ],
     "deny": [],
     "ask": []

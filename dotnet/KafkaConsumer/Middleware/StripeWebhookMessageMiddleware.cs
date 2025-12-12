@@ -1,7 +1,5 @@
-using System.Globalization;
 using Confluent.Kafka;
 using KafkaConsumer.Services;
-using Nudges.Kafka;
 using Nudges.Kafka.Events;
 using Nudges.Kafka.Middleware;
 
@@ -9,8 +7,7 @@ namespace KafkaConsumer.Middleware;
 
 internal class StripeWebhookMessageMiddleware(
     ILogger<StripeWebhookMessageMiddleware> logger,
-    Func<INudgesClient> nudgesClientFactory,
-    KafkaMessageProducer<ForeignProductEventKey, ForeignProductEvent> foreignProductProducer)
+    Func<INudgesClient> nudgesClientFactory)
     : IMessageMiddleware<StripeWebhookKey, StripeWebhookEvent> {
 
     public async Task<MessageContext<StripeWebhookKey, StripeWebhookEvent>> InvokeAsync(
@@ -54,17 +51,18 @@ internal class StripeWebhookMessageMiddleware(
         using var client = new DisposableWrapper<INudgesClient>(nudgesClientFactory);
 
         try {
-            var plan = await client.Instance.GetPlanById(evt.PlanId, cancellationToken);
-            logger.LogPlanAlreadyExists(plan.Id, evt.ProductId);
+            var plan = await client.Instance.GetPlan(evt.PlanNodeId, cancellationToken);
 
-            await foreignProductProducer.ProduceForeignProductSynchronized(
-                new ForeignProductSynchronizedEvent(
-                    PlanNodeId: plan.Id,
-                    ForeignProductId: evt.ProductId,
-                    Name: evt.Name,
-                    Description: evt.Description,
-                    IconUrl: evt.IconUrl),
-                cancellationToken);
+            await client.Instance.PatchPlan(new PatchPlanInput {
+                Id = evt.PlanNodeId,
+                Name = evt.Name,
+                Description = evt.Description,
+                IconUrl = evt.IconUrl,
+                IsActive = evt.Active,
+                ForeignServiceId = evt.ProductId
+            }, cancellationToken);
+
+
         } catch (PlanNotFoundException ex) {
             logger.LogNewPlanFromStripe(evt.ProductId, ex);
             throw;

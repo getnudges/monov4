@@ -6,6 +6,7 @@ namespace Nudges.Contracts.Products;
 /// </summary>
 public sealed record Plan(
     int Id,
+    string NodeId,
     string Name,
     string? Description,
     string? IconUrl,

@@ -1,4 +1,3 @@
-using System.Globalization;
 using Monads;
 using Nudges.Kafka;
 using Nudges.Kafka.Events;
@@ -6,9 +5,8 @@ using Stripe;
 
 namespace Nudges.Webhooks.Stripe.Commands;
 
-internal sealed class ProductCreatedCommand(
-    ILogger<ProductCreatedCommand> logger,
-    KafkaMessageProducer<StripeWebhookKey, StripeWebhookEvent> stripeWebhookProducer)
+internal sealed class ProductCreatedCommand(ILogger<ProductCreatedCommand> logger,
+                                            KafkaMessageProducer<StripeWebhookKey, StripeWebhookEvent> stripeWebhookProducer)
     : IEventCommand<StripeEventContext> {
 
     public async Task<Maybe<Exception>> InvokeAsync(StripeEventContext context, CancellationToken cancellationToken) {
@@ -31,7 +29,7 @@ public static class ProductMappingExtensions {
     public static StripeProductCreatedEvent ToStripeProductCreatedEvent(this Product product) =>
         new(
             ProductId: product.Id,
-            PlanId: int.Parse(product.Metadata.GetValueOrDefault("planId") ?? "0", CultureInfo.InvariantCulture),
+            PlanNodeId: product.Metadata.GetValueOrDefault("planNodeId") ?? throw new ArgumentException("planNodeId Missing"),
             Name: product.Name,
             Description: product.Description,
             IconUrl: product.Images?.FirstOrDefault(),

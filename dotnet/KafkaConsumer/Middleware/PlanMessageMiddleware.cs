@@ -41,11 +41,11 @@ internal class PlanMessageMiddleware(ILogger<PlanMessageMiddleware> logger,
         await CreateForeignProduct(planCreatedEvent.ToShopifyProductCreateOptions(), cancellationToken);
     }
 
-    private async Task CreateForeignProduct(ProductCreateOptions plan, CancellationToken cancellationToken) {
+    private async Task CreateForeignProduct(ProductCreateOptions createOptions, CancellationToken cancellationToken) {
         using var client = new DisposableWrapper<INudgesClient>(nudgesClientFactory);
 
-        await foreignProductService.CreateForeignProduct(plan, cancellationToken);
-        logger.LogPlanCreated(plan.Metadata["planId"]);
+        var newProduct = await foreignProductService.CreateForeignProduct(createOptions, cancellationToken);
+        logger.LogProductCreated(newProduct.Id);
 
     }
 
