@@ -38,11 +38,11 @@ FROM build AS fusion
 RUN dotnet tool restore
 
 ############################################################################################################
-# TODO: So this is what we need:
-#       1. When a subgraph is successfully deployed, we need to communicate it's graphql endpoint to
-#          a centralized location. This will allow us to generate the subgraph config for that project.
-#       2. When we come here to build the gateway, we need to pull in that subgraph config and use it
-#          to generate the gateway schema.
+# So this is what we need:
+# 1. When a subgraph is successfully deployed, we need to communicate it's graphql endpoint to
+#    a centralized location. This will allow us to generate the subgraph config for that project.
+# 2. When we come here to build the gateway, we need to pull in that subgraph config and use it
+#    to generate the gateway schema.
 ############################################################################################################
 
 RUN dotnet fusion subgraph config set name "UserApi" -w ./UserApi -c ./UserApi/subgraph-config.json
