@@ -15,6 +15,7 @@ using Nudges.Webhooks.Stripe.Commands;
 using Nudges.Webhooks.Twilio;
 using Polly;
 using Polly.Contrib.WaitAndRetry;
+using Polly.Retry;
 using Precision.WarpCache;
 using Precision.WarpCache.Grpc.Client;
 using Precision.WarpCache.MemoryCache;
@@ -248,12 +249,10 @@ app.Use(async (context, next) => {
 var api = app.MapGroup("/api");
 
 api.MapPost("/StripeWebhookHandler", async (StripeWebhookHandler handler, HttpContext context) =>
-    // TODO: look into better retry logic since I'm using Result<,> now.
-    await RetryPolicy.ExecuteAsync(() => handler.Endpoint(context.Request, context.RequestAborted)));
+    await ResultAwareRetryPolicy.ExecuteAsync(async _ => await handler.Endpoint(context.Request, context.RequestAborted)));
 
 api.MapPost("/TwilioWebhookHandler", async (TwilioWebhookHandler handler, HttpContext context) =>
-    // TODO: look into better retry logic since I'm using Result<,> now.
-    RetryPolicy.ExecuteAsync(() => handler.Endpoint(context.Request, context.RequestAborted)));
+    await ResultAwareRetryPolicy.ExecuteAsync(async _ => await handler.Endpoint(context.Request, context.RequestAborted)));
 
 app.Run();
 
@@ -263,8 +262,34 @@ internal partial class Program {
         "1.0.0"
     );
 
-
-    private static readonly AsyncPolicy RetryPolicy = Policy
-        .Handle<Exception>()
-        .WaitAndRetryAsync(Backoff.ExponentialBackoff(TimeSpan.FromSeconds(1), retryCount: 5));
+    /// <summary>
+    /// Retry policy that works with Result-based error handling.
+    /// Retries on server errors (500+) and exceptions, but not on client errors (400-499).
+    /// </summary>
+    private static readonly ResiliencePipeline<IResult> ResultAwareRetryPolicy = new ResiliencePipelineBuilder<IResult>()
+        .AddRetry(new RetryStrategyOptions<IResult> {
+            ShouldHandle = new PredicateBuilder<IResult>()
+                // Retry on exceptions
+                .HandleInner<Exception>()
+                // Retry on IResult that represents a server error (5xx status code)
+                .HandleResult(result => result is IStatusCodeHttpResult statusResult &&
+                                       statusResult.StatusCode >= 500),
+            BackoffType = DelayBackoffType.Exponential,
+            UseJitter = true,
+            MaxRetryAttempts = 5,
+            Delay = TimeSpan.FromSeconds(1),
+            OnRetry = args => {
+                var statusCode = args.Outcome.Result is IStatusCodeHttpResult statusResult
+                    ? statusResult.StatusCode?.ToString(System.Globalization.CultureInfo.InvariantCulture)
+                    : "N/A";
+                Activity.Current?.AddEvent(new ActivityEvent(
+                    $"Retry attempt {args.AttemptNumber}",
+                    tags: new ActivityTagsCollection {
+                        ["retry.attempt"] = args.AttemptNumber,
+                        ["retry.status_code"] = statusCode
+                    }));
+                return ValueTask.CompletedTask;
+            }
+        })
+        .Build();
 }
