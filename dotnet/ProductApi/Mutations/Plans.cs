@@ -22,6 +22,7 @@ public partial class Mutation {
     public async Task<Plan> DeletePlan(ProductDbContext context,
                                        KafkaMessageProducer<PlanEventKey, PlanChangeEvent> productProducer,
                                        DeletePlanInput input,
+                                       INodeIdSerializer idSerializer,
                                        CancellationToken cancellationToken) {
 
         var found = await context.Plans.FindAsync([input.Id], cancellationToken);
@@ -40,7 +41,8 @@ public partial class Mutation {
         if (string.IsNullOrEmpty(plan.ForeignServiceId)) {
             return plan;
         }
-        await productProducer.ProducePlanDeleted(plan.ToPlanDeletedEvent(DateTimeOffset.UtcNow), cancellationToken);
+        var nodeId = idSerializer.Format(nameof(Plan), plan.Id);
+        await productProducer.ProducePlanDeleted(plan.ToPlanDeletedEvent(nodeId, DateTimeOffset.UtcNow), cancellationToken);
         return plan;
 
     }
@@ -79,6 +81,7 @@ public partial class Mutation {
                                        KafkaMessageProducer<PlanEventKey, PlanChangeEvent> productProducer,
                                        CreatePlanInput input,
                                        HttpContext httpContext,
+                                       INodeIdSerializer idSerializer,
                                        CancellationToken cancellationToken) {
 
         using var activity = ActivitySource.StartActivity(nameof(CreatePlan), ActivityKind.Server, httpContext.Request.GetActivityContext());
@@ -97,7 +100,8 @@ public partial class Mutation {
             activity?.SetTag("plan.id", newPlan.Entity.Id);
             activity?.SetTag("db.save_duration_ms", sw.Elapsed.TotalMilliseconds);
 
-            var delivery = await productProducer.ProducePlanCreated(newPlan.Entity.ToPlanCreatedEvent(), cancellationToken);
+            var nodeId = idSerializer.Format(nameof(Plan), newPlan.Entity.Id);
+            var delivery = await productProducer.ProducePlanCreated(newPlan.Entity.ToPlanCreatedEvent(nodeId), cancellationToken);
             logger.LogPlanCreatedEventProduced(newPlan.Entity.Id, delivery.TopicPartitionOffset.Topic, delivery.TopicPartitionOffset.Offset);
 
             await transaction.CommitAsync(cancellationToken);
@@ -166,6 +170,7 @@ public partial class Mutation {
                                        KafkaMessageProducer<PlanEventKey, PlanChangeEvent> productProducer,
                                        KafkaMessageProducer<PriceTierEventKey, PriceTierChangeEvent> priceTierEventProducer,
                                        HttpContext httpContext,
+                                       INodeIdSerializer idSerializer,
                                        CancellationToken cancellationToken) {
         using var activity = ActivitySource.StartActivity(nameof(UpdatePlan), ActivityKind.Server, httpContext.Request.GetActivityContext());
 
@@ -210,7 +215,8 @@ public partial class Mutation {
             }
         }
 
-        await productProducer.ProducePlanUpdated(plan.ToPlanUpdatedEvent(), cancellationToken);
+        var nodeId = idSerializer.Format(nameof(Plan), plan.Id);
+        await productProducer.ProducePlanUpdated(plan.ToPlanUpdatedEvent(nodeId), cancellationToken);
 
         plan.PlanFeature.Plan = default!;
         foreach (var tier in plan.PriceTiers) {

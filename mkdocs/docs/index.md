@@ -143,7 +143,7 @@ sequenceDiagram
     Kafka->>Consumer: Consume event
     Consumer->>Stripe: Create Product
     Stripe->>Webhooks: product.created webhook
-    Webhooks->>Kafka: ForeignProductSyncEvent
+    Webhooks->>Kafka: StripeProductCreatedEvent
     Kafka->>Consumer: Consume sync event
     Consumer->>API: PatchPlan (add Stripe ID)
     API-->>UI: onPlanUpdated subscription

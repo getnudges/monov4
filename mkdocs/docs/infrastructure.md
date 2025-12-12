@@ -173,7 +173,7 @@ sequenceDiagram
     Consumer->>Stripe: Create Product
 
     Stripe->>Webhooks: product.created webhook
-    Webhooks->>Kafka: ForeignProductSyncEvent
+    Webhooks->>Kafka: StripeProductCreatedEvent
     Kafka->>Consumer: Consume
     Consumer->>API: Update plan with Stripe ID
 ```

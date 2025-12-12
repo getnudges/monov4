@@ -64,7 +64,7 @@ All consumers use the same Docker image with different commands:
 | `payments-listener` | Payments | Payment processing |
 | `plan-subscription-listener` | PlanSubscriptions | Subscription lifecycle |
 | `user-authentication-listener` | UserAuthentication | Login events |
-| `foreign-products-listener` | ForeignProducts | External product sync |
+| `stripe-webhooks-listener` | StripeProducts | External product sync |
 
 ### Web UIs
 

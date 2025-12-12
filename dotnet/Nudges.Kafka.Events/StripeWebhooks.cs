@@ -34,7 +34,7 @@ public abstract record StripeWebhookEvent;
 /// </summary>
 public record StripeProductCreatedEvent(
     string ProductId,
-    int PlanId,
+    string PlanNodeId,
     string Name,
     string? Description,
     string? IconUrl,

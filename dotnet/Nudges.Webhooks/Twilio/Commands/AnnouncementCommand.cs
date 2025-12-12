@@ -1,15 +1,12 @@
 using System.Globalization;
 using System.Text.RegularExpressions;
-using ErrorOr;
-using Monads;
-using Precision.WarpCache.Grpc.Client;
-using Twilio.TwiML;
 using Nudges.Kafka;
+using Nudges.Kafka.Events;
 using Nudges.Localization.Client;
 using Nudges.Webhooks.GraphQL;
 using Nudges.Webhooks.Twilio;
-using Nudges.Webhooks.Twilio.Commands;
-using Nudges.Kafka.Events;
+using Precision.WarpCache.Grpc.Client;
+using Twilio.TwiML;
 
 namespace Nudges.Webhooks.Endpoints.Handlers;
 
@@ -24,7 +21,7 @@ internal sealed partial class AnnouncementCommand(INudgesClient nudgesClient,
 
     public async Task<Monads.Result<MessagingResponse, Exception>> InvokeAsync(TwilioEventContext context, CancellationToken cancellationToken) {
         var result = await nudgesClient.GetClientByPhoneNumber(context.From, cancellationToken);
-        
+
         if (result.IsError) {
             return new GraphQLException(result.FirstError.Description);
         }
@@ -33,7 +30,7 @@ internal sealed partial class AnnouncementCommand(INudgesClient nudgesClient,
         if (client.Subscription?.Status != "ACTIVE") {
             return new NotCustomerException();
         }
-        
+
         await cache.SetAsync($"announcement:{context.From}", context.SmsBody);
         var body = await localizer.GetLocalizedStringAsync("AnnouncementConfirm", client.Locale, new Dictionary<string, string>() {
                 { "smsBody", context.SmsBody }
@@ -55,7 +52,7 @@ internal sealed partial class AnnouncementConfirmCommand(INudgesClient nudgesCli
 
     public async Task<Monads.Result<MessagingResponse, Exception>> InvokeAsync(TwilioEventContext context, CancellationToken cancellationToken) {
         var result = await nudgesClient.GetClientByPhoneNumber(context.From, cancellationToken);
-        
+
         if (result.IsError) {
             return new GraphQLException(result.FirstError.Description);
         }
@@ -64,7 +61,7 @@ internal sealed partial class AnnouncementConfirmCommand(INudgesClient nudgesCli
         if (client.Subscription?.Status != "ACTIVE") {
             return new NotCustomerException();
         }
-        
+
         var announcement = await cache.GetAsync($"announcement:{context.From}");
 
         if (announcement is null) {

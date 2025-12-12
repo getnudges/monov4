@@ -110,8 +110,8 @@ If the "Foreign Service ID" field updates, everything is working.
 3. ProductApi saves to DB, emits PlanCreatedEvent
 4. plans-listener consumes event, calls Stripe API to create product
 5. Stripe fires `product.created` webhook (via ngrok)
-6. Webhooks service emits ForeignProductSynchronizedEvent
-7. foreign-product-listener consumes event, updates DB with Stripe product ID
+6. Webhooks service emits StripeProductCreatedEvent
+7. stripe-webhooks-listener consumes event, updates DB with Stripe product ID
 8. GraphQL subscription updates React UI with Foreign Service ID
 
 
@@ -122,7 +122,7 @@ sequenceDiagram
     participant ProductApi
     participant Kafka
     participant PlansListener
-    participant ProductsListener
+    participant StripeWebhooksListener
     participant Webhooks
     participant Stripe
     
@@ -138,9 +138,9 @@ sequenceDiagram
     Kafka->>PlansListener: Consume PlanChangeEvent
     PlansListener->>Stripe: Create Product
     Stripe->>Webhooks: product.created webhook
-    Webhooks->>Kafka: ForeignProductSynchronizedEvent
-    Kafka->>ProductsListener: Consume ForeignProductSynchronizedEvent
-    ProductsListener->>ProductApi: PatchPlan
+    Webhooks->>Kafka: StripeProductCreatedEvent
+    Kafka->>StripeWebhooksListener: Consume StripeProductCreatedEvent
+    StripeWebhooksListener->>ProductApi: PatchPlan
     ProductApi->>Gateway: onPlanUpdated
     Gateway->>Client: onPlanUpdated subscription
 ```

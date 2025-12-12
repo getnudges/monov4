@@ -642,34 +642,6 @@ services:
     #   - warp-cache
     #   - graphql-gateway
 
-  foreign-products-listener:
-    container_name: foreign-products-listener
-    networks:
-      - Nudges
-    extra_hosts:
-      - "keycloak.local:host-gateway"
-    build:
-      context: ./dotnet
-      dockerfile: ./KafkaConsumer.Dockerfile
-    environment:
-      DOTNET_ENVIRONMENT: Development
-      ASPNETCORE_ENVIRONMENT: Development
-      HTTP_PORTS: 7100
-    ports:
-      - "7100"
-    env_file:
-      - ./dotnet/KafkaConsumer/.env.docker
-      - ./keycloak/.env.kafka-consumer
-    command: foreign-products
-    deploy:
-      resources:
-        limits:
-          memory: 256M
-    # depends_on:
-    #   - kafka
-    #   - warp-cache
-    #   - graphql-gateway
-
   stripe-webhooks-listener:
     container_name: stripe-webhooks-listener
     networks:
@@ -926,7 +898,6 @@ services:
       kafka-topics --create --topic price-tiers           --partitions 2 --replication-factor 1 --if-not-exists --bootstrap-server kafka:29092 && \
       kafka-topics --create --topic plan-subscriptions    --partitions 2 --replication-factor 1 --if-not-exists --bootstrap-server kafka:29092 && \
       kafka-topics --create --topic user-authentication   --partitions 2 --replication-factor 1 --if-not-exists --bootstrap-server kafka:29092 && \
-      kafka-topics --create --topic foreign-products      --partitions 2 --replication-factor 1 --if-not-exists --bootstrap-server kafka:29092 && \
       kafka-topics --create --topic stripe-webhooks       --partitions 2 --replication-factor 1 --if-not-exists --bootstrap-server kafka:29092 && \
 
       kafka-topics --create --topic test --partitions 1 --replication-factor 1 --if-not-exists --bootstrap-server kafka:29092 && \

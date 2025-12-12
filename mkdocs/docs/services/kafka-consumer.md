@@ -21,7 +21,7 @@ Available commands:
 | `payments` | Payments | Payment confirmations |
 | `clients` | Clients | Client creation and updates |
 | `user-authentication` | UserAuthentication | User login/logout events |
-| `foreign-products` | ForeignProducts | External product synchronization |
+| `stripe-webhooks` | StripeWebhooks | External (Stripe) events |
 
 ## Architecture
 
@@ -58,7 +58,7 @@ KafkaConsumer/
 │   ├── PlanSubscriptionMiddleware.cs
 │   ├── PriceTierMessageMiddleware.cs
 │   ├── UserAuthenticationMessageMiddleware.cs
-│   └── ForeignProductMessageMiddleware.cs
+│   └── StripeWebhookMessageMiddleware.cs
 ├── Services/                     # Business logic and integrations
 │   ├── StripeService.cs          # Stripe integration
 │   ├── TwilioNotifier.cs         # SMS delivery (production)
@@ -132,14 +132,19 @@ Handles authentication events.
 | `UserLoggedInEvent` | Sends login confirmation SMS |
 | `UserLoggedOutEvent` | (Logged only) |
 
-### ForeignProductMessageMiddleware
+### StripeWebhookMessageMiddleware
 
-Handles external product synchronization (e.g., from Stripe webhooks).
+Handles Stripe webhook events and synchronizes external products and pricing with local plans and price tiers.
 
 | Event | Action |
 |-------|--------|
-| `ForeignProductCreatedEvent` | Maps external product to local plan |
-| `ForeignProductSynchronizedEvent` | Syncs plan data from external source |
+| `StripeProductCreatedEvent` | Creates or patches plan from Stripe product |
+| `StripeProductUpdatedEvent` | Updates plan with Stripe product changes |
+| `StripeProductDeletedEvent` | Deletes plan when Stripe product is removed |
+| `StripePriceCreatedEvent` | Creates price tier from Stripe price |
+| `StripePriceUpdatedEvent` | Updates price tier pricing |
+| `StripePriceDeletedEvent` | Deletes price tier when Stripe price is removed |
+| `StripeCheckoutCompletedEvent` | Creates payment confirmation and plan subscription after checkout |
 
 ## Configuration
 
