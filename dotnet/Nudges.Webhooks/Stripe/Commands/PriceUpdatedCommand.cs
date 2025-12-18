@@ -1,29 +1,38 @@
-using ErrorOr;
 using Monads;
+using Nudges.Kafka;
+using Nudges.Kafka.Events;
 using Stripe;
-using Nudges.Webhooks.GraphQL;
 
 namespace Nudges.Webhooks.Stripe.Commands;
 
-internal sealed class PriceUpdatedCommand(INudgesClient nudgesClient) : IEventCommand<StripeEventContext> {
+internal sealed class PriceUpdatedCommand(
+    ILogger<PriceUpdatedCommand> logger,
+    KafkaMessageProducer<StripeWebhookKey, StripeWebhookEvent> stripeWebhookProducer)
+    : IEventCommand<StripeEventContext> {
+
     public async Task<Maybe<Exception>> InvokeAsync(StripeEventContext context, CancellationToken cancellationToken) {
         if (context.StripeEvent.Data.Object is not Price price) {
             return new MissingDataException("Could not find price in event data");
         }
-        
-        var tierResult = await nudgesClient.GetPriceTierByForeignId(price.Id, cancellationToken);
-        
-        if (tierResult.IsError) {
-            return new GraphQLException(tierResult.FirstError.Description);
+
+        try {
+            await stripeWebhookProducer.ProducePriceUpdated(
+                new StripePriceUpdatedEvent(
+                    PriceId: price.Id,
+                    Price: price.UnitAmountDecimal.GetValueOrDefault() / 100m),
+                cancellationToken);
+            logger.LogPriceUpdatedPublished(price.Id);
+        } catch (Exception ex) {
+            return ex;
         }
-
-        var patchResult = await nudgesClient.PatchPriceTier(new PatchPriceTierInput {
-            Id = tierResult.Value.Id,
-            Price = price.UnitAmountDecimal / 100,
-        }, cancellationToken);
-
-        return patchResult.IsError 
-            ? new GraphQLException(patchResult.FirstError.Description)
-            : Maybe<Exception>.None;
+        return Maybe<Exception>.None;
     }
+}
+
+internal static partial class PriceUpdatedCommandLogs {
+    [LoggerMessage(
+        EventId = 1040,
+        Level = LogLevel.Information,
+        Message = "Published StripePriceUpdatedEvent for Price ID: {PriceId}")]
+    public static partial void LogPriceUpdatedPublished(this ILogger logger, string priceId);
 }

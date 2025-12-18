@@ -1,28 +1,36 @@
-using ErrorOr;
 using Monads;
+using Nudges.Kafka;
+using Nudges.Kafka.Events;
 using Stripe;
-using Nudges.Webhooks.GraphQL;
 
 namespace Nudges.Webhooks.Stripe.Commands;
 
-internal sealed class PriceDeletedCommand(INudgesClient nudgesClient) : IEventCommand<StripeEventContext> {
+internal sealed class PriceDeletedCommand(
+    ILogger<PriceDeletedCommand> logger,
+    KafkaMessageProducer<StripeWebhookKey, StripeWebhookEvent> stripeWebhookProducer)
+    : IEventCommand<StripeEventContext> {
+
     public async Task<Maybe<Exception>> InvokeAsync(StripeEventContext context, CancellationToken cancellationToken) {
         if (context.StripeEvent.Data.Object is not Price price) {
             return new MissingDataException("Could not find price in event data");
         }
-        
-        var tierResult = await nudgesClient.GetPriceTierByForeignId(price.Id, cancellationToken);
-        
-        if (tierResult.IsError) {
-            return new GraphQLException(tierResult.FirstError.Description);
+
+        try {
+            await stripeWebhookProducer.ProducePriceDeleted(
+                new StripePriceDeletedEvent(price.Id),
+                cancellationToken);
+            logger.LogPriceDeletedPublished(price.Id);
+        } catch (Exception ex) {
+            return ex;
         }
-
-        var deleteResult = await nudgesClient.DeletePriceTier(new DeletePriceTierInput {
-            Id = tierResult.Value.Id
-        }, cancellationToken);
-
-        return deleteResult.IsError 
-            ? new GraphQLException(deleteResult.FirstError.Description)
-            : Maybe<Exception>.None;
+        return Maybe<Exception>.None;
     }
+}
+
+internal static partial class PriceDeletedCommandLogs {
+    [LoggerMessage(
+        EventId = 1050,
+        Level = LogLevel.Information,
+        Message = "Published StripePriceDeletedEvent for Price ID: {PriceId}")]
+    public static partial void LogPriceDeletedPublished(this ILogger logger, string priceId);
 }

@@ -642,8 +642,8 @@ services:
     #   - warp-cache
     #   - graphql-gateway
 
-  foreign-products-listener:
-    container_name: foreign-products-listener
+  stripe-webhooks-listener:
+    container_name: stripe-webhooks-listener
     networks:
       - Nudges
     extra_hosts:
@@ -660,7 +660,7 @@ services:
     env_file:
       - ./dotnet/KafkaConsumer/.env.docker
       - ./keycloak/.env.kafka-consumer
-    command: foreign-products
+    command: stripe-webhooks
     deploy:
       resources:
         limits:
@@ -898,7 +898,7 @@ services:
       kafka-topics --create --topic price-tiers           --partitions 2 --replication-factor 1 --if-not-exists --bootstrap-server kafka:29092 && \
       kafka-topics --create --topic plan-subscriptions    --partitions 2 --replication-factor 1 --if-not-exists --bootstrap-server kafka:29092 && \
       kafka-topics --create --topic user-authentication   --partitions 2 --replication-factor 1 --if-not-exists --bootstrap-server kafka:29092 && \
-      kafka-topics --create --topic foreign-products      --partitions 2 --replication-factor 1 --if-not-exists --bootstrap-server kafka:29092 && \
+      kafka-topics --create --topic stripe-webhooks       --partitions 2 --replication-factor 1 --if-not-exists --bootstrap-server kafka:29092 && \
 
       kafka-topics --create --topic test --partitions 1 --replication-factor 1 --if-not-exists --bootstrap-server kafka:29092 && \
       kafka-console-producer --bootstrap-server kafka:29092 --topic test < /data/message.json'"

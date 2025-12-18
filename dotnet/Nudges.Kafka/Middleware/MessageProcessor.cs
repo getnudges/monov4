@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using Confluent.Kafka;
 
@@ -86,8 +87,6 @@ public sealed class MessageProcessor<TKey, TValue>(
             next = async ctx => await middleware.InvokeAsync(ctx, nextCopy);
         }
 
-        // NOTE: we do NOT increment AttemptCount here anymore.
-        // That’s owned by the outer retry loop now.
         return await next(context);
     }
 

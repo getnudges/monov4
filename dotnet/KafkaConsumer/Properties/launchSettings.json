@@ -70,14 +70,15 @@
         "HTTP_PORTS": "7100"
       }
     },
-    "listen-foreign-products": {
+    "listen-stripe-webhooks": {
       "commandName": "Project",
-      "commandLineArgs": "foreign-products",
+      "commandLineArgs": "stripe-webhooks",
       "environmentVariables": {
         "DOTNET_ENVIRONMENT": "Development",
         "ASPNETCORE_ENVIRONMENT": "Development",
         "Otlp__Endpoint": "http://localhost:4317",
         "HTTP_PORTS": "7100"
+      }
     }
   }
 }

@@ -1,6 +1,4 @@
 using KafkaConsumer.Services;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
 using Nudges.Configuration.Extensions;
 using Twilio.Clients;
 using Twilio.Rest.Api.V2010.Account;

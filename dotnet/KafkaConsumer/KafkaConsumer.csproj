@@ -29,7 +29,6 @@
   <ItemGroup>
     <PackageReference Include="Confluent.Kafka" Version="2.12.0" />
     <PackageReference Include="Keycloak.AuthServices.Sdk" Version="2.7.0" />
-    <PackageReference Include="Microsoft.Extensions.Localization" Version="10.0.0" />
     <PackageReference Include="OpenTelemetry.Exporter.Console" Version="1.14.0" />
     <PackageReference Include="Polly" Version="8.6.4" />
     <PackageReference Include="StrawberryShake.Server" Version="15.1.11" />

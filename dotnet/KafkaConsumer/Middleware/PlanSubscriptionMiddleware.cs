@@ -1,6 +1,5 @@
 using Confluent.Kafka;
 using KafkaConsumer.Services;
-using Microsoft.Extensions.Logging;
 using Nudges.Kafka;
 using Nudges.Kafka.Events;
 using Nudges.Kafka.Middleware;

@@ -25,9 +25,10 @@ public static class EventMappings {
             } : default
         };
 
-    public static Nudges.Contracts.Products.Plan ToContract(this Plan plan) =>
+    public static Nudges.Contracts.Products.Plan ToContract(this Plan plan, string nodeId) =>
         new(
             Id: plan.Id,
+            NodeId: nodeId,
             ForeignServiceId: plan.ForeignServiceId,
             Name: plan.Name,
             Description: plan.Description,
@@ -51,13 +52,13 @@ public static class EventMappings {
                 IconUrl: pt.IconUrl))?.ToList() ?? []
         );
 
-    public static PlanCreatedEvent ToPlanCreatedEvent(this Plan plan) =>
-        new(plan.ToContract());
+    public static PlanCreatedEvent ToPlanCreatedEvent(this Plan plan, string nodeId) =>
+        new(plan.ToContract(nodeId));
 
-    public static PlanUpdatedEvent ToPlanUpdatedEvent(this Plan plan) =>
-        new(plan.ToContract());
-    public static PlanDeletedEvent ToPlanDeletedEvent(this Plan plan, DateTimeOffset deletedAt) =>
-        new(plan.ToContract(), deletedAt);
+    public static PlanUpdatedEvent ToPlanUpdatedEvent(this Plan plan, string nodeId) =>
+        new(plan.ToContract(nodeId));
+    public static PlanDeletedEvent ToPlanDeletedEvent(this Plan plan, string nodeId, DateTimeOffset deletedAt) =>
+        new(plan.ToContract(nodeId), deletedAt);
 
     public static Nudges.Contracts.Products.PriceTier ToContract(this PriceTier tier) =>
         new(

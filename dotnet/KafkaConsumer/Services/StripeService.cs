@@ -1,7 +1,6 @@
 using System.Diagnostics;
 using System.Globalization;
 using HotChocolate.Utilities;
-using Microsoft.Extensions.Logging;
 using Monads;
 using Nudges.Kafka.Events;
 using Nudges.Models;
@@ -48,8 +47,10 @@ internal class StripeService(IStripeClient stripeClient, ILogger<StripeService> 
         }
     }
 
-    public async Task<string> CreateForeignProduct(ProductCreateOptions plan, CancellationToken cancellationToken) {
+    public async Task<Product> CreateForeignProduct(ProductCreateOptions plan, CancellationToken cancellationToken) {
         using var activity = ActivitySource.StartActivity(nameof(CreateForeignProduct), ActivityKind.Client, Activity.Current?.Context ?? default);
+        activity?.SetTag("peer.service", "stripe.com");
+
         try {
             var sw = Stopwatch.StartNew();
             var product = await _productService.CreateAsync(plan, new RequestOptions {
@@ -65,7 +66,7 @@ internal class StripeService(IStripeClient stripeClient, ILogger<StripeService> 
                 activity?.SetTag("product.id", product.Id);
                 activity?.SetStatus(ActivityStatusCode.Ok);
                 logger.LogForeignProductCreated(product.Id);
-                return product.Id;
+                return product;
             }
         } catch (Exception ex) {
             activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
@@ -131,11 +132,7 @@ internal class StripeService(IStripeClient stripeClient, ILogger<StripeService> 
 
     public async Task DeleteForeignProduct(string id, CancellationToken cancellationToken) {
         try {
-            var product = await _productService.DeleteAsync(id, cancellationToken: cancellationToken);
-            if (product is null) {
-                throw new ProductDeleteException("No product returned from Stripe");
-            }
-            return;
+            await _productService.DeleteAsync(id, cancellationToken: cancellationToken);
         } catch (StripeException ex) {
             if (ex.HttpStatusCode is System.Net.HttpStatusCode.NotFound) {
                 return;
@@ -146,13 +143,9 @@ internal class StripeService(IStripeClient stripeClient, ILogger<StripeService> 
 
     public async Task DeleteForeignPrice(string id, CancellationToken cancellationToken) {
         try {
-            var price = await _priceService.UpdateAsync(id, new PriceUpdateOptions {
+            await _priceService.UpdateAsync(id, new PriceUpdateOptions {
                 Active = false,
             }, new RequestOptions(), cancellationToken);
-            if (price is null) {
-                throw new PriceTierDeleteException("No price returned from Stripe");
-            }
-            return;
         } catch (StripeException e) {
             if (e.HttpStatusCode is System.Net.HttpStatusCode.NotFound) {
                 return;
@@ -207,8 +200,8 @@ internal static class ProductMappings {
             Images = string.IsNullOrEmpty(data.Plan.IconUrl) ? default : [data.Plan.IconUrl],
             Type = "service",
             Metadata = new Dictionary<string, string> {
-                        { "planId", data.Plan.Id.ToString(CultureInfo.InvariantCulture) },
-                    },
+                { "planNodeId", data.Plan.NodeId },
+            },
             //MarketingFeatures = [
             //    new ProductMarketingFeatureOptions {
             //        Name = $"{plan.Features.MaxMessages} messages per billing period",

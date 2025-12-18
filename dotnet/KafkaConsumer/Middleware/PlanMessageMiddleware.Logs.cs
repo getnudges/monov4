@@ -1,4 +1,3 @@
-using Microsoft.Extensions.Logging;
 using Nudges.Kafka.Events;
 using Stripe;
 
@@ -27,8 +26,8 @@ internal static partial class PlanMessageMiddlewareLogs {
     [LoggerMessage(Level = LogLevel.Warning)]
     public static partial void LogStripeException(this ILogger<PlanMessageMiddleware> logger, StripeException exception);
 
-    [LoggerMessage(Level = LogLevel.Information, Message = "Plan {planId} created")]
-    public static partial void LogPlanCreated(this ILogger<PlanMessageMiddleware> logger, string planId);
+    [LoggerMessage(Level = LogLevel.Information, Message = "Product with ID {ProductId} created")]
+    public static partial void LogProductCreated(this ILogger<PlanMessageMiddleware> logger, string productId);
 
     [LoggerMessage(Level = LogLevel.Information, Message = "Plan Creation Failed: {Message}")]
     public static partial void LogPlanUpdateError(this ILogger<PlanMessageMiddleware> logger, string message);

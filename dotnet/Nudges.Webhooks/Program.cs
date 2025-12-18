@@ -1,5 +1,4 @@
 using System.Diagnostics;
-using System.Net.Http.Headers;
 using System.Text.Json;
 using Confluent.Kafka;
 using Nudges.Auth;
@@ -70,8 +69,8 @@ builder.Services.AddSingleton<KafkaMessageProducer<NotificationKey, Notification
     new NotificationEventProducer(Topics.Notifications, new ProducerConfig {
         BootstrapServers = settings.Kafka.BrokerList
     }));
-builder.Services.AddSingleton<KafkaMessageProducer<ForeignProductEventKey, ForeignProductEvent>>(sp =>
-    new ForeignProductEventProducer(Topics.ForeignProducts, new ProducerConfig {
+builder.Services.AddSingleton<KafkaMessageProducer<StripeWebhookKey, StripeWebhookEvent>>(sp =>
+    new StripeWebhookEventProducer(Topics.StripeWebhooks, new ProducerConfig {
         BootstrapServers = settings.Kafka.BrokerList
     }));
 

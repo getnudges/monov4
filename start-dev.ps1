@@ -49,8 +49,8 @@ docker compose up -d localization-api
 # setup the kafka listeners
 docker compose up -d user-authentication-listener
 docker compose up -d plans-listener
-docker compose up -d foreign-products-listener
 docker compose up -d notifications-listener
+docker compose up -d stripe-webhooks-listener
 # docker compose up -d payments-listener
 # docker compose up -d clients-listener
 # docker compose up -d plan-subscription-listener

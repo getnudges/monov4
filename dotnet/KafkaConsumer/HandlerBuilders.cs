@@ -4,11 +4,6 @@ using KafkaConsumer.Middleware;
 using KafkaConsumer.Notifications;
 using KafkaConsumer.Services;
 using Keycloak.AuthServices.Sdk;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Nudges.Configuration;
 using Nudges.Configuration.Extensions;
@@ -198,23 +193,6 @@ internal static class HandlerBuilders {
                 services.AddHostedService<MessageHandlerService<PlanEventKey, PlanChangeEvent>>();
             });
 
-    public static IHostBuilder ConfigureForeignProductEventHandler(this IHostBuilder builder) =>
-        builder
-            .ConfigureServices(static (hostContext, services) => {
-                services.AddTransient<IMessageMiddleware<ForeignProductEventKey, ForeignProductEvent>, ForeignProductMessageMiddleware>();
-                services.AddTransient(static sp =>
-                    KafkaMessageProcessorBuilder
-                        .For<ForeignProductEventKey, ForeignProductEvent>(
-                            Topics.ForeignProducts,
-                            sp.GetRequiredService<IOptions<KafkaSettings>>().Value.BrokerList,
-                            cancellationToken: sp.GetRequiredService<IHostApplicationLifetime>().ApplicationStopping)
-                        .Use(new TracingMiddleware<ForeignProductEventKey, ForeignProductEvent>())
-                        .Use(sp.GetRequiredService<IMessageMiddleware<ForeignProductEventKey, ForeignProductEvent>>())
-                        .Build());
-
-                services.AddHostedService<MessageHandlerService<ForeignProductEventKey, ForeignProductEvent>>();
-            });
-
     public static IHostBuilder ConfigurePriceTierEventHandler(this IHostBuilder builder) =>
         builder
             .ConfigureServices(static (hostContext, services) => {
@@ -236,5 +214,25 @@ internal static class HandlerBuilders {
                         .Build());
 
                 services.AddHostedService<MessageHandlerService<PriceTierEventKey, PriceTierChangeEvent>>();
+            });
+
+    public static IHostBuilder ConfigureStripeWebhookEventHandler(this IHostBuilder builder) =>
+        builder
+            .ConfigureServices(static (hostContext, services) => {
+                services.AddTransient<IMessageMiddleware<StripeWebhookKey, StripeWebhookEvent>, StripeWebhookMessageMiddleware>();
+                services.AddTransient(static sp =>
+                    KafkaMessageProcessorBuilder
+                        .For<StripeWebhookKey, StripeWebhookEvent>(
+                            Topics.StripeWebhooks,
+                            sp.GetRequiredService<IOptions<KafkaSettings>>().Value.BrokerList,
+                            cancellationToken: sp.GetRequiredService<IHostApplicationLifetime>().ApplicationStopping)
+                        .UseCircuitBreaker(TimeProvider.System)
+                        .UseRetry(TimeProvider.System)
+                        .UseTracing()
+                        .UseErrorHandling(sp.GetRequiredService<ILogger<ErrorHandlingMiddleware<StripeWebhookKey, StripeWebhookEvent>>>())
+                        .Use(sp.GetRequiredService<IMessageMiddleware<StripeWebhookKey, StripeWebhookEvent>>())
+                        .Build());
+
+                services.AddHostedService<MessageHandlerService<StripeWebhookKey, StripeWebhookEvent>>();
             });
 }
