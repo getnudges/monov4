@@ -764,14 +764,13 @@ Shows more detailed errors.
 - Use explicit types for function parameters
 - Rely on inference for simple variables
 - Prefer `type` over `interface` for component props
-- Use `Readonly<>` for props
 
 ```typescript
 // Good
-type MyProps = Readonly<{
+type MyProps = {
   name: string;
   onClick: (id: string) => void;
-}>;
+};
 
 // Avoid
 interface MyProps {

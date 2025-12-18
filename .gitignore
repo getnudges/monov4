@@ -53,3 +53,5 @@ redisinsight/
 .vs/VSWorkspaceState.json
 
 ngrok.yml
+
+.claude/

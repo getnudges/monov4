@@ -5,7 +5,13 @@
       "Bash(cat:*)",
       "Bash(git fetch:*)",
       "Bash(git rebase:*)",
-      "Bash(dir:*)"
+      "Bash(dir:*)",
+      "Bash(npm install:*)",
+      "Bash(mkdir:*)",
+      "Bash(npm view:*)",
+      "Bash(npm uninstall:*)",
+      "Bash(npm run build-storybook:*)",
+      "Bash(timeout 120 npm run build-storybook:*)"
     ],
     "deny": [],
     "ask": []

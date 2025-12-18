@@ -1,0 +1,251 @@
+import { Meta } from "@storybook/blocks";
+
+<Meta title="Patterns/Relay Routing" />
+
+# Relay Routing Pattern
+
+This app uses a **custom-built integration** between Relay and Wouter that provides automatic data loading based on route parameters.
+
+## The Problem
+
+Standard React routing requires:
+1. Manually extracting URL params
+2. Passing params to GraphQL queries
+3. Managing loading states
+4. Handling errors
+
+This creates boilerplate in every screen component.
+
+## The Solution
+
+Our custom `withRelay` HOC + `createRouterFactory` pattern automates all of this!
+
+## How It Works
+
+### 1. Define a Route
+
+```typescript
+// Screens/Plan/route.ts
+import { RouteDefinition } from "@/Router/withRelay";
+import Query, { type PlanQuery } from "./__generated__/PlanQuery.graphql";
+import { PlanQueryDef } from "./Plan";
+
+export default {
+  path: "/plan/:id",          // wouter path pattern
+  query: Query,               // Relay compiled query
+  gqlQuery: PlanQueryDef,     // GraphQL query definition
+  component: PlanScreen,      // Your component
+  fetchPolicy: 'store-or-network'
+} satisfies RouteDefinition<PlanQuery>;
+```
+
+### 2. Define GraphQL Query
+
+```typescript
+// Screens/Plan/Plan.ts
+import { graphql } from "react-relay";
+
+export const PlanQueryDef = graphql\`
+  query PlanQuery($id: ID!) {
+    plan(id: $id) {
+      id
+      name
+      description
+    }
+  }
+\`;
+```
+
+### 3. Component Receives Data
+
+```typescript
+// Screens/Plan/index.tsx
+import { RelayRoute } from "@/Router/withRelay";
+import type { PlanQuery } from "./__generated__/PlanQuery.graphql";
+
+export default function PlanScreen({
+  data
+}: Readonly<RelayRoute<PlanQuery>>) {
+  // data is fully typed and loaded!
+  return <h1>{data.plan?.name}</h1>;
+}
+```
+
+## Magic Happening Behind the Scenes
+
+### URL Param Extraction
+
+When you navigate to `/plan/abc123`:
+
+1. **createRouterFactory** extracts params: `{ id: "abc123" }`
+2. **withRelay** passes these as GraphQL variables
+3. **Relay** loads the query automatically
+4. **React Suspense** shows loading state
+5. **Component** receives typed data
+
+### Query String Support
+
+You can also extract query strings as variables:
+
+```typescript
+const router = withRelay(
+  createRouterFactory(true), // includeQueryString: true
+  routes,
+  LoadingScreen
+);
+```
+
+Now `/plan/abc123?debug=true` gives you `{ id: "abc123", debug: "true" }` as variables!
+
+## Type Safety
+
+Everything is fully typed:
+
+```typescript
+// GraphQL query generates this type automatically
+type PlanQuery = {
+  response: {
+    plan: {
+      id: string;
+      name: string;
+      description: string;
+    } | null;
+  };
+  variables: {
+    id: string;
+  };
+};
+
+// Your component gets typed props
+function PlanScreen({ data }: Readonly<RelayRoute<PlanQuery>>) {
+  // TypeScript knows data.plan has id, name, description
+  // Autocomplete works perfectly!
+}
+```
+
+## Refresh Capability
+
+Need to refetch the query? Use the hook:
+
+```typescript
+import { useRelayScreenContext } from "@/Router/withRelay";
+
+function MyComponent() {
+  const { refresh, variables } = useRelayScreenContext<PlanQuery>();
+
+  const handleRefresh = () => {
+    refresh(variables); // Re-fetch with same variables
+    // Or: refresh({ id: 'new-id' }); // Different variables
+  };
+
+  return <button onClick={handleRefresh}>Refresh</button>;
+}
+```
+
+## Loading States
+
+Handled automatically via React Suspense:
+
+```typescript
+// In withRelay setup
+const router = withRelay(
+  createRouterFactory(true),
+  routes,
+  LoadingScreen  // Shows while query loads
+);
+
+// Each route can also have custom skeleton
+export default {
+  path: "/plan/:id",
+  query: PlanQuery,
+  gqlQuery: PlanQueryDef,
+  component: PlanScreen,
+  skeleton: <PlanSkeleton />  // Custom loading UI
+};
+```
+
+## Error Handling
+
+Errors are caught by ErrorBoundary wrapper:
+
+```typescript
+// In createRouterFactory.tsx
+return (
+  <ErrorBoundary>
+    <Component queryVars={queryVars} {...props} />
+  </ErrorBoundary>
+);
+```
+
+## The Architecture
+
+```
+User navigates to /plan/123
+        ↓
+createRouterFactory extracts { id: "123" }
+        ↓
+withRelay wraps component with RelayScreenWrapper
+        ↓
+useQueryLoader(query, { id: "123" })
+        ↓
+React Suspense (shows LoadingScreen)
+        ↓
+Query completes
+        ↓
+Component renders with data prop
+```
+
+## Benefits
+
+✅ **Zero boilerplate** - No manual param extraction
+✅ **Type-safe** - Generated types for all queries
+✅ **Automatic loading** - Suspense handles loading states
+✅ **Error boundaries** - Built-in error handling
+✅ **Refresh capability** - Easy query refetch
+✅ **Developer experience** - Just define route + query + component!
+
+## Comparison
+
+### Without This Pattern
+
+```typescript
+function PlanScreen() {
+  const params = useParams();
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    setLoading(true);
+    fetchQuery(PlanQuery, { id: params.id })
+      .then(setData)
+      .catch(setError)
+      .finally(() => setLoading(false));
+  }, [params.id]);
+
+  if (loading) return <Loading />;
+  if (error) return <Error error={error} />;
+
+  return <h1>{data.plan.name}</h1>;
+}
+```
+
+### With This Pattern
+
+```typescript
+export default function PlanScreen({ data }: Readonly<RelayRoute<PlanQuery>>) {
+  return <h1>{data.plan?.name}</h1>;
+}
+```
+
+**That's it!** The pattern handles everything else.
+
+---
+
+This pattern is the heart of what makes this app special. It combines the best of:
+- Relay's normalized cache and type generation
+- Wouter's lightweight routing
+- React Suspense for loading states
+- TypeScript for safety
+
+The result: A routing system that feels magical but is actually simple, testable, and maintainable.

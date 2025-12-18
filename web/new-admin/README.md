@@ -247,6 +247,29 @@ COPY admin-ui.nginx.conf /etc/nginx/conf.d/default.conf
 - [Development](docs/DEVELOPMENT.md) - Development guidelines and workflows
 - [Components](docs/COMPONENTS.md) - Component library and patterns
 - [Screens](docs/SCREENS.md) - Screen-by-screen documentation
+- [Storybook](STORYBOOK.md) - Interactive component and pattern showcase
+
+## Storybook
+
+This project includes a Storybook showcasing the custom Relay integration patterns and component library.
+
+**Run locally:**
+```bash
+npm run storybook
+```
+
+**Build for deployment:**
+```bash
+npm run build-storybook
+```
+
+The Storybook demonstrates:
+- Custom Relay + Wouter routing integration
+- Real-time subscription patterns
+- shadcn/ui component library
+- Form patterns with React Hook Form + Zod
+
+See [STORYBOOK.md](STORYBOOK.md) for details.
 
 ## Related
 
