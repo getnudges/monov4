@@ -10,6 +10,10 @@ type RelayNavigationScreenProps = RouteProps &
     includeQueryString: boolean;
   }>;
 
+/**
+ * Converts URL query string to object.
+ * @example "?foo=bar&baz=qux" → { foo: "bar", baz: "qux" }
+ */
 function queryStringToObject(queryString: string) {
   return [...new URLSearchParams(queryString).entries()].reduce(
     (acc, [key, value]) => ({ ...acc, [key]: value }),
@@ -17,6 +21,16 @@ function queryStringToObject(queryString: string) {
   );
 }
 
+/**
+ * Route component that extracts query variables from URL params and query string,
+ * then passes them to the wrapped component for Relay query variables.
+ *
+ * Extracts:
+ * - URL path params (e.g., /plan/:id → { id: "..." })
+ * - Query string params (if includeQueryString=true) (e.g., ?foo=bar → { foo: "bar" })
+ *
+ * Filters out numeric array indices from wouter's params.
+ */
 const RelayNavigationRoute = memo(function RelayNavigationScreen({
   Component,
   includeQueryString,
@@ -45,6 +59,21 @@ const RelayNavigationRoute = memo(function RelayNavigationScreen({
 
 RelayNavigationRoute.displayName = "RelayNavigationScreen";
 
+/**
+ * Creates a router factory that integrates wouter with Relay.
+ *
+ * @param includeQueryString - Whether to extract query string params as query variables
+ * @returns Router component that renders route definitions as wouter Routes
+ *
+ * @example
+ * ```typescript
+ * const router = withRelay(
+ *   createRouterFactory(true), // Include query string
+ *   routes,
+ *   LoadingScreen
+ * );
+ * ```
+ */
 export default function createRouterFactory(
   includeQueryString: boolean = false
 ) {

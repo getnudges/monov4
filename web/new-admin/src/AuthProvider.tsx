@@ -47,12 +47,37 @@ export const AuthProvider = ({ children }: React.PropsWithChildren) => {
   );
 };
 
+/**
+ * Hook to check if user is authorized (boolean).
+ */
 export const useAuthorized = () => {
   const [authorized] = useContext(AuthContext);
   return authorized;
 };
+
+/**
+ * Hook to access full auth context (authorized state, authorize, logOut).
+ */
 export const useAuthorization = () => useContext(AuthContext);
 
+/**
+ * Higher-order component that protects routes by requiring authentication.
+ *
+ * Flow:
+ * 1. Checks if user is authorized via context
+ * 2. If not authorized and not on /login, queries GraphQL for viewer role
+ * 3. If viewer exists, authorizes user
+ * 4. If no viewer, redirects to /login
+ * 5. While checking, returns null (loading state)
+ *
+ * @param WrappedComponent - Component to protect
+ * @returns Protected component that only renders when authorized
+ *
+ * @example
+ * ```typescript
+ * export default withAuthorization(MyProtectedScreen);
+ * ```
+ */
 export function withAuthorization<T extends RelayRoute<OperationType>>(
   WrappedComponent: React.ComponentType<T>
 ) {
