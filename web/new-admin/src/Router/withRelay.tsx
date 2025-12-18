@@ -11,9 +11,16 @@ import type {
   PreloadableConcreteRequest,
 } from "relay-runtime";
 
+/**
+ * Context for the Relay navigator, provides loading fallback component.
+ */
 export type RelayNavigatorContextType = Readonly<{
   suspenseFallback: React.ReactNode | JSX.Element | (() => JSX.Element);
 }>;
+
+/**
+ * Context for individual screens, provides query reference and refresh capability.
+ */
 export type RelayScreenContextType<T extends OperationType> = Readonly<{
   readonly queryReference: any;
   readonly refresh: (params?: T["variables"]) => void;
@@ -30,6 +37,17 @@ const RelayScreenContext = React.createContext<RelayScreenContextType<any>>(
 export function useRelayNavigatorContext() {
   return useContext(RelayNavigatorContext);
 }
+
+/**
+ * Hook to access the current screen's query context.
+ * Provides refresh capability to re-fetch the query with new variables.
+ *
+ * @example
+ * ```typescript
+ * const { refresh, variables } = useRelayScreenContext<MyScreenQuery>();
+ * refresh({ ...variables, newParam: 'value' });
+ * ```
+ */
 export function useRelayScreenContext<T extends OperationType = never>() {
   return useContext(
     RelayScreenContext as React.Context<RelayScreenContextType<T>>
@@ -66,12 +84,18 @@ function RelayComponentWrapper<T extends OperationType>({
   return <Component Component={Component} data={data} {...props} />;
 }
 
+/**
+ * Props passed to screen components with Relay data.
+ */
 export type RelayRoute<T extends OperationType> = Readonly<{
   data: T["response"];
   params?: T["variables"];
   errors?: ReadonlyArray<GraphQLError>;
 }>;
 
+/**
+ * Relay-specific route configuration.
+ */
 type RelayRouteDefinition<T extends OperationType> = {
   query: PreloadableConcreteRequest<T>;
   gqlQuery: GraphQLTaggedNode;
@@ -79,11 +103,28 @@ type RelayRouteDefinition<T extends OperationType> = {
   skeleton?: React.ReactNode | JSX.Element | (() => JSX.Element);
 };
 
+/**
+ * Base route configuration (non-Relay routes).
+ */
 type BaseRouteDefinition = {
   path: string;
   component: React.ComponentType<any>;
 };
 
+/**
+ * Route definition that can be either a simple route or a Relay route.
+ *
+ * @example
+ * ```typescript
+ * const route: RouteDefinition<MyQuery> = {
+ *   path: '/my-screen/:id',
+ *   component: MyScreen,
+ *   query: MyQuery,
+ *   gqlQuery: MyQueryDef,
+ *   fetchPolicy: 'store-or-network'
+ * };
+ * ```
+ */
 export type RouteDefinition<T extends OperationType = never> = T extends never
   ? Readonly<BaseRouteDefinition>
   : Readonly<BaseRouteDefinition & RelayRouteDefinition<T>>;
@@ -157,6 +198,29 @@ export type RelayNavigatorProps<T extends OperationType = OperationType> =
     screens: RouteDefinition<T>[];
   }>;
 
+/**
+ * Higher-order component that wraps a router to provide Relay data loading.
+ *
+ * Integrates Relay with wouter routing by:
+ * 1. Wrapping each route component with RelayScreenWrapper
+ * 2. Automatically loading GraphQL queries based on route params
+ * 3. Providing loading/suspense states
+ * 4. Exposing refresh capability via useRelayScreenContext()
+ *
+ * @param WrappedNavigator - Router component (from createRouterFactory)
+ * @param routeDefList - Array of route definitions with Relay queries
+ * @param suspenseFallback - Loading component shown during query fetch
+ * @returns Router component with Relay integration
+ *
+ * @example
+ * ```typescript
+ * const router = withRelay(
+ *   createRouterFactory(true),
+ *   [HomeRoute, PlanRoute, PlansRoute],
+ *   LoadingScreen
+ * );
+ * ```
+ */
 export default function withRelay<T extends OperationType = OperationType>(
   WrappedNavigator: React.ComponentType<any>,
   routeDefList: RouteDefinition<T>[],

@@ -68,6 +68,26 @@ const subscribe: SubscribeFunction = (operation, variables) => {
   });
 };
 
+/**
+ * Creates a Relay Environment configured for the new-admin app.
+ *
+ * Configuration:
+ * - Network layer with fetch (HTTP POST to /graphql)
+ * - WebSocket subscription layer (ws:// or wss://)
+ * - In-memory normalized cache (Store + RecordSource)
+ * - Custom error handling via onError callback
+ *
+ * @param onError - Callback for GraphQL errors (network/parse errors)
+ * @returns Configured Relay Environment
+ *
+ * @example
+ * ```typescript
+ * const environment = crateRelayEnvironment((error) => {
+ *   console.error('GraphQL error:', error);
+ *   showErrorDialog(error);
+ * });
+ * ```
+ */
 const crateRelayEnvironment = (onError: (error: GraphQLApiError) => void) => {
   return new Environment({
     network: Network.create(createFetchQuery(onError), subscribe),

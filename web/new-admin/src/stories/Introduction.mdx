@@ -1,0 +1,97 @@
+import { Meta } from "@storybook/blocks";
+
+<Meta title="Introduction" />
+
+# New Admin - Relay Patterns Showcase
+
+Welcome to the **new-admin** component and pattern library! This Storybook demonstrates the custom Relay integration patterns that power the admin interface.
+
+## What Makes This Special?
+
+This app features a **custom-built Relay + Wouter integration** that provides:
+
+- 🔄 **Automatic query variable extraction** from URL params and query strings
+- ⚡ **Type-safe GraphQL operations** with generated TypeScript types
+- 🔌 **Real-time subscriptions** via WebSocket
+- 🎯 **Route-driven data loading** with built-in suspense
+- 🔁 **Query refresh capability** via context hooks
+
+## Key Patterns
+
+### 1. Route-Driven Data Loading
+
+Routes declare their data requirements via GraphQL queries. The router automatically:
+- Extracts URL params as query variables
+- Loads the query when the route is visited
+- Shows loading states via Suspense
+- Provides refresh capability
+
+**Example:**
+```typescript
+// route.ts
+export default {
+  path: '/plan/:id',
+  query: PlanQuery,
+  gqlQuery: PlanQueryDef,
+  component: PlanScreen,
+  fetchPolicy: 'store-or-network'
+};
+```
+
+The `id` param automatically becomes `{ id: "..." }` variables for the GraphQL query!
+
+### 2. Custom Relay HOC (`withRelay`)
+
+A higher-order component that wraps the router to provide Relay integration:
+- Manages query loading lifecycle
+- Provides Suspense boundaries
+- Exposes `useRelayScreenContext()` for refresh
+
+### 3. Router Factory (`createRouterFactory`)
+
+Bridges wouter with Relay by:
+- Extracting route params from URL
+- Converting params to GraphQL variables
+- Wrapping screens in error boundaries
+
+### 4. Real-time Subscriptions
+
+GraphQL subscriptions for live updates:
+- WebSocket connection via `graphql-ws`
+- Auto-updates Relay cache
+- Form sync with `keepDirtyValues`
+
+## Component Library
+
+This Storybook includes:
+
+### Components
+- **shadcn/ui primitives** - Button, Card, Form, Input, etc.
+- **Custom components** - NavHeader, Snackbar, ErrorDialog
+- **Theme support** - Dark/light mode with CSS variables
+
+### Patterns
+- **Relay Screen Pattern** - How to build a screen with Relay
+- **Form + Mutation** - React Hook Form + Zod + Relay mutations
+- **Subscriptions** - Real-time updates pattern
+- **Auth Protection** - `withAuthorization` HOC
+
+## Tech Stack
+
+- **React 18** + TypeScript
+- **Vite** for build tooling
+- **Relay** for GraphQL client
+- **Wouter** for routing
+- **shadcn/ui** for components
+- **Tailwind CSS** for styling
+- **React Hook Form** + Zod for forms
+
+## Explore the Patterns
+
+Navigate through the sidebar to see:
+1. **Components** - UI building blocks
+2. **Patterns** - The custom Relay patterns (the cool stuff!)
+
+---
+
+Built with ❤️ to showcase modern React + GraphQL patterns.

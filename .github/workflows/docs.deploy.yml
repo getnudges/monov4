@@ -6,6 +6,7 @@ on:
       - main
     paths:
       - 'mkdocs/**'
+      - 'web/new-admin/**'
       - '.github/workflows/docs.deploy.yml'
   workflow_dispatch:
 
@@ -32,6 +33,19 @@ jobs:
       - name: Install dependencies
         run: |
           pip install mkdocs-material mkdocs-exclude
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: web/new-admin/package-lock.json
+
+      - name: Build Storybook
+        run: |
+          npm ci
+          npm run build-storybook
+        working-directory: web/new-admin
 
       - name: Build documentation
         run: mkdocs build

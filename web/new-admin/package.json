@@ -8,7 +8,9 @@
     "build": "npm run relay && tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "relay": "relay-compiler"
+    "relay": "relay-compiler",
+    "storybook": "storybook dev -p 6006",
+    "build-storybook": "storybook build -o ../../mkdocs/site/admin-storybook"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",
@@ -38,6 +40,12 @@
   "devDependencies": {
     "@eslint/js": "^9.13.0",
     "@hookform/devtools": "^4.3.1",
+    "@storybook/addon-essentials": "^8.6.15",
+    "@storybook/addon-interactions": "^8.6.15",
+    "@storybook/addon-links": "^8.6.15",
+    "@storybook/blocks": "^8.6.15",
+    "@storybook/react": "^8.6.15",
+    "@storybook/react-vite": "^8.6.15",
     "@types/node": "^22.7.7",
     "@types/react": "^18.3.11",
     "@types/react-dom": "^18.3.1",
@@ -52,6 +60,7 @@
     "graphql": "^16.9.0",
     "postcss": "^8.4.47",
     "relay-compiler": "^18.1.0",
+    "storybook": "^8.6.15",
     "tailwind-merge": "^2.5.4",
     "tailwindcss": "^3.4.14",
     "tailwindcss-animate": "^1.0.7",
