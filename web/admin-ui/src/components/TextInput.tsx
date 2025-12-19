@@ -9,12 +9,14 @@ import {
 type TextInputProps<T extends FieldValues> = UseControllerProps<T> & {
   label: string;
   placeholder?: string;
+  readOnly?: boolean;
 };
 
 const TextInput = <T extends FieldValues>({
   name,
   label,
   placeholder,
+  readOnly = false,
   ...rest
 }: TextInputProps<T>) => {
   const { control } = useFormContext<T>();
@@ -26,7 +28,12 @@ const TextInput = <T extends FieldValues>({
         <Form.Field name={field.name}>
           <Form.Label>{label}</Form.Label>
           <Form.Control asChild>
-            <input placeholder={placeholder} {...rest} {...field} />
+            <input
+              readOnly={readOnly}
+              placeholder={placeholder}
+              {...rest}
+              {...field}
+            />
           </Form.Control>
           <Form.Message />
         </Form.Field>

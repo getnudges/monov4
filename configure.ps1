@@ -236,7 +236,7 @@ if ($Docker -and $masterValues.Count -eq 0) {
         GRAPHQL_API_URL                                                              = 'https://host.docker.internal:5443/graphql'
         STRIPE_API_URL                                                               = 'http://payment-processor-proxy:4243'
         WarpCache__Url                                                               = 'http://warp-cache:7777'
-        LOCALIZATION_API_URL                                                         = 'http://localizer-api:8888'
+        LOCALIZATION_API_URL                                                         = 'http://localization-api:8888'
         REDIS_URL                                                                    = 'redis:6379'
         Kafka__BrokerList                                                            = 'kafka:29092'
         OIDC_ADMIN_USERNAME                                                          = 'admin'

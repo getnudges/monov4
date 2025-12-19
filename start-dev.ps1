@@ -51,10 +51,10 @@ docker compose up -d user-authentication-listener
 docker compose up -d plans-listener
 docker compose up -d notifications-listener
 docker compose up -d stripe-webhooks-listener
-# docker compose up -d payments-listener
-# docker compose up -d clients-listener
-# docker compose up -d plan-subscription-listener
-# docker compose up -d price-tiers-listener
+docker compose up -d payments-listener
+docker compose up -d clients-listener
+docker compose up -d plan-subscription-listener
+docker compose up -d price-tiers-listener
 
 # setup the subgraphs for the gateway
 docker compose up -d user-api

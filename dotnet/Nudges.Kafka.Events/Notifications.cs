@@ -4,19 +4,8 @@ using Confluent.Kafka;
 
 namespace Nudges.Kafka.Events;
 
-public record NotificationKey(string EventType, string EventKey) {
-    public static NotificationKey EndSubscription(Guid planSubscriptionId) =>
-        new(nameof(EndSubscription), planSubscriptionId.ToString("N"));
-    public static NotificationKey StartSubscription(Guid planSubscriptionId) =>
-        new(nameof(StartSubscription), planSubscriptionId.ToString("N"));
-    public static NotificationKey ClientCreated(string clientNodeId) =>
-        new(nameof(ClientCreated), clientNodeId);
-    public static NotificationKey ClientUpdated(string nodeId) =>
-        new(nameof(ClientUpdated), nodeId);
-    public static NotificationKey SendSms(string phoneNumber) =>
-        new(nameof(SendSms), phoneNumber);
-
-    public override string ToString() => $"{EventType}:{EventKey}";
+public record NotificationKey(string EventType) {
+    public override string ToString() => $"NotificationKey(EventType={EventType})";
 }
 
 [EventModel(typeof(NotificationKey))]
@@ -28,9 +17,9 @@ public record NotificationKey(string EventType, string EventKey) {
 [JsonDerivedType(typeof(StartSubscriptionNotificationEvent), "notification.startSubscription")]
 public abstract record NotificationEvent;
 
-public record SendSmsNotificationEvent(string ResourceKey, string Locale, Dictionary<string, string> Replacements) : NotificationEvent {
-    public static SendSmsNotificationEvent Create(string resourceKey, string locale, Dictionary<string, string> replacements) =>
-        new(resourceKey, locale, replacements);
+public record SendSmsNotificationEvent(string PhoneNumber, string ResourceKey, string Locale, Dictionary<string, string> Replacements) : NotificationEvent {
+    public static SendSmsNotificationEvent Create(string phoneNumber, string resourceKey, string locale, Dictionary<string, string> replacements) =>
+        new(phoneNumber, resourceKey, locale, replacements);
 }
 
 public record ClientCreatedNotificationEvent(string ResourceKey, string Locale, Dictionary<string, string> Replacements) : NotificationEvent {
@@ -48,23 +37,51 @@ public record EndSubscriptionNotificationEvent(string ResourceKey, string Locale
 public record StartSubscriptionNotificationEvent(string ResourceKey, string Locale, Dictionary<string, string> Replacements) : NotificationEvent;
 
 public static class NotificationProducerExtensions {
-    public static Task<DeliveryResult<NotificationKey, NotificationEvent>> ProduceOtpRequested(
-        this KafkaMessageProducer<NotificationKey, NotificationEvent> producer, string phoneNumber, string locale, string otp, CancellationToken cancellationToken) {
-        ArgumentNullException.ThrowIfNull(producer);
-        ArgumentException.ThrowIfNullOrEmpty(phoneNumber);
-        ArgumentException.ThrowIfNullOrEmpty(locale);
-        ArgumentException.ThrowIfNullOrEmpty(otp);
 
-        return producer.Produce(NotificationKey.SendSms(phoneNumber), SendSmsNotificationEvent.Create("SendOtp", locale, new Dictionary<string, string> { { "otp", otp } }), cancellationToken);
-    }
-
-    public static Task<DeliveryResult<NotificationKey, NotificationEvent>> ProduceSendSms(
-        this KafkaMessageProducer<NotificationKey, NotificationEvent> producer, string phoneNumber, string resourceKey, string locale, Dictionary<string, string> replacements, CancellationToken cancellationToken) {
+    private static Task<DeliveryResult<NotificationKey, NotificationEvent>> ProduceSendSms(
+        this KafkaMessageProducer<NotificationKey, NotificationEvent> producer, string encryptedPhone, string resourceKey, string locale, Dictionary<string, string> replacements, CancellationToken cancellationToken) {
         ArgumentNullException.ThrowIfNull(producer);
-        ArgumentException.ThrowIfNullOrEmpty(phoneNumber);
+        ArgumentException.ThrowIfNullOrEmpty(encryptedPhone);
         ArgumentException.ThrowIfNullOrEmpty(locale);
 
-        return producer.Produce(NotificationKey.SendSms(phoneNumber), SendSmsNotificationEvent.Create(resourceKey, locale, replacements), cancellationToken);
+        return producer.Produce(new NotificationKey("SendSms"), SendSmsNotificationEvent.Create(encryptedPhone, resourceKey, locale, replacements), cancellationToken);
     }
+
+    public static Task<DeliveryResult<NotificationKey, NotificationEvent>> ProduceSendOtp(
+        this KafkaMessageProducer<NotificationKey, NotificationEvent> producer, string encryptedPhone, string locale, string code, CancellationToken cancellationToken) {
+        ArgumentNullException.ThrowIfNull(producer);
+        ArgumentException.ThrowIfNullOrEmpty(encryptedPhone);
+        ArgumentException.ThrowIfNullOrEmpty(locale);
+
+        return ProduceSendSms(producer, encryptedPhone, "SendOtp", locale, new Dictionary<string, string>(
+            [new KeyValuePair<string, string>("otp", code)]
+        ), cancellationToken);
+    }
+
+    public static Task<DeliveryResult<NotificationKey, NotificationEvent>> ProduceSendUserLoggedIn(
+        this KafkaMessageProducer<NotificationKey, NotificationEvent> producer, string encryptedPhone, string locale, CancellationToken cancellationToken) {
+        ArgumentNullException.ThrowIfNull(producer);
+        ArgumentException.ThrowIfNullOrEmpty(encryptedPhone);
+        ArgumentException.ThrowIfNullOrEmpty(locale);
+
+        return ProduceSendSms(producer, encryptedPhone, "UserLoggedIn", locale, [], cancellationToken);
+    }
+
+    public static Task<DeliveryResult<NotificationKey, NotificationEvent>> ProduceSendClientCreated(
+        this KafkaMessageProducer<NotificationKey, NotificationEvent> producer, string encryptedPhone, string locale, CancellationToken cancellationToken) {
+        ArgumentNullException.ThrowIfNull(producer);
+        ArgumentException.ThrowIfNullOrEmpty(encryptedPhone);
+        ArgumentException.ThrowIfNullOrEmpty(locale);
+
+        return ProduceSendSms(producer, encryptedPhone, "ClientCreated", locale, [], cancellationToken);
+    }
+
+
+    //public static Task<DeliveryResult<NotificationKey, NotificationEvent>> ProduceStartSubscription(
+    //    this KafkaMessageProducer<NotificationKey, NotificationEvent> producer, string phoneNumber, string resourceKey, string locale, Dictionary<string, string> replacements, CancellationToken cancellationToken) {
+    //    ArgumentNullException.ThrowIfNull(producer);
+    //    return producer.Produce(new NotificationKey("StartSubscription"),
+    //        new StartSubscriptionNotificationEvent("StartSubscription", locale, []), cancellationToken);
+    //}
 }
 

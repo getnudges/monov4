@@ -43,6 +43,7 @@
     <ProjectReference Include="..\Nudges.Contracts\Nudges.Contracts.csproj" />
     <ProjectReference Include="..\Nudges.Core\Nudges.Core.csproj" />
     <ProjectReference Include="..\Nudges.Kafka.Events\Nudges.Kafka.Events.csproj" />
+    <ProjectReference Include="..\Nudges.Security\Nudges.Security.csproj" />
     <ProjectReference Include="..\Nudges.Telemetry\Nudges.Telemetry.csproj" />
     <ProjectReference Include="..\Precision.WarpCache\Precision.WarpCache.Grpc.Client\Precision.WarpCache.Grpc.Client.csproj" />
     <ProjectReference Include="..\Precision.WarpCache\Precision.WarpCache.MemoryCache\Precision.WarpCache.MemoryCache.csproj" />

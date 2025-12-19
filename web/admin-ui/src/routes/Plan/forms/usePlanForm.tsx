@@ -16,7 +16,7 @@ export function createFormData(
     foreignServiceId: data?.foreignServiceId ?? "",
     features: {
       planId: data?.features?.planId || undefined,
-      maxMessages: data?.features?.maxMessages ?? 0,
+      maxMessages: data?.features?.maxMessages ?? 3,
       supportTier: data?.features?.supportTier ?? "BASIC",
       aiSupport: data?.features?.aiSupport ?? false,
     },
@@ -99,6 +99,7 @@ export const usePlanForm = (plan?: PlanEditor_plan$data) => {
   const form = useForm<PlanFormValues>({
     resolver: zodResolver(planSchema),
     defaultValues: createFormData(plan ?? ({} as PlanEditor_plan$data)),
+    mode: "onBlur",
   });
 
   return form;

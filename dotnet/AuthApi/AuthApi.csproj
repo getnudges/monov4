@@ -21,6 +21,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Nudges.Core\Nudges.Core.csproj" />
+    <ProjectReference Include="..\Nudges.Security\Nudges.Security.csproj" />
     <ProjectReference Include="..\Nudges.Telemetry\Nudges.Telemetry.csproj" />
     <ProjectReference Include="..\Nudges.Auth.Keycloak\Nudges.Auth.Keycloak.csproj" />
     <ProjectReference Include="..\Nudges.Configuration\Nudges.Configuration.csproj" />

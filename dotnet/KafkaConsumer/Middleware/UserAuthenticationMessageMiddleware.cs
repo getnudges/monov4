@@ -30,6 +30,6 @@ internal class UserAuthenticationMessageMiddleware(ILogger<UserAuthenticationMes
 
     private async Task HandleUserLoggedIn(UserLoggedInEvent userData, CancellationToken cancellationToken) {
         throw new Exception("Simulated Notification Service outage");
-        await notificationProducer.ProduceSendSms(userData.PhoneNumber, "UserLoggedIn", userData.Locale, [], cancellationToken);
+        await notificationProducer.ProduceSendUserLoggedIn(userData.PhoneNumber, userData.Locale, cancellationToken);
     }
 }

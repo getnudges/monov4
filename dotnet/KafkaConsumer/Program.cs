@@ -8,6 +8,7 @@ using Nudges.Configuration.Extensions;
 using Nudges.Kafka.Events;
 using Nudges.Kafka.Middleware;
 using Nudges.Localization.Client;
+using Nudges.Security;
 using Nudges.Telemetry;
 using Precision.WarpCache;
 using Precision.WarpCache.Grpc.Client;
@@ -126,5 +127,15 @@ static IHostBuilder CreateBaseHost(string[] args, string name) =>
             services.AddLocalizationClient((sp, o) => {
                 o.ServerAddress = sp.GetRequiredService<IConfiguration>().GetLocalizationApiUrl();
                 return o;
+            });
+            services.AddSingleton<IEncryptionService>(static sp => {
+                var config = sp.GetRequiredService<IConfiguration>();
+                var base64 = config["EncryptionSettings:Key"]
+                    ?? throw new InvalidOperationException("Missing EncryptionSettings:Key");
+
+                var keyBytes = Convert.FromBase64String(base64);
+                return new AesGcmEncryptionService(
+                    Options.Create(new EncryptionSettings { Key = keyBytes })
+                );
             });
         });

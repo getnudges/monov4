@@ -50,6 +50,6 @@ scrape_configs:
     static_configs:
       - targets: ["host.docker.internal:5555"]
 
-  # - job_name: "localizer-api"
+  # - job_name: "localization-api"
   #   static_configs: # TODO: need an endpoint to scrape
   #     - targets: ["host.docker.internal:8888"]

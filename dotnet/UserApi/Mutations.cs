@@ -1,4 +1,5 @@
 using System.Buffers.Text;
+using System.Diagnostics;
 using System.Globalization;
 using System.Security.Claims;
 using System.Security.Cryptography;
@@ -14,10 +15,12 @@ using Nudges.Data.Users.Models;
 using Nudges.Kafka;
 using Nudges.Kafka.Events;
 using Nudges.Security;
+using Nudges.Telemetry;
 
 namespace UserApi;
 
 public class Mutation(ILogger<Mutation> logger) {
+    public static readonly ActivitySource ActivitySource = new($"{typeof(Mutation).FullName}");
 
     [Authorize(PolicyNames.Admin)]
     public async Task<Client> DeleteClient([ID<Client>] Guid id, UserDbContext context, CancellationToken cancellationToken) {
@@ -48,10 +51,15 @@ public class Mutation(ILogger<Mutation> logger) {
                                            CreateClientInput input,
                                            KafkaMessageProducer<ClientKey, ClientEvent> clientEventProducer,
                                            HashService hashService,
+                                           IEncryptionService encryptionService,
                                            HttpContext httpContext,
                                            CancellationToken cancellationToken) {
 
-        var phoneNumber = claimsPrincipal.FindFirstValue(WellKnownClaims.PhoneNumber)
+        using var activity = ActivitySource.StartActivity(nameof(CreateClient), ActivityKind.Server, httpContext.Request.GetActivityContext());
+        activity?.AddBaggage("client.name", input.Name);
+        activity?.AddBaggage("user.name", httpContext.User.Identity?.Name ?? "anonymous");
+
+        var encryptedPhone = claimsPrincipal.FindFirstValue(WellKnownClaims.PhoneNumber)
                           ?? throw new ClientCreateException("Phone number claim is missing from token.");
 
         var userSub = claimsPrincipal.FindFirstValue(WellKnownClaims.Sub)
@@ -62,7 +70,11 @@ public class Mutation(ILogger<Mutation> logger) {
             ?? httpContext.Features.Get<IRequestCultureFeature>()?.RequestCulture.Culture.Name
             ?? "en-US";
 
-        var phoneNumberHash = hashService.ComputeHash(ValidationHelpers.NormalizePhoneNumber(phoneNumber));
+        activity?.SetTag("client.locale", userLocale);
+
+        var decryptedPhone = encryptionService.Decrypt(encryptedPhone)
+            ?? throw new ClientCreateException("Failed to decrypt phone number.");
+        var phoneNumberHash = hashService.ComputeHash(ValidationHelpers.NormalizePhoneNumber(decryptedPhone));
         var user = await context.Users
             .Include(u => u.Client)
             .SingleOrDefaultAsync(s => s.PhoneNumberHash == phoneNumberHash, cancellationToken);
@@ -71,24 +83,46 @@ public class Mutation(ILogger<Mutation> logger) {
         }
 
         var newUser = context.Users.Add(new User {
-            PhoneNumber = phoneNumber,
+            PhoneNumber = decryptedPhone,
             Locale = userLocale,
             Subject = userSub,
         });
-        await context.SaveChangesAsync(cancellationToken);
-        var newClient = context.Clients.Add(new Client {
-            Id = newUser.Entity.Id,
-            Name = input.Name,
-            Slug = GenerateSlug(newUser.Entity.Id.ToString())
-        });
-        await context.SaveChangesAsync(cancellationToken);
 
-        await clientEventProducer.Produce(
-            ClientKey.ClientCreated(newClient.Entity.Slug),
-            new ClientCreatedEvent(newClient.Entity.Id, newUser.Entity.PhoneNumber, newClient.Entity.Name, newUser.Entity.Locale),
-            cancellationToken);
+        try {
+            var sw = Stopwatch.StartNew();
+            await context.SaveChangesAsync(cancellationToken);
+            sw.Stop();
+            logger.LogUserCreated(newUser.Entity.Id, sw.Elapsed.TotalMilliseconds);
+            activity?.SetTag("user.id", newUser.Entity.Id);
+            activity?.SetTag("db.user_save_duration_ms", sw.Elapsed.TotalMilliseconds);
 
-        return newClient.Entity;
+            var newClient = context.Clients.Add(new Client {
+                Id = newUser.Entity.Id,
+                Name = input.Name,
+                Slug = GenerateSlug(newUser.Entity.Id.ToString())
+            });
+
+            sw.Restart();
+            await context.SaveChangesAsync(cancellationToken);
+            sw.Stop();
+            logger.LogClientCreated(newClient.Entity.Id, newClient.Entity.Name, sw.Elapsed.TotalMilliseconds);
+            activity?.SetTag("client.id", newClient.Entity.Id);
+            activity?.SetTag("client.slug", newClient.Entity.Slug);
+            activity?.SetTag("db.client_save_duration_ms", sw.Elapsed.TotalMilliseconds);
+
+            var delivery = await clientEventProducer.ProduceClientCreatedEvent(
+                new ClientCreatedEvent(newClient.Entity.Id, newUser.Entity.PhoneNumberEncrypted, newClient.Entity.Name, userLocale),
+                cancellationToken);
+            logger.LogClientCreatedEventProduced(newClient.Entity.Id, delivery.TopicPartitionOffset.Topic, delivery.TopicPartitionOffset.Offset);
+
+            activity?.SetStatus(ActivityStatusCode.Ok);
+            return newClient.Entity;
+        } catch (Exception ex) {
+            activity?.AddException(ex);
+            activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
+            logger.LogClientCreationFailed(input.Name, ex);
+            throw new ClientCreateException(ex.GetBaseException().Message);
+        }
     }
 
 
@@ -110,7 +144,7 @@ public class Mutation(ILogger<Mutation> logger) {
         try {
             await context.SaveChangesAsync(cancellationToken);
             var clientNodeId = idSerializer.Format(nameof(Client), client.Id);
-            await clientEventProducer.Produce(ClientKey.ClientUpdated(clientNodeId), new ClientUpdatedEvent(clientNodeId), cancellationToken);
+            await clientEventProducer.ProduceClientUpdatedEvent(new ClientUpdatedEvent(client.Id, clientNodeId), cancellationToken);
             await subscriptionSender.SendAsync(nameof(Subscription.OnClientUpdated), client, cancellationToken);
             return client;
         } catch (Exception ex) {

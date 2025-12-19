@@ -14,6 +14,7 @@ using Nudges.Auth.Web;
 using Nudges.Configuration;
 using Nudges.Kafka;
 using Nudges.Kafka.Events;
+using Nudges.Security;
 using Nudges.Telemetry;
 using Precision.WarpCache.Grpc.Client;
 
@@ -21,40 +22,52 @@ namespace AuthApi;
 
 [ApiController]
 [Route("/")]
-public sealed class Handlers(IOtpVerifier otpVerifier,
-                             ICacheClient<string> cache,
-                             IOidcClient tokenClient,
-                             KafkaMessageProducer<NotificationKey, NotificationEvent> notificationProducer,
-                             KafkaMessageProducer<UserAuthenticationEventKey, UserAuthenticationEvent> userEventProducer,
-                             ILogger<Handlers> logger) : ControllerBase {
+public sealed class ApiController(IOtpVerifier otpVerifier,
+                                  ICacheClient<string> cache,
+                                  IOidcClient tokenClient,
+                                  KafkaMessageProducer<NotificationKey, NotificationEvent> notificationProducer,
+                                  KafkaMessageProducer<UserAuthenticationEventKey, UserAuthenticationEvent> userEventProducer,
+                                  IEncryptionService encryptionService,
+                                  HashService hashService,
+                                  ILogger<ApiController> logger) : ControllerBase {
 
-    public static readonly ActivitySource ActivitySource = new($"{typeof(Handlers).FullName}");
+    public static readonly ActivitySource ActivitySource = new($"{typeof(ApiController).FullName}");
 
     [HttpPost("otp")]
-    public async Task<IActionResult> GenerateOtp([FromBody] OtpRequest request) {
+    public async Task<IResult> GenerateOtp([FromBody] OtpRequest request) {
 
         using var activity = ActivitySource.StartActivity(nameof(ValidateOtp), ActivityKind.Server, HttpContext.Request.GetActivityContext());
         activity?.Start();
 
         var (code, base32Key) = otpVerifier.GetOtp();
 
-        await cache.SetOtpSecret(request.PhoneNumber, base32Key);
+        var phoneHash = hashService.ComputeHash(request.PhoneNumber);
+        await cache.SetOtpSecret(phoneHash, base32Key);
+
         var locale = HttpContext.Request.GetRequestCulture();
-        await notificationProducer.ProduceOtpRequested(request.PhoneNumber, locale, code, HttpContext.RequestAborted);
+        var encryptedPhone = encryptionService.Encrypt(request.PhoneNumber);
+        if (string.IsNullOrEmpty(encryptedPhone)) {
+            activity?.SetStatus(ActivityStatusCode.Error, "Failed to encrypt phone number.");
+            logger.LogError("Failed to encrypt phone number for OTP generation.");
+            return Results.InternalServerError(new {
+                Message = "Failed to process phone number."
+            });
+        }
+        await notificationProducer.ProduceSendOtp(encryptedPhone, locale, code, HttpContext.RequestAborted);
 
         // When developing locally, return the OTP code in the response for easier testing
         if (HttpContext.RequestServices.GetRequiredService<IWebHostEnvironment>().IsDevelopment()) {
             activity?.SetStatus(ActivityStatusCode.Ok);
-            return new JsonResult(new OtpResponse(code, DateTimeOffset.UtcNow.Add(WarpCacheExtensions.OtpExpirationTime))) {
-                SerializerSettings = OtpResponseSerializerContext.Default.OtpResponse
-            };
+            return Results.Json(
+                new OtpResponse(code, DateTimeOffset.UtcNow.Add(WarpCacheExtensions.OtpExpirationTime)),
+                OtpResponseSerializerContext.Default.OtpResponse);
         }
         activity?.SetStatus(ActivityStatusCode.Ok);
-        return Ok();
+        return Results.Ok();
     }
 
     [HttpPost("otp/verify")]
-    public async Task<IActionResult> ValidateOtp([FromBody] OtpCredentials credentials) {
+    public async Task<IResult> ValidateOtp([FromBody] OtpCredentials credentials) {
 
         using var activity = ActivitySource.StartActivity(nameof(ValidateOtp), ActivityKind.Server, HttpContext.Request.GetActivityContext());
         activity?.Start();
@@ -62,45 +75,56 @@ public sealed class Handlers(IOtpVerifier otpVerifier,
         if (!HttpContext.Request.Headers.TryGetValue("X-Role-Claim", out var role)) {
             activity?.SetStatus(ActivityStatusCode.Error, "Missing required role claim.");
             logger.LogMissingClaim();
-            return BadRequest(new ErrorResponse("Missing required role claim."));
+            return Results.BadRequest(new ErrorResponse("Missing required role claim."));
         }
 
         var roleClaim = role.ToString();
         if (roleClaim is not ClaimValues.Roles.Client and not ClaimValues.Roles.Subscriber) {
             activity?.SetStatus(ActivityStatusCode.Error, $"Invalid role claim: {roleClaim}");
-            return BadRequest(new ErrorResponse($"Invalid role: {roleClaim}"));
+            return Results.BadRequest(new ErrorResponse($"Invalid role: {roleClaim}"));
         }
 
-        var key = await cache.GetOtpSecret(credentials.PhoneNumber);
+        var phoneHash = hashService.ComputeHash(credentials.PhoneNumber);
+        var key = await cache.GetOtpSecret(phoneHash);
         if (key is null) {
             activity?.SetStatus(ActivityStatusCode.Error, "OTP expired or not generated.");
-            return BadRequest(new ErrorResponse("OTP expired or not generated"));
+            return Results.BadRequest(new ErrorResponse("OTP expired or not generated"));
         }
 
         if (!otpVerifier.ValidateOtp(key, credentials.Code)) {
             activity?.SetStatus(ActivityStatusCode.Error, "Invalid OTP.");
-            return BadRequest(new ErrorResponse("Invalid OTP"));
+            return Results.BadRequest(new ErrorResponse("Invalid OTP"));
         }
 
-        await cache.RemoveOtpSecret(credentials.PhoneNumber);
+        await cache.RemoveOtpSecret(phoneHash);
 
         var tempPassword = Guid.NewGuid().ToString("N");
-        var userCreate = await CreateNewUser(credentials, roleClaim, tempPassword);
+
+        var encryptedPhone = encryptionService.Encrypt(credentials.PhoneNumber);
+        if (string.IsNullOrEmpty(encryptedPhone)) {
+            activity?.SetStatus(ActivityStatusCode.Error, "Failed to encrypt phone number.");
+            logger.LogError("Failed to encrypt phone number for OTP verification.");
+            return Results.InternalServerError(new {
+                Message = "Failed to process phone number."
+            });
+        }
+
+        var userCreate = await CreateNewUser(phoneHash, encryptedPhone, roleClaim, tempPassword);
 
         var result = await userCreate.ThenAsync(_ =>
-            tokenClient.GetUserTokenAsync(credentials.PhoneNumber, tempPassword, HttpContext.RequestAborted)).ThenAsync(async token => {
+            tokenClient.GetUserTokenAsync(phoneHash, tempPassword, HttpContext.RequestAborted)).ThenAsync(async token => {
                 var tokenId = Guid.NewGuid().ToString("N");
                 await cache.SetToken(tokenId, token.AccessToken, token.ExpiresIn);
                 HttpContext.AttachTokenIdCookie(token, tokenId);
                 activity?.SetStatus(ActivityStatusCode.Ok);
-                return ErrorOrFactory.From<IActionResult>(Ok());
-            }).Else(e => Problem(string.Join(',', e.Select(i => i.Description))));
-        return result.Value;
+                return Results.Ok();
+            }).Else(e => Results.Problem(string.Join(',', e.Select(i => i.Description))));
+        return Results.Ok(result.Value);
     }
 
-    private async Task<ErrorOr<Success>> CreateNewUser(OtpCredentials credentials, string roleClaim, string tempPassword) {
+    private async Task<ErrorOr<Success>> CreateNewUser(string phoneNumberHash, string encryptedPhone, string roleClaim, string tempPassword) {
         var result = await tokenClient.CreateUser(new UserRepresentation {
-            Username = credentials.PhoneNumber,
+            Username = phoneNumberHash,
             Credentials = [
                 new() {
                     Type = "password",
@@ -114,16 +138,15 @@ public sealed class Handlers(IOtpVerifier otpVerifier,
             // disable required password change and email validation
             RequiredActions = [],
             Attributes = new Dictionary<string, ICollection<string>> {
-                { WellKnownClaims.PhoneNumber, [credentials.PhoneNumber] },
-                { "phone", [credentials.PhoneNumber] },
-                { "locale", [HttpContext.Request.GetRequestCulture()] }
+                { WellKnownClaims.Locale, [HttpContext.Request.GetRequestCulture()] },
+                { "phone", [encryptedPhone] }
             }
         }, HttpContext.RequestAborted);
         return result;
     }
 
     [HttpGet("redirect")]
-    public async Task<IActionResult> OAuthRedirect([FromQuery] string? code, [FromQuery] string state, [FromQuery] string? error, [FromQuery] string? error_description) {
+    public async Task<IResult> OAuthRedirect([FromQuery] string? code, [FromQuery] string state, [FromQuery] string? error, [FromQuery] string? error_description) {
         using var activity = ActivitySource.StartActivity(nameof(OAuthRedirect), ActivityKind.Server, HttpContext.Request.GetActivityContext());
 
         if (!string.IsNullOrEmpty(error)) {
@@ -133,12 +156,12 @@ public sealed class Handlers(IOtpVerifier otpVerifier,
                     { "error.type", error },
                     { "error.message", error_description }
                 }));
-            return BadRequest(new ErrorResponse($"OAuth error: {error} - {error_description}"));
+            return Results.BadRequest(new ErrorResponse($"OAuth error: {error} - {error_description}"));
         }
 
         if (string.IsNullOrWhiteSpace(code) || string.IsNullOrWhiteSpace(state)) {
             activity?.SetStatus(ActivityStatusCode.Error, "Missing code or state in OAuth redirect.");
-            return BadRequest(new ErrorResponse("Invalid OAuth request: missing code or state."));
+            return Results.BadRequest(new ErrorResponse("Invalid OAuth request: missing code or state."));
         }
 
         var stateData = Base64UrlEncoder.Decode(state);
@@ -146,7 +169,7 @@ public sealed class Handlers(IOtpVerifier otpVerifier,
         var codeVerifier = await cache.GetOidcState(state);
         if (string.IsNullOrEmpty(codeVerifier)) {
             activity?.SetStatus(ActivityStatusCode.Error, "Invalid or expired OAuth state.");
-            return Unauthorized();
+            return Results.Unauthorized();
         }
 
         var tokenResponse = await tokenClient.GrantTokenAsync(code!, codeVerifier, oauthState.InternalRedirect, HttpContext.RequestAborted);
@@ -156,13 +179,13 @@ public sealed class Handlers(IOtpVerifier otpVerifier,
             .Else(e => {
                 var message = string.Join('\n', e.Select(i => i.Description));
                 activity?.SetStatus(ActivityStatusCode.Error, $"Failed to grant token: {message}");
-                return Problem(message);
+                return Results.Problem(message);
             }).ThenDo(_ => activity?.SetStatus(ActivityStatusCode.Ok));
 
         return result.Value;
     }
 
-    private async Task<IActionResult> CreateRedirectResponse(TokenResponse token, string state, OAuthState oauthState) {
+    private async Task<IResult> CreateRedirectResponse(TokenResponse token, string state, OAuthState oauthState) {
 
         await cache.RemoveOidcState(state);
         var tokenId = Guid.NewGuid().ToString("N");
@@ -178,7 +201,7 @@ public sealed class Handlers(IOtpVerifier otpVerifier,
             ?? HttpContext.Request.GetRequestCulture();
 
         if (string.IsNullOrEmpty(phoneNumber)) {
-            return Problem("Phone number claim is missing in the token.");
+            return Results.Problem("Phone number claim is missing in the token.");
         }
 
         var cts = CancellationTokenSource.CreateLinkedTokenSource(HttpContext.RequestAborted);
@@ -194,11 +217,11 @@ public sealed class Handlers(IOtpVerifier otpVerifier,
             }
         }, TaskScheduler.Default);
 
-        return Redirect(oauthState.RedirectUri);
+        return Results.Redirect(oauthState.RedirectUri);
     }
 
     [HttpGet("login")]
-    public async Task<IActionResult> OAuthLogin([FromQuery] string redirectUri, [FromServices] IOptions<OidcSettings> settingsConfig) {
+    public async Task<IResult> OAuthLogin([FromQuery] string redirectUri, [FromServices] IOptions<OidcSettings> settingsConfig) {
 
         using var activity = ActivitySource.StartActivity(nameof(OAuthLogin), ActivityKind.Server, HttpContext.Request.GetActivityContext());
         activity?.Start();
@@ -230,7 +253,7 @@ public sealed class Handlers(IOtpVerifier otpVerifier,
         await cache.SetOidcState(stateKey, codeVerifier);
 
         activity?.SetStatus(ActivityStatusCode.Ok);
-        return Redirect(redirect);
+        return Results.Redirect(redirect);
     }
 
     private static class PkceHelper {

@@ -50,6 +50,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Nudges.Contracts", "Nudges.
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Nudges.Core", "Nudges.Core\Nudges.Core.csproj", "{DE9C8CDB-51A6-4C1C-EA16-583779F292EA}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Nudges.Security", "Nudges.Security\Nudges.Security.csproj", "{591185A6-9807-01CE-3B21-62155E25C0A6}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -140,6 +142,10 @@ Global
 		{DE9C8CDB-51A6-4C1C-EA16-583779F292EA}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{DE9C8CDB-51A6-4C1C-EA16-583779F292EA}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{DE9C8CDB-51A6-4C1C-EA16-583779F292EA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{591185A6-9807-01CE-3B21-62155E25C0A6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{591185A6-9807-01CE-3B21-62155E25C0A6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{591185A6-9807-01CE-3B21-62155E25C0A6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{591185A6-9807-01CE-3B21-62155E25C0A6}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

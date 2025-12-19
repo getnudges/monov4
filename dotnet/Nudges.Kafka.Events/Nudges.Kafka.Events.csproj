@@ -8,6 +8,7 @@
 
 
   <ItemGroup>
+    <ProjectReference Include="..\Nudges.Contracts\Nudges.Contracts.csproj" />
     <ProjectReference Include="..\Nudges.Kafka.Analyzers\Nudges.Kafka.Analyzers.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
     <ProjectReference Include="..\Nudges.Kafka\Nudges.Kafka.csproj" />
   </ItemGroup>

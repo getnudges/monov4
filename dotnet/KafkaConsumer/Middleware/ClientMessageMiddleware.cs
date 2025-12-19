@@ -3,12 +3,14 @@ using KafkaConsumer.Services;
 using Nudges.Kafka;
 using Nudges.Kafka.Events;
 using Nudges.Kafka.Middleware;
+using Nudges.Security;
 
 namespace KafkaConsumer.Middleware;
 
 internal class ClientMessageMiddleware(ILogger<ClientMessageMiddleware> logger,
                                        Func<INudgesClient> nudgesClientFactory,
                                        IForeignProductService foreignProductService,
+                                       IEncryptionService encryptionService,
                                        KafkaMessageProducer<NotificationKey, NotificationEvent> notificationProducer) : IMessageMiddleware<ClientKey, ClientEvent> {
     public async Task<MessageContext<ClientKey, ClientEvent>> InvokeAsync(MessageContext<ClientKey, ClientEvent> context, MessageHandler<ClientKey, ClientEvent> next) {
         await HandleMessageAsync(context.ConsumeResult, context.CancellationToken);
@@ -34,24 +36,20 @@ internal class ClientMessageMiddleware(ILogger<ClientMessageMiddleware> logger,
     private async Task HandleClientCreated(ClientCreatedEvent data, CancellationToken cancellationToken) {
         using var client = new DisposableWrapper<INudgesClient>(nudgesClientFactory);
 
-        var customerId = await foreignProductService.CreateCustomer(data.Id, data.PhoneNumber, data.Name, cancellationToken);
+        var phoneNumber = encryptionService.Decrypt(data.PhoneNumberEncrypted);
+        if (string.IsNullOrEmpty(phoneNumber)) {
+            throw new Exception("Decrypted phone number is null or empty");
+        }
+        var customerId = await foreignProductService.CreateCustomer(data.UserId, phoneNumber, data.Name, cancellationToken);
 
         await client.Instance.UpdateClient(new UpdateClientInput {
-            Id = data.Id,
+            Id = data.UserId,
             CustomerId = customerId,
         }, cancellationToken);
 
-        await SendSms(data.PhoneNumber, "ClientCreated", data.Locale, [], cancellationToken);
-    }
-
-    private async Task SendSms(string phoneNumber,
-                               string resourceKey,
-                               string locale,
-                               Dictionary<string, string> replacements,
-                               CancellationToken cancellationToken) {
-        var result = await notificationProducer.ProduceSendSms(phoneNumber, resourceKey, locale, replacements, cancellationToken);
+        var result = await notificationProducer.ProduceSendClientCreated(data.PhoneNumberEncrypted, data.Locale, cancellationToken);
         if (result.Status != PersistenceStatus.Persisted) {
-            throw new Exception($"Failed to send SMS to {phoneNumber}");
+            throw new Exception($"Failed to send SMS to {data.UserId}");
         }
     }
 

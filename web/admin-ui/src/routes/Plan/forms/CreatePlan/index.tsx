@@ -48,6 +48,7 @@ export default function PlanCreator() {
   };
 
   function onSubmitCreate(formData: PlanFormValues) {
+    debugger;
     createPlan({
       name: formData.name,
       description: formData.description,
