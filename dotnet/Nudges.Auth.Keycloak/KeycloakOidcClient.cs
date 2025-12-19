@@ -96,6 +96,10 @@ public sealed class KeycloakOidcClient(HttpClient client, IOptions<OidcConfig> c
             try {
                 var response = await _client.SendAsync(request);
                 if (!response.IsSuccessStatusCode) {
+                    if (response.StatusCode == System.Net.HttpStatusCode.Conflict) {
+                        var err = await response.Content.ReadFromJsonAsync(SimpleApiErrorContext.Default.SimpleApiError);
+                        return Errors.SimpleError(err?.ErrorMessage ?? "Unknown Error");
+                    }
                     var body = await response.Content.ReadFromJsonAsync(AuthApiErrorContext.Default.AuthApiError);
                     if (body is null) {
                         return Errors.ResponseParseFailed();
@@ -119,6 +123,8 @@ public sealed class KeycloakOidcClient(HttpClient client, IOptions<OidcConfig> c
             Error.Validation("Response.Parsing", $"Could not parse error response {(type is null ? "" : $"of type {type}")}.");
         public static Error RequestFailed(AuthApiError error) =>
             Error.Failure("Http.Request.Failure", $"OIDC request failed: {error.ErrorDescription}");
+        public static Error SimpleError(string errorMessage) =>
+            Error.Failure("Http.Request.Failure", $"OIDC request failed: {errorMessage}");
 
         public static Error Exception(Exception ex) =>
             Error.Failure(ex.GetType().Name, ex.Message, new Dictionary<string, object>([

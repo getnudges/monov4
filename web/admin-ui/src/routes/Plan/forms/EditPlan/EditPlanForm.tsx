@@ -31,6 +31,11 @@ const EditPlanForm = ({ onSubmit, onDelete }: EditPlanFormProps) => {
           label="Description"
           placeholder="Enter plan description"
         />
+        <TextInput
+          name={`foreignServiceId`}
+          label="Foreign Service ID"
+          readOnly={true}
+        />
         <input type="submit" value="Update Plan" />
       </Form.Root>
     </>

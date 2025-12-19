@@ -11,6 +11,15 @@ const CreatePlanForm = ({ onSubmit }: CreatePlanFormProps) => {
   const form = useFormContext<PlanFormValues>();
   return (
     <>
+      {form.formState.errors && (
+        <div>
+          {Object.entries(form.formState.errors).map(([key, error]) => (
+            <p key={key} style={{ color: "red" }}>
+              {error.message}
+            </p>
+          ))}
+        </div>
+      )}
       <Form.Root onSubmit={form.handleSubmit(onSubmit)} autoComplete="off">
         <input type="hidden" {...form.register("id")} />
         <input type="hidden" {...form.register("features.planId")} />
@@ -20,7 +29,11 @@ const CreatePlanForm = ({ onSubmit }: CreatePlanFormProps) => {
           label="Description"
           placeholder="Enter plan description"
         />
-        <input type="submit" value="Create Plan" />
+        <input
+          type="submit"
+          value="Create Plan"
+          disabled={!form.formState.isValid}
+        />
       </Form.Root>
     </>
   );

@@ -30,15 +30,25 @@ internal static class HandlerBuilders {
                     services.AddSingleton<INotifier, TwilioNotifier>();
                 }
 
-                services.AddTransient<NotificationMessageMiddleware>();
+                services.AddSingleton<KafkaMessageProducer<DeadLetterEventKey, DeadLetterEvent>>(static sp =>
+                    new DeadLetterEventProducer(Topics.DeadLetter, new ProducerConfig {
+                        BootstrapServers = sp.GetRequiredService<IOptions<KafkaSettings>>().Value.BrokerList,
+                        AllowAutoCreateTopics = true,
+                    }));
+                services.AddTransient<IMessageMiddleware<NotificationKey, NotificationEvent>, NotificationMessageMiddleware>();
                 services.AddTransient(static sp =>
                     KafkaMessageProcessorBuilder
                         .For<NotificationKey, NotificationEvent>(
                             Topics.Notifications,
                             sp.GetRequiredService<IOptions<KafkaSettings>>().Value.BrokerList,
                             cancellationToken: sp.GetRequiredService<IHostApplicationLifetime>().ApplicationStopping)
-                        .Use(new TracingMiddleware<NotificationKey, NotificationEvent>())
-                        .Use(sp.GetRequiredService<NotificationMessageMiddleware>())
+                        .UseCircuitBreaker(TimeProvider.System)
+                        .UseRetry(TimeProvider.System)
+                        .UseTracing()
+                        .UseErrorHandling(sp.GetRequiredService<ILogger<ErrorHandlingMiddleware<NotificationKey, NotificationEvent>>>())
+                        .UseDlq(DlqHelper.CreateDlqHandler<NotificationKey, NotificationEvent>(
+                            sp.GetRequiredService<KafkaMessageProducer<DeadLetterEventKey, DeadLetterEvent>>()))
+                        .Use(sp.GetRequiredService<IMessageMiddleware<NotificationKey, NotificationEvent>>())
                         .Build());
 
                 services.AddHostedService<MessageHandlerService<NotificationKey, NotificationEvent>>();
@@ -84,6 +94,11 @@ internal static class HandlerBuilders {
                         BootstrapServers = sp.GetRequiredService<IOptions<KafkaSettings>>().Value.BrokerList,
                         AllowAutoCreateTopics = true,
                     }));
+                services.AddSingleton<KafkaMessageProducer<DeadLetterEventKey, DeadLetterEvent>>(static sp =>
+                    new DeadLetterEventProducer(Topics.DeadLetter, new ProducerConfig {
+                        BootstrapServers = sp.GetRequiredService<IOptions<KafkaSettings>>().Value.BrokerList,
+                        AllowAutoCreateTopics = true,
+                    }));
 
                 services.AddTransient<IStripeClient>(s => {
                     var config = s.GetRequiredService<IConfiguration>();
@@ -100,7 +115,12 @@ internal static class HandlerBuilders {
                             Topics.Clients,
                             sp.GetRequiredService<IOptions<KafkaSettings>>().Value.BrokerList,
                             cancellationToken: sp.GetRequiredService<IHostApplicationLifetime>().ApplicationStopping)
-                        .Use(new TracingMiddleware<ClientKey, ClientEvent>())
+                        .UseCircuitBreaker(TimeProvider.System)
+                        .UseRetry(TimeProvider.System)
+                        .UseTracing()
+                        .UseErrorHandling(sp.GetRequiredService<ILogger<ErrorHandlingMiddleware<ClientKey, ClientEvent>>>())
+                        .UseDlq(DlqHelper.CreateDlqHandler<ClientKey, ClientEvent>(
+                            sp.GetRequiredService<KafkaMessageProducer<DeadLetterEventKey, DeadLetterEvent>>()))
                         .Use(sp.GetRequiredService<IMessageMiddleware<ClientKey, ClientEvent>>())
                         .Build());
 

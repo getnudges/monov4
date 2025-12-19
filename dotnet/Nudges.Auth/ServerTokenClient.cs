@@ -95,6 +95,13 @@ public record AuthApiError(string Error, string ErrorDescription);
 [JsonSerializable(typeof(AuthApiError))]
 public partial class AuthApiErrorContext : JsonSerializerContext;
 
+public record SimpleApiError(string ErrorMessage);
+[JsonSourceGenerationOptions(
+    GenerationMode = JsonSourceGenerationMode.Default,
+    PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase)]
+[JsonSerializable(typeof(SimpleApiError))]
+public partial class SimpleApiErrorContext : JsonSerializerContext;
+
 internal static partial class ServerTokenClientLogs {
     [LoggerMessage(Level = LogLevel.Warning, Message = "Request Failed")]
     public static partial void LogRequestError(this ILogger<ServerTokenClient> logger, Exception? exception = null);

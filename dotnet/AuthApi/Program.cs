@@ -4,6 +4,7 @@ using AuthApi;
 using Confluent.Kafka;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.Extensions.Options;
 using Nudges.Auth;
 using Nudges.Auth.Keycloak;
 using Nudges.Auth.Web;
@@ -11,6 +12,7 @@ using Nudges.Configuration;
 using Nudges.Configuration.Extensions;
 using Nudges.Kafka;
 using Nudges.Kafka.Events;
+using Nudges.Security;
 using Nudges.Telemetry;
 using Precision.WarpCache.Grpc.Client;
 
@@ -32,7 +34,7 @@ if (settings.Otlp.Endpoint is string url) {
                 "System.Net.Http",
             ], [
                 $"{typeof(KafkaMessageProducer<,>).Namespace}.KafkaMessageProducer",
-                $"{typeof(Handlers).FullName}"
+                $"{typeof(ApiController).FullName}"
             ], null, null, options => options.RecordException = true);
 }
 
@@ -68,6 +70,27 @@ builder.Services.AddSingleton<KafkaMessageProducer<UserAuthenticationEventKey, U
     new UserAuthenticationEventProducer(Topics.UserAuthentication, new ProducerConfig {
         BootstrapServers = settings.Kafka.BrokerList,
     }));
+
+builder.Services.AddSingleton(static sp => {
+    var config = sp.GetRequiredService<IConfiguration>();
+    var base64 = config["HashSettings:HashKeyBase64"]
+        ?? throw new InvalidOperationException("Missing HashSettings:HashKeyBase64");
+
+    var keyBytes = Convert.FromBase64String(base64);
+    return new HashService(
+        Options.Create(new HashSettings { HashKey = keyBytes })
+    );
+});
+builder.Services.AddSingleton<IEncryptionService>(static sp => {
+    var config = sp.GetRequiredService<IConfiguration>();
+    var base64 = config["EncryptionSettings:Key"]
+        ?? throw new InvalidOperationException("Missing EncryptionSettings:Key");
+
+    var keyBytes = Convert.FromBase64String(base64);
+    return new AesGcmEncryptionService(
+        Options.Create(new EncryptionSettings { Key = keyBytes })
+    );
+});
 
 builder.Services.AddTransient<IOtpVerifier, OtpVerifier>();
 

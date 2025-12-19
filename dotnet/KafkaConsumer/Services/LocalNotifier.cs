@@ -9,7 +9,7 @@ internal class LocalNotifier(ILogger<LocalNotifier> logger) : INotifier {
     }
 }
 internal static partial class LocalNotifierLogs {
-    [LoggerMessage(Level = LogLevel.Information, Message = "Sending SMS to {PhoneNumber}: {Message}")]
+    [LoggerMessage(Level = LogLevel.Information, Message = "Sending SMS: {Message}")]
     public static partial void LogMessage(this ILogger<LocalNotifier> logger, string phoneNumber, string message);
 }
 

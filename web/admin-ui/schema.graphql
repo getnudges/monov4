@@ -13,25 +13,12 @@ interface Node {
   id: ID!
 }
 
-type AddSubscriberPayload {
-  errors: [AddSubscriberError!]
-  subscriber: Subscriber
-}
-
 type Admin implements Node {
   id: ID!
-  idNavigation: Client!
 }
 
 type AlreadySubscribedError implements Error {
   message: String!
-}
-
-type Announcement {
-  client: Client
-  clientId: UUID
-  messageSid: String!
-  sentOn: DateTime
 }
 
 type CancelCheckoutSessionPayload {
@@ -53,17 +40,11 @@ type CheckoutSessionError implements Error {
 }
 
 type Client implements Node {
-  admin: Admin
-  announcements: [Announcement!]!
-  clientId: String!
-    @cost(weight: "10")
-    @deprecated(reason: "Use `id` field instead.")
   customerId: String
   id: ID!
-  joinedDate: DateTime
-  locale: String!
+  locale: String! @cost(weight: "10")
   name: String!
-  phoneNumber: String!
+  phoneNumberHash: String! @cost(weight: "10")
   slug: String!
   subscriberCount: Int! @cost(weight: "10")
   subscribers(
@@ -85,7 +66,6 @@ type Client implements Node {
       sizedFields: ["edges", "nodes"]
       requireOneSlicingArgument: false
     )
-    @cost(weight: "10")
   subscription: PlanSubscription @cost(weight: "10")
   subscriptionId: ID @cost(weight: "10")
 }
@@ -243,9 +223,6 @@ type MerchantServicesEdge {
 }
 
 type Mutation {
-  addSubscriber(input: AddSubscriberInput!): AddSubscriberPayload!
-    @authorize(policy: "client")
-    @cost(weight: "10")
   cancelCheckoutSession(
     input: CancelCheckoutSessionInput!
   ): CancelCheckoutSessionPayload!
@@ -257,7 +234,7 @@ type Mutation {
     @authorize(policy: "client")
     @cost(weight: "10")
   createClient(input: CreateClientInput!): CreateClientPayload!
-    @authorize(roles: ["admin", "client"])
+    @authorize(roles: ["client"])
     @cost(weight: "10")
   createDiscountCode(
     input: CreateDiscountCodeInput!
@@ -268,7 +245,7 @@ type Mutation {
     @authorize(policy: "admin")
     @cost(weight: "10")
   createPlan(input: CreatePlanInput!): CreatePlanPayload!
-    @authorize(policy: "admin")
+    @authorize(roles: ["admin"])
     @cost(weight: "10")
   createPlanSubscription(
     input: CreatePlanSubscriptionInput!
@@ -302,7 +279,6 @@ type Mutation {
   patchPriceTier(input: PatchPriceTierInput!): PatchPriceTierPayload!
     @authorize(policy: "admin")
     @cost(weight: "10")
-  sendMessage(input: SendMessageInput!): SendMessagePayload! @cost(weight: "10")
   subscribeToClient(input: SubscribeToClientInput!): SubscribeToClientPayload!
     @authorize(policy: "subscriber")
     @cost(weight: "10")
@@ -466,7 +442,7 @@ type PriceTier implements Node {
   id: ID!
   name: String!
   plan: Plan
-  planId: ID
+  planId: ID!
   planSubscriptions: [PlanSubscription!]!
   price: Decimal!
   status: PriceTierStatus! @cost(weight: "10")
@@ -574,7 +550,10 @@ type Query {
     @cost(weight: "10")
   plan(id: ID): Plan @authorize(roles: ["admin", "client"]) @cost(weight: "10")
   planByForeignId(id: String!): Plan
-    @authorize(roles: ["admin", "client"])
+    @authorize(roles: ["admin", "service"])
+    @cost(weight: "10")
+  planById(id: Int!): Plan
+    @authorize(roles: ["admin", "service"])
     @cost(weight: "10")
   plans(
     "Returns the elements in the list that come after the specified cursor."
@@ -631,9 +610,6 @@ type Query {
   priceTierByForeignId(id: String!): PriceTier
     @authorize(roles: ["admin", "client"])
     @cost(weight: "10")
-  subscriber(subPhone: String!): Subscriber
-    @authorize(roles: ["admin", "client"])
-    @cost(weight: "10")
   subscriberByPhoneNumber(phoneNumber: String!): Subscriber
     @authorize(policy: "admin")
     @cost(weight: "10")
@@ -663,11 +639,6 @@ type Query {
   totalPlanSubscriptions: Int! @authorize(policy: "admin") @cost(weight: "10")
   totalSubscribers: Int! @cost(weight: "10")
   viewer: User @cost(weight: "10")
-}
-
-type SendMessagePayload {
-  failed: Int!
-  sent: Int!
 }
 
 type SubscribeToClientPayload {
@@ -700,16 +671,10 @@ type Subscriber implements Node {
       requireOneSlicingArgument: false
     )
     @cost(weight: "10")
-  fullPhone: String @authorize(policy: "admin") @cost(weight: "10")
   id: ID!
-  joinedDate: DateTime
-  locale: String!
-  maskedPhone: String @cost(weight: "10")
+  locale: String! @cost(weight: "10")
+  phoneNumberHash: String! @cost(weight: "10")
   subscriptionCount: Int! @cost(weight: "10")
-}
-
-type SubscriberExistsError implements Error {
-  message: String!
 }
 
 type SubscriberNotFoundError implements Error {
@@ -737,8 +702,10 @@ type SubscribersEdge {
 type Subscription {
   ClientCreated: Client @cost(weight: "10")
   onClientUpdated(id: ID!): Client @authorize(policy: "client")
-  onPlanUpdated(id: ID!): Plan @authorize(policy: "admin") @cost(weight: "10")
-  onPriceTierUpdated(id: ID!): Plan @authorize(policy: "admin")
+  onPlanUpdated(id: ID!): Plan @cost(weight: "10")
+  onPriceTierUpdated(id: ID!): Plan
+    @authorize(policy: "admin")
+    @cost(weight: "10")
   SubscriberUnsubscribed: Subscriber @cost(weight: "10")
 }
 
@@ -786,8 +753,6 @@ type UpdatePlanPayload {
   plan: Plan
 }
 
-union AddSubscriberError = SubscriberExistsError
-
 union CreateCheckoutSessionError = CheckoutSessionError | UnauthorizedError
 
 union CreateClientError = ClientCreateError
@@ -809,7 +774,7 @@ union PatchPriceTierError =
   | KafkaProduceError
   | PriceTierUpdateError
 
-union SubscribeToClientError = AlreadySubscribedError
+union SubscribeToClientError = ClientCreateError | AlreadySubscribedError
 
 union UnsubscribeFromClientError = NotSubscribedError | ClientNotFoundError
 
@@ -819,30 +784,16 @@ union UpdatePlanError = PlanNotFoundError | PlanUpdateError
 
 union User = Admin | Client | Subscriber
 
-input AddSubscriberInput {
-  locale: String!
-  phoneNumber: String!
-}
-
 input AdminFilterInput {
   and: [AdminFilterInput!]
   id: UuidOperationFilterInput
-  idNavigation: ClientFilterInput
+  idNavigation: UserFilterInput
   or: [AdminFilterInput!]
 }
 
 input AdminSortInput {
   id: SortEnumType @cost(weight: "10")
-  idNavigation: ClientSortInput @cost(weight: "10")
-}
-
-input AnnouncementFilterInput {
-  and: [AnnouncementFilterInput!]
-  client: ClientFilterInput
-  clientId: UuidOperationFilterInput
-  messageSid: StringOperationFilterInput
-  or: [AnnouncementFilterInput!]
-  sentOn: DateTimeOperationFilterInput
+  idNavigation: UserSortInput @cost(weight: "10")
 }
 
 input BooleanOperationFilterInput {
@@ -855,29 +806,22 @@ input CancelCheckoutSessionInput {
 }
 
 input ClientFilterInput {
-  admin: AdminFilterInput
   and: [ClientFilterInput!]
-  announcements: ListFilterInputTypeOfAnnouncementFilterInput
   customerId: StringOperationFilterInput
   id: UuidOperationFilterInput
-  joinedDate: DateTimeOperationFilterInput
-  locale: StringOperationFilterInput
+  idNavigation: UserFilterInput
   name: StringOperationFilterInput
   or: [ClientFilterInput!]
-  phoneNumber: StringOperationFilterInput
   slug: StringOperationFilterInput
-  subscriberPhoneNumbers: ListFilterInputTypeOfSubscriberFilterInput
+  subscribers: ListFilterInputTypeOfSubscriberFilterInput
   subscriptionId: StringOperationFilterInput
 }
 
 input ClientSortInput {
-  admin: AdminSortInput @cost(weight: "10")
   customerId: SortEnumType @cost(weight: "10")
   id: SortEnumType @cost(weight: "10")
-  joinedDate: SortEnumType @cost(weight: "10")
-  locale: SortEnumType @cost(weight: "10")
+  idNavigation: UserSortInput @cost(weight: "10")
   name: SortEnumType @cost(weight: "10")
-  phoneNumber: SortEnumType @cost(weight: "10")
   slug: SortEnumType @cost(weight: "10")
   subscriptionId: SortEnumType @cost(weight: "10")
 }
@@ -1029,7 +973,7 @@ input DiscountFilterInput {
 }
 
 input EndSubscriptionInput {
-  id: ID!
+  id: UUID!
 }
 
 input IntOperationFilterInput {
@@ -1045,13 +989,6 @@ input IntOperationFilterInput {
   nin: [Int] @cost(weight: "10")
   nlt: Int @cost(weight: "10")
   nlte: Int @cost(weight: "10")
-}
-
-input ListFilterInputTypeOfAnnouncementFilterInput {
-  all: AnnouncementFilterInput @cost(weight: "10")
-  any: Boolean @cost(weight: "10")
-  none: AnnouncementFilterInput @cost(weight: "10")
-  some: AnnouncementFilterInput @cost(weight: "10")
 }
 
 input ListFilterInputTypeOfClientFilterInput {
@@ -1297,11 +1234,6 @@ input PriceTierSortInput {
   status: SortEnumType @cost(weight: "10")
 }
 
-input SendMessageInput {
-  audience: Audience!
-  message: String!
-}
-
 input StringOperationFilterInput {
   and: [StringOperationFilterInput!]
   contains: String @cost(weight: "20")
@@ -1322,24 +1254,22 @@ input SubscribeToClientInput {
 }
 
 input SubscribeToPlanInput {
-  clientId: ID!
+  clientId: UUID!
   paymentConfirmationId: UUID!
-  priceTierId: ID!
+  priceTierId: Int!
 }
 
 input SubscriberFilterInput {
   and: [SubscriberFilterInput!]
   clients: ListFilterInputTypeOfClientFilterInput
-  joinedDate: DateTimeOperationFilterInput
-  locale: StringOperationFilterInput
+  id: UuidOperationFilterInput
+  idNavigation: UserFilterInput
   or: [SubscriberFilterInput!]
-  phoneNumber: StringOperationFilterInput
 }
 
 input SubscriberSortInput {
-  joinedDate: SortEnumType @cost(weight: "10")
-  locale: SortEnumType @cost(weight: "10")
-  phoneNumber: SortEnumType @cost(weight: "10")
+  id: SortEnumType @cost(weight: "10")
+  idNavigation: UserSortInput @cost(weight: "10")
 }
 
 input TimeSpanOperationFilterInput {
@@ -1388,10 +1318,9 @@ input UnsubscribeFromClientInput {
 
 input UpdateClientInput {
   customerId: String
-  id: ID!
-  locale: String
+  id: UUID!
   name: String
-  subscriptionId: UUID
+  subscriptionId: String
 }
 
 input UpdateDiscountCodeInput {
@@ -1435,6 +1364,34 @@ input UpdatePlanPriceTierInput {
   status: String!
 }
 
+input UserFilterInput {
+  admin: AdminFilterInput
+  and: [UserFilterInput!]
+  client: ClientFilterInput
+  id: UuidOperationFilterInput
+  joinedDate: DateTimeOperationFilterInput
+  locale: StringOperationFilterInput
+  or: [UserFilterInput!]
+  phoneNumber: StringOperationFilterInput
+  phoneNumberEncrypted: StringOperationFilterInput
+  phoneNumberHash: StringOperationFilterInput
+  subject: StringOperationFilterInput
+  subscriber: SubscriberFilterInput
+}
+
+input UserSortInput {
+  admin: AdminSortInput @cost(weight: "10")
+  client: ClientSortInput @cost(weight: "10")
+  id: SortEnumType @cost(weight: "10")
+  joinedDate: SortEnumType @cost(weight: "10")
+  locale: SortEnumType @cost(weight: "10")
+  phoneNumber: SortEnumType @cost(weight: "10")
+  phoneNumberEncrypted: SortEnumType @cost(weight: "10")
+  phoneNumberHash: SortEnumType @cost(weight: "10")
+  subject: SortEnumType @cost(weight: "10")
+  subscriber: SubscriberSortInput @cost(weight: "10")
+}
+
 input UuidOperationFilterInput {
   eq: UUID @cost(weight: "10")
   gt: UUID @cost(weight: "10")
@@ -1458,14 +1415,6 @@ enum ApplyPolicy {
   BEFORE_RESOLVER
   "The policy is applied in the validation step before the execution."
   VALIDATION
-}
-
-enum Audience {
-  ACTIVE_CLIENTS
-  ACTIVE_CLIENTS_WITHOUT_SUBSCRIBERS
-  ALL_CLIENTS
-  ALL_SUBSCRIBERS
-  EVERYONE
 }
 
 "The duration of a price tier"

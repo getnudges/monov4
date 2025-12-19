@@ -6,5 +6,5 @@ public static partial class HandlersLogs {
         Level = LogLevel.Warning,
         Message = "Missing required role claim."
     )]
-    public static partial void LogMissingClaim(this ILogger<Handlers> logger);
+    public static partial void LogMissingClaim(this ILogger<ApiController> logger);
 }

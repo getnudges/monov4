@@ -146,10 +146,13 @@ export default function PlansPage({ data }: Readonly<RelayRoute<PlansQuery>>) {
   if (!data.viewer?.id) {
     return <div>loading...</div>;
   }
+  if (!data.plans) {
+    return <div>no plans available</div>;
+  }
 
   return (
     <ClientChecker id={data.viewer.id} viewer={data.viewer}>
-      <PlanTable plans={data.plans!} onSelectPrice={onSelectPrice} />
+      <PlanTable plans={data.plans} onSelectPrice={onSelectPrice} />
       {createCheckoutSessionError && (
         <ErrorDialog
           title="Failed to create checkout session"

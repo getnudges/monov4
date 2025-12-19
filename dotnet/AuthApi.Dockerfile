@@ -7,6 +7,7 @@ COPY Nudges.Kafka/*.csproj ./Nudges.Kafka/
 COPY Nudges.Kafka.Analyzers/*.csproj ./Nudges.Kafka.Analyzers/
 COPY Nudges.Kafka.Events/*.csproj ./Nudges.Kafka.Events/
 COPY Nudges.Auth/*.csproj ./Nudges.Auth/
+COPY Nudges.Security/*.csproj ./Nudges.Security/
 COPY Nudges.Auth.Web/*.csproj ./Nudges.Auth.Web/
 COPY Monads/*.csproj ./Monads/
 COPY Nudges.Localization/*.csproj ./Nudges.Localization/
@@ -14,7 +15,6 @@ COPY Nudges.Telemetry/*.csproj ./Nudges.Telemetry/
 COPY Nudges.Localization.Analyzers/*.csproj ./Nudges.Localization.Analyzers/
 COPY Nudges.Configuration.Analyzers/*.csproj ./Nudges.Configuration.Analyzers/
 COPY Nudges.Auth.Keycloak/*.csproj ./Nudges.Auth.Keycloak/
-
 COPY Precision.WarpCache/Precision.WarpCache/*.csproj Precision.WarpCache/Precision.WarpCache/
 COPY Precision.WarpCache/Precision.WarpCache.Grpc.Client/*.csproj Precision.WarpCache/Precision.WarpCache.Grpc.Client/
 COPY Nudges.Configuration/*.csproj ./Nudges.Configuration/

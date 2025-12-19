@@ -36,9 +36,9 @@ internal class PlanSubscriptionEventMiddleware(ILogger<PlanSubscriptionEventMidd
         }, cancellationToken);
 
         // send notification (best-effort; allow exception to bubble to be handled by middleware)
-        await notificationProducer.Produce(
-            NotificationKey.StartSubscription(data.PlanSubscriptionId),
-            new StartSubscriptionNotificationEvent(string.Empty, "en-US", new Dictionary<string, string>()),
-            cancellationToken);
+        //await notificationProducer.Produce(
+        //    new NotificationKey("",
+        //    new StartSubscriptionNotificationEvent(string.Empty, "en-US", new Dictionary<string, string>()),
+        //    cancellationToken);
     }
 }
