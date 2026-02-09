@@ -1,39 +1,142 @@
 import * as React from "react"
-import { OTPInput, OTPInputContext } from "input-otp"
-import { Dot } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 
-const InputOTP = React.forwardRef<
-  React.ElementRef<typeof OTPInput>,
-  React.ComponentPropsWithoutRef<typeof OTPInput>
->(({ className, containerClassName, ...props }, ref) => (
-  <OTPInput
-    ref={ref}
-    containerClassName={cn(
-      "flex items-center gap-2 has-[:disabled]:opacity-50",
-      containerClassName
-    )}
-    className={cn("disabled:cursor-not-allowed", className)}
-    {...props}
-  />
-))
+// --- Context ---
+type InputOTPContextValue = {
+  value: string
+  activeIndex: number
+  maxLength: number
+  focus: () => void
+}
+
+const InputOTPContext = React.createContext<InputOTPContextValue>({
+  value: "",
+  activeIndex: -1,
+  maxLength: 6,
+  focus: () => {},
+})
+
+// --- InputOTP (root) ---
+interface InputOTPProps
+  extends Omit<React.InputHTMLAttributes<HTMLInputElement>, "onChange" | "value"> {
+  maxLength: number
+  value?: string
+  onChange?: (value: string) => void
+  containerClassName?: string
+}
+
+const InputOTP = React.forwardRef<HTMLInputElement, InputOTPProps>(
+  (
+    {
+      maxLength,
+      value = "",
+      onChange,
+      onBlur,
+      containerClassName,
+      className,
+      children,
+      ...props
+    },
+    ref
+  ) => {
+    const internalRef = React.useRef<HTMLInputElement>(null)
+    const inputRef = (ref as React.RefObject<HTMLInputElement>) || internalRef
+    const [isFocused, setIsFocused] = React.useState(false)
+
+    const activeIndex = isFocused ? Math.min(value.length, maxLength - 1) : -1
+
+    const focus = React.useCallback(() => {
+      inputRef.current?.focus()
+    }, [inputRef])
+
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+      const newValue = e.target.value.replace(/[^0-9]/g, "").slice(0, maxLength)
+      onChange?.(newValue)
+    }
+
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+      if (e.key === "Backspace" && value.length > 0) {
+        e.preventDefault()
+        onChange?.(value.slice(0, -1))
+      }
+    }
+
+    const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+      e.preventDefault()
+      const pasted = e.clipboardData
+        .getData("text/plain")
+        .replace(/[^0-9]/g, "")
+        .slice(0, maxLength)
+      onChange?.(pasted)
+    }
+
+    const handleFocus = () => setIsFocused(true)
+
+    const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+      setIsFocused(false)
+      onBlur?.(e)
+    }
+
+    const ctx = React.useMemo(
+      () => ({ value, activeIndex, maxLength, focus }),
+      [value, activeIndex, maxLength, focus]
+    )
+
+    return (
+      <InputOTPContext.Provider value={ctx}>
+        <div
+          className={cn(
+            "flex items-center gap-2 has-[:disabled]:opacity-50",
+            containerClassName
+          )}
+          onClick={focus}
+        >
+          <input
+            ref={inputRef}
+            inputMode="numeric"
+            autoComplete="one-time-code"
+            pattern="[0-9]*"
+            value={value}
+            onChange={handleChange}
+            onKeyDown={handleKeyDown}
+            onPaste={handlePaste}
+            onFocus={handleFocus}
+            onBlur={handleBlur}
+            maxLength={maxLength}
+            className={cn(
+              "sr-only absolute",
+              "disabled:cursor-not-allowed",
+              className
+            )}
+            {...props}
+          />
+          {children}
+        </div>
+      </InputOTPContext.Provider>
+    )
+  }
+)
 InputOTP.displayName = "InputOTP"
 
+// --- InputOTPGroup ---
 const InputOTPGroup = React.forwardRef<
-  React.ElementRef<"div">,
-  React.ComponentPropsWithoutRef<"div">
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement>
 >(({ className, ...props }, ref) => (
   <div ref={ref} className={cn("flex items-center", className)} {...props} />
 ))
 InputOTPGroup.displayName = "InputOTPGroup"
 
+// --- InputOTPSlot ---
 const InputOTPSlot = React.forwardRef<
-  React.ElementRef<"div">,
-  React.ComponentPropsWithoutRef<"div"> & { index: number }
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement> & { index: number }
 >(({ index, className, ...props }, ref) => {
-  const inputOTPContext = React.useContext(OTPInputContext)
-  const { char, hasFakeCaret, isActive } = inputOTPContext.slots[index]
+  const { value, activeIndex } = React.useContext(InputOTPContext)
+  const char = value[index] ?? ""
+  const isActive = index === activeIndex
+  const hasFakeCaret = isActive && char === ""
 
   return (
     <div
@@ -56,12 +159,15 @@ const InputOTPSlot = React.forwardRef<
 })
 InputOTPSlot.displayName = "InputOTPSlot"
 
+// --- InputOTPSeparator ---
 const InputOTPSeparator = React.forwardRef<
-  React.ElementRef<"div">,
-  React.ComponentPropsWithoutRef<"div">
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement>
 >(({ ...props }, ref) => (
   <div ref={ref} role="separator" {...props}>
-    <Dot />
+    <svg width="8" height="8" viewBox="0 0 8 8" fill="currentColor">
+      <circle cx="4" cy="4" r="2" />
+    </svg>
   </div>
 ))
 InputOTPSeparator.displayName = "InputOTPSeparator"

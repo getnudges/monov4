@@ -1,48 +1,132 @@
 import * as React from "react"
-import * as AlertDialogPrimitive from "@radix-ui/react-alert-dialog"
+import { createPortal } from "react-dom"
 
 import { cn } from "@/lib/utils"
 import { buttonVariants } from "@/components/ui/button"
 
-const AlertDialog = AlertDialogPrimitive.Root
+// --- AlertDialog (root) ---
+interface AlertDialogProps {
+  open?: boolean
+  onOpenChange?: (open: boolean) => void
+  children: React.ReactNode
+}
 
-const AlertDialogTrigger = AlertDialogPrimitive.Trigger
+const AlertDialogContext = React.createContext<{
+  open: boolean
+  onOpenChange: (open: boolean) => void
+}>({ open: false, onOpenChange: () => {} })
 
-const AlertDialogPortal = AlertDialogPrimitive.Portal
+function AlertDialog({ open = false, onOpenChange, children }: AlertDialogProps) {
+  const [internalOpen, setInternalOpen] = React.useState(open)
+  const isControlled = onOpenChange !== undefined
 
-const AlertDialogOverlay = React.forwardRef<
-  React.ElementRef<typeof AlertDialogPrimitive.Overlay>,
-  React.ComponentPropsWithoutRef<typeof AlertDialogPrimitive.Overlay>
->(({ className, ...props }, ref) => (
-  <AlertDialogPrimitive.Overlay
-    className={cn(
-      "fixed inset-0 z-50 bg-black/80  data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
-      className
-    )}
-    {...props}
-    ref={ref}
-  />
-))
-AlertDialogOverlay.displayName = AlertDialogPrimitive.Overlay.displayName
+  const actualOpen = isControlled ? open : internalOpen
+  const handleOpenChange = React.useCallback(
+    (next: boolean) => {
+      if (isControlled) {
+        onOpenChange?.(next)
+      } else {
+        setInternalOpen(next)
+      }
+    },
+    [isControlled, onOpenChange]
+  )
 
-const AlertDialogContent = React.forwardRef<
-  React.ElementRef<typeof AlertDialogPrimitive.Content>,
-  React.ComponentPropsWithoutRef<typeof AlertDialogPrimitive.Content>
->(({ className, ...props }, ref) => (
-  <AlertDialogPortal>
-    <AlertDialogOverlay />
-    <AlertDialogPrimitive.Content
+  // Sync with controlled prop
+  React.useEffect(() => {
+    if (!isControlled) setInternalOpen(open)
+  }, [open, isControlled])
+
+  return (
+    <AlertDialogContext.Provider value={{ open: actualOpen, onOpenChange: handleOpenChange }}>
+      {children}
+    </AlertDialogContext.Provider>
+  )
+}
+
+// --- AlertDialogTrigger ---
+const AlertDialogTrigger = React.forwardRef<
+  HTMLButtonElement,
+  React.ButtonHTMLAttributes<HTMLButtonElement>
+>(({ onClick, ...props }, ref) => {
+  const { onOpenChange } = React.useContext(AlertDialogContext)
+  return (
+    <button
       ref={ref}
-      className={cn(
-        "fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] sm:rounded-lg",
-        className
-      )}
+      onClick={(e) => {
+        onOpenChange(true)
+        onClick?.(e)
+      }}
       {...props}
     />
-  </AlertDialogPortal>
-))
-AlertDialogContent.displayName = AlertDialogPrimitive.Content.displayName
+  )
+})
+AlertDialogTrigger.displayName = "AlertDialogTrigger"
 
+// --- AlertDialogContent ---
+const AlertDialogContent = React.forwardRef<
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement>
+>(({ className, children, ...props }, ref) => {
+  const { open, onOpenChange } = React.useContext(AlertDialogContext)
+  const contentRef = React.useRef<HTMLDivElement>(null)
+  const previousFocusRef = React.useRef<HTMLElement | null>(null)
+
+  React.useEffect(() => {
+    if (open) {
+      previousFocusRef.current = document.activeElement as HTMLElement
+      // Focus first focusable element inside dialog
+      requestAnimationFrame(() => {
+        const focusable = contentRef.current?.querySelector<HTMLElement>(
+          "button, [href], input, select, textarea, [tabindex]:not([tabindex='-1'])"
+        )
+        focusable?.focus()
+      })
+    } else if (previousFocusRef.current) {
+      previousFocusRef.current.focus()
+      previousFocusRef.current = null
+    }
+  }, [open])
+
+  React.useEffect(() => {
+    if (!open) return
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        onOpenChange(false)
+      }
+    }
+    document.addEventListener("keydown", handleKeyDown)
+    return () => document.removeEventListener("keydown", handleKeyDown)
+  }, [open, onOpenChange])
+
+  if (!open) return null
+
+  return createPortal(
+    <>
+      <div className="fixed inset-0 z-50 bg-black/80" />
+      <div
+        ref={(node) => {
+          (contentRef as React.MutableRefObject<HTMLDivElement | null>).current = node
+          if (typeof ref === "function") ref(node)
+          else if (ref) (ref as React.MutableRefObject<HTMLDivElement | null>).current = node
+        }}
+        role="alertdialog"
+        aria-modal="true"
+        className={cn(
+          "fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg sm:rounded-lg",
+          className
+        )}
+        {...props}
+      >
+        {children}
+      </div>
+    </>,
+    document.body
+  )
+})
+AlertDialogContent.displayName = "AlertDialogContent"
+
+// --- Header/Footer (pure layout) ---
 const AlertDialogHeader = ({
   className,
   ...props
@@ -71,63 +155,76 @@ const AlertDialogFooter = ({
 )
 AlertDialogFooter.displayName = "AlertDialogFooter"
 
+// --- Title/Description ---
 const AlertDialogTitle = React.forwardRef<
-  React.ElementRef<typeof AlertDialogPrimitive.Title>,
-  React.ComponentPropsWithoutRef<typeof AlertDialogPrimitive.Title>
+  HTMLHeadingElement,
+  React.HTMLAttributes<HTMLHeadingElement>
 >(({ className, ...props }, ref) => (
-  <AlertDialogPrimitive.Title
+  <h2
     ref={ref}
     className={cn("text-lg font-semibold", className)}
     {...props}
   />
 ))
-AlertDialogTitle.displayName = AlertDialogPrimitive.Title.displayName
+AlertDialogTitle.displayName = "AlertDialogTitle"
 
 const AlertDialogDescription = React.forwardRef<
-  React.ElementRef<typeof AlertDialogPrimitive.Description>,
-  React.ComponentPropsWithoutRef<typeof AlertDialogPrimitive.Description>
+  HTMLParagraphElement,
+  React.HTMLAttributes<HTMLParagraphElement>
 >(({ className, ...props }, ref) => (
-  <AlertDialogPrimitive.Description
+  <p
     ref={ref}
     className={cn("text-sm text-muted-foreground", className)}
     {...props}
   />
 ))
-AlertDialogDescription.displayName =
-  AlertDialogPrimitive.Description.displayName
+AlertDialogDescription.displayName = "AlertDialogDescription"
 
+// --- Action/Cancel buttons ---
 const AlertDialogAction = React.forwardRef<
-  React.ElementRef<typeof AlertDialogPrimitive.Action>,
-  React.ComponentPropsWithoutRef<typeof AlertDialogPrimitive.Action>
->(({ className, ...props }, ref) => (
-  <AlertDialogPrimitive.Action
-    ref={ref}
-    className={cn(buttonVariants(), className)}
-    {...props}
-  />
-))
-AlertDialogAction.displayName = AlertDialogPrimitive.Action.displayName
+  HTMLButtonElement,
+  React.ButtonHTMLAttributes<HTMLButtonElement>
+>(({ className, onClick, ...props }, ref) => {
+  const { onOpenChange } = React.useContext(AlertDialogContext)
+  return (
+    <button
+      ref={ref}
+      className={cn(buttonVariants(), className)}
+      onClick={(e) => {
+        onClick?.(e)
+        onOpenChange(false)
+      }}
+      {...props}
+    />
+  )
+})
+AlertDialogAction.displayName = "AlertDialogAction"
 
 const AlertDialogCancel = React.forwardRef<
-  React.ElementRef<typeof AlertDialogPrimitive.Cancel>,
-  React.ComponentPropsWithoutRef<typeof AlertDialogPrimitive.Cancel>
->(({ className, ...props }, ref) => (
-  <AlertDialogPrimitive.Cancel
-    ref={ref}
-    className={cn(
-      buttonVariants({ variant: "outline" }),
-      "mt-2 sm:mt-0",
-      className
-    )}
-    {...props}
-  />
-))
-AlertDialogCancel.displayName = AlertDialogPrimitive.Cancel.displayName
+  HTMLButtonElement,
+  React.ButtonHTMLAttributes<HTMLButtonElement>
+>(({ className, onClick, ...props }, ref) => {
+  const { onOpenChange } = React.useContext(AlertDialogContext)
+  return (
+    <button
+      ref={ref}
+      className={cn(
+        buttonVariants({ variant: "outline" }),
+        "mt-2 sm:mt-0",
+        className
+      )}
+      onClick={(e) => {
+        onClick?.(e)
+        onOpenChange(false)
+      }}
+      {...props}
+    />
+  )
+})
+AlertDialogCancel.displayName = "AlertDialogCancel"
 
 export {
   AlertDialog,
-  AlertDialogPortal,
-  AlertDialogOverlay,
   AlertDialogTrigger,
   AlertDialogContent,
   AlertDialogHeader,
