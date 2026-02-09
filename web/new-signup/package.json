@@ -8,7 +8,8 @@
     "build": "npm run relay && tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "relay": "relay-compiler"
+    "relay": "relay-compiler",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
@@ -33,6 +34,7 @@
     "zod": "^4.1.12"
   },
   "devDependencies": {
+    "@playwright/test": "^1.50.1",
     "@eslint/js": "^9.39.1",
     "@i18next-selector/vite-plugin": "^0.0.18",
     "@types/luxon": "^3.7.1",

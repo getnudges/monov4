@@ -28,3 +28,8 @@ dist-ssr
 
 *.crt
 *.key
+
+# Playwright
+playwright-report
+test-results
+.playwright
