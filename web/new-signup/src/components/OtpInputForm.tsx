@@ -54,7 +54,7 @@ export default function OtpInputForm({
             <FormItem>
               <FormLabel>One-Time Password</FormLabel>
               <FormControl>
-                <InputOTP maxLength={6} {...field}>
+                <InputOTP maxLength={6} aria-label="One-Time Password" {...field}>
                   <InputOTPGroup>
                     <InputOTPSlot index={0} />
                     <InputOTPSlot index={1} />
@@ -73,10 +73,7 @@ export default function OtpInputForm({
           )}
         />
 
-        <Button
-          type="submit"
-          disabled={disableAction || form.formState.isSubmitting}
-        >
+        <Button type="submit" disabled={disableAction || form.formState.isSubmitting}>
           Verify
         </Button>
       </form>
